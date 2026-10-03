@@ -1,0 +1,3 @@
+# 초안 — 아직 설치·검증하지 않았다. 학습 프레임워크는 Vision 베이스 모델 결정 후 추가한다(plan.md 9장).
+# MLflow 서버와 같은 버전을 쓴다(infra/docker-compose.yml의 mlflow 이미지).
+mlflow==3.16.1

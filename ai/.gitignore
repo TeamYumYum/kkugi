@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+# 레지스트리에서 받은 모델 캐시
+model-cache/
