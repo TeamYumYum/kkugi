@@ -4,7 +4,7 @@
 > Android 폰과 Wear OS가 주 무대이고, 웹은 대시보드·관리자다.
 
 - 기획서: [docs/renewal/plan.md](docs/renewal/plan.md) — 기능·여정·아키텍처(5장)·팀과 일정(6장)
-- 결정 기록: [docs/renewal/adr/](docs/renewal/adr/README.md) — ADR-01~13
+- 결정 기록: [docs/adr/](docs/adr/README.md) — ADR-0001~0013
 - 협업 문서: [docs/README.md](docs/README.md) — 문서 역할, Git 컨벤션, Secret 관리, AI 작업 규칙([AGENTS.md](AGENTS.md))
 
 ## 저장소 구조

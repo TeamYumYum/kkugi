@@ -1,30 +1,35 @@
-# ADR-06: DI는 Hilt
+# ADR-0006: DI는 Hilt
 
-**Date:** 2026-10-03
+| 항목 | 값 |
+|---|---|
+| 상태 | 채택 |
+| 결정일 | 2026-10-03 |
+| 결정자 | 리뉴얼 기획 단계 팀 결정 (E 주도) |
+| 관련 | [기획서](../renewal/plan.md), ADR-0004, ADR-0005 |
 
-## Context
+## 맥락
 
 멀티모듈(ADR-05) + 폰·워치 두 진입점 + 2계층(ADR-04). Repository 구현을 feature에서 바꿔치기할 수 있어야 하고(테스트·mock),
 ViewModel 생성·WorkManager 워커 주입·Wear 서비스 주입이 필요하다. 팀에 Hilt + MVVM 경험이 있다.
 
-## Decision
+## 결정
 
 **Hilt**를 쓴다. `:app`과 `:wear`가 각각 `@HiltAndroidApp` 루트. `:core`가 네트워크·Room·Data Layer 모듈을 제공하고,
 각 `:feature`가 자기 Repository 바인딩(`@Binds`)을 제공한다. WorkManager는 `HiltWorkerFactory`.
 
-## Rationale
+## 근거
 
 - **컴파일타임 검증.** 바인딩 누락이 빌드 에러로 잡힌다. 6명이 모듈 8개에 바인딩을 흩어 놓는 구조에서 런타임 DI 에러(Koin)는 디버깅 비용이 크다.
 - **팀 경험.** 학습 비용 없음. 규칙 파일에 "Hilt 모듈은 `di/` 패키지, `@InstallIn(SingletonComponent)`…" 식으로 바로 쓸 수 있다.
 - Wear OS, Compose(`hiltViewModel()`), WorkManager 전부 공식 통합이 있다.
 
-## Alternatives Considered
+## 고려한 대안
 
 - **Koin**: 설정 가벼움, KMP 친화. 런타임 해석이라 누락이 실행 시 발견. 팀 경험 없음. 기각.
 - **수동 생성자 주입(AppContainer)**: 라이브러리 없음, 명시적. feature 모듈 5개 × 폰·워치 두 컨테이너를 손으로 관리 — 모듈이 늘수록 보일러플레이트가 선형 증가. 기각.
 - **Anvil / Metro**: Hilt 대비 빌드 속도 이점. 팀 경험 없고 Wear 통합 사례 적음. 기각.
 
-## Consequences
+## 결과
 
 - KSP 설정과 Hilt Gradle 플러그인을 `:core` 포함 모든 모듈에 적용(1주차 A).
 - 빌드 시간이 KSP 처리만큼 늘어난다. CI 캐시로 상쇄.

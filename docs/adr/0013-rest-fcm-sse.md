@@ -1,33 +1,38 @@
-# ADR-13: 서버 통신은 REST + FCM, RAG 채팅만 SSE — WebSocket 없음
+# ADR-0013: 서버 통신은 REST + FCM, RAG 채팅만 SSE — WebSocket 없음
 
-**Date:** 2026-10-03
+| 항목 | 값 |
+|---|---|
+| 상태 | 채택 |
+| 결정일 | 2026-10-03 |
+| 결정자 | 리뉴얼 기획 단계 팀 결정 (E 주도) |
+| 관련 | [기획서](../renewal/plan.md), ADR-0009 |
 
-## Context
+## 맥락
 
 클라이언트(폰·웹)와 서버 사이에 실시간성이 필요한 지점을 가려야 한다. 후보: 운동 중 심박 미러링, 알림, RAG 채팅 응답, 워치↔폰 동기화.
 ADR-02로 심박 실시간 미러링은 제외됐고, 워치↔폰은 Data Layer(서버 무관)다.
 
-## Decision
+## 결정
 
 - **REST**(JSON)가 기본. 모든 CRUD·조회.
 - **FCM**으로 서버 → 클라이언트 푸시: Streak 리마인드, 마지막 끼니 추천 트리거, WeeklyReport 생성 알림. 데이터 페이로드는 최소(ID만), 클라이언트가 REST로 재조회.
 - **SSE**는 RAG 채팅 응답 스트리밍 한 곳만. Spring이 FastAPI의 스트림을 그대로 중계(`SseEmitter`/`Flux<ServerSentEvent>`).
 - **WebSocket 없음.**
 
-## Rationale
+## 근거
 
 - 양방향 실시간이 필요한 기능이 범위에 없다. WebSocket은 연결 관리·재접속·인증 갱신을 클라이언트 3곳에 추가한다.
 - 채팅 응답은 단방향 스트림이라 SSE가 정확히 맞고, HTTP 인프라(nginx·인증 헤더)를 그대로 탄다.
 - FCM은 앱이 꺼져 있어도 도달한다 — 리마인드의 본질. 서버 폴링·소켓으로는 불가.
 - v1의 "홈 코멘트 12h Redis 캐시" 같은 패턴이 REST에서 이미 검증됐다.
 
-## Alternatives Considered
+## 고려한 대안
 
 - **REST + FCM만(SSE 없음)**: RAG 응답을 완성 후 한 번에. 가장 단순하지만 3~8초 공백. RAG가 들어간다면 체감 차이가 크다. SSE 추가 비용이 작아 포함.
 - **WebSocket 추가**: 쓸 곳 불분명. 기각.
 - **gRPC-web / GraphQL**: 팀 경험 없음, OpenAPI 계약 파이프라인(ADR-09)과 어긋남. 기각.
 
-## Consequences
+## 결과
 
 - nginx에 SSE용 `proxy_buffering off` 설정(`/api/chat/stream`). 1주차 C.
 - FCM 토큰은 Member 도메인이 저장·갱신(`member_device`). 발송은 `infrastructure/fcm`. 트리거 판단은 Coaching 이벤트 핸들러.

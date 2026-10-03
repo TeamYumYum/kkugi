@@ -543,5 +543,8 @@
       ],
       "standard": []
     }
+  },
+  "hooks": {
+    "python": "python"
   }
 }

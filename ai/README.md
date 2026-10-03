@@ -1,7 +1,7 @@
 # ai — FastAPI 추론 서버
 
 Spring이 내부 HTTP(`/ai/**`)로만 호출하는 추론 서버다. 폰·웹은 이 서버를 모른다(plan.md 5.2).
-학습·평가 코드는 `ml/`에 있고 이 이미지에 들어가지 않는다([ADR-11](../docs/renewal/adr/2026-10-03-11-mlflow-and-ai-ml-split.md)).
+학습·평가 코드는 `ml/`에 있고 이 이미지에 들어가지 않는다([ADR-11](../docs/adr/0011-mlflow-and-ai-ml-split.md)).
 홈 담당은 E. `app/schemas/` 변경은 Spring ↔ FastAPI 계약 변경이라 E 리뷰가 필수다.
 
 ## 구조

@@ -1,8 +1,13 @@
-# ADR-07: 백엔드 패키지는 feelm식 기능 우선 + ArchUnit 규칙 3개
+# ADR-0007: 백엔드 패키지는 feelm식 기능 우선 + ArchUnit 규칙 3개
 
-**Date:** 2026-10-03
+| 항목 | 값 |
+|---|---|
+| 상태 | 채택 |
+| 결정일 | 2026-10-03 |
+| 결정자 | 리뉴얼 기획 단계 팀 결정 (E 주도) |
+| 관련 | [기획서](../renewal/plan.md), ADR-0008 |
 
-## Context
+## 맥락
 
 레포에 서로 다른 관행이 둘 있다.
 - **feelm식**(`S15P21E106-980`): `domain/{x}/{controller, dto/request, dto/response, entity, event, repository, service}` + `global/` + `infrastructure/`. 레이어 방향은 리뷰로 지킴.
@@ -10,7 +15,7 @@
 
 6인·8주, 도메인 4개를 4명이 개인 수직 소유. 가드레일 키트가 규칙을 기계적으로 검사할 수 있다.
 
-## Decision
+## 결정
 
 **feelm식 패키지**를 쓴다.
 
@@ -35,20 +40,20 @@ com.nyamnyam.backend/
 
 v1의 DTO 접미사 규칙(Request/Response, 외부 송수신은 ClientRequest/ClientResponse)은 유지한다. Command/Result 레이어는 두지 않는다.
 
-## Rationale
+## 근거
 
 - **기능 하나 = 폴더 하나에 파일 7개.** v1식은 11개 + 변환 코드 4군데. 변환 코드는 Claude가 만들어 줘도 리뷰 양은 그대로다.
 - **초기 스타트업 Spring 코드베이스의 사실상 표준**이다. 새 팀원이 설명 없이 읽는다.
 - v1식이 패키지로 강제하던 것(service의 HTTP 무지)은 **규칙 한 줄 + ArchUnit 테스트 1개**로 같은 효과를 낸다. 가드레일 키트가 할 일이 정확히 이것.
 - 도메인 폴더가 자기완결적이라 개인 수직 소유(A는 `domain/meal/`만)와 일치.
 
-## Alternatives Considered
+## 고려한 대안
 
 - **yumyum v1식**: 기존 CLAUDE.md 규칙 재사용 가능. 변환 보일러플레이트가 6인·8주에서 발목. 2인 팀 시절의 선택. 기각.
 - **feelm식 + Command/Result만 추가(중간)**: 변환 2군데. 이점이 ArchUnit 규칙 1과 겹침. 기각.
 - **헥사고날(port·adapter)**: 파일 16개+. 8주 CRUD 서비스에서 교체할 인프라가 없음. 기각.
 
-## Consequences
+## 결과
 
 - service가 비대해지면 **유스케이스별 service 분리**를 허용한다(`MealRecordService`, `MealCorrectionService`). 한 service 300줄 넘으면 분리 검토(규칙 파일).
 - controller는 `ResponseEntity<ApiResponse<T>>`로 통일(v1 규칙 유지).

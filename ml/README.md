@@ -1,7 +1,7 @@
 # ml — 학습·평가·모델 등록
 
 음식 Vision 모델의 MLOps 1회전(plan.md J3, MVP-3)을 담는다. 추론 서버(`ai/`) 이미지에 포함되지 않는다
-([ADR-11](../docs/renewal/adr/2026-10-03-11-mlflow-and-ai-ml-split.md)). 홈 담당은 E.
+([ADR-11](../docs/adr/0011-mlflow-and-ai-ml-split.md)). 홈 담당은 E.
 
 ```
 수정 데이터(Spring 업무 DB, 읽기 전용)

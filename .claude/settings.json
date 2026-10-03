@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-paths.py\"",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-paths.py\"",
             "timeout": 30
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-verify.py\"",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-verify.py\"",
             "timeout": 900
           }
         ]

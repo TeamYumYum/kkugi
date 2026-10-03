@@ -1,7 +1,7 @@
 # backend
 
 냠냠코치 Spring Boot 백엔드. 1주차 셸(실행·빌드·테스트가 도는 골격과 공통 기반 초안)만 있다.
-작업 규칙은 [AGENTS.md](./AGENTS.md), 구조 결정은 [ADR-07](../docs/renewal/adr/2026-10-03-07-backend-feature-package.md)을 본다.
+작업 규칙은 [AGENTS.md](./AGENTS.md), 구조 결정은 [ADR-07](../docs/adr/0007-backend-feature-package.md)을 본다.
 
 ## 버전
 

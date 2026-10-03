@@ -1,6 +1,6 @@
 # 냠냠코치 리뉴얼 기획서
 
-**작성일:** 2026-10-03 · **상태:** 초안 v0.1 · **결정 근거:** `docs/renewal/adr/`
+**작성일:** 2026-10-03 · **상태:** 초안 v0.1 · **결정 근거:** `docs/adr/` (ADR-0001~0013)
 
 > SSAFY 자율 프로젝트에서 냠냠코치를 새로 개발한다. v1(4주·2인·웹)의 제품 방향은 잇되,
 > 표면·팀·아키텍처는 처음부터 다시 결정했다. 이 문서는 "무엇을, 누가, 언제" 만드는지의 합의본이다.
@@ -260,3 +260,7 @@ nyamnyam/
 - **소셜 로그인 범위** — 카카오만으로 시작할지, 구글 동시 지원할지.
 - **XP 규칙** — 세트·식사·미션별 XP와 Nyam 외형 단계 매핑 (Growth 소유자 C가 2주차 초안).
 - **팀원 실명 배정** — A~F에 사람 매핑. 풀스택 4명을 A·B·C·D에.
+- **마이그레이션 도구** — 지금 `ddl-auto: none`, 도구 미정. 추천: Flyway(ADR-0007이 "스토리 하나 = 폰·백엔드·마이그레이션 한 브랜치"를 전제). 1주차 D.
+- **인증 방식** — 지금 `SecurityConfig`가 `permitAll` 임시. 추천: v1의 JWT + Redis 블랙리스트 재사용(소셜 로그인 뒤에 붙이기 쉬움). 401·403도 `ApiResponse` 형태로. 1주차 D·C.
+- **`:core` OpenAPI Kotlin 생성** — Gradle 설정 없음. ADR-0009 1주차 항목: openapi-generator 플러그인, DTO만 생성할지 Retrofit 인터페이스까지 생성할지. 1주차 A.
+- **MLflow stage vs alias** — 지금 `get_latest_versions(stages=["Production"])`(MLflow 3에서 deprecated, 코드에 "결정 필요" 주석). 추천: alias(`@production`)로 바꾸고 ADR-0011 문구 수정. 1주차 E.

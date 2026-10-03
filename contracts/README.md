@@ -1,6 +1,6 @@
 # contracts
 
-서버 API 계약 산출물을 두는 곳이다([ADR-09](../docs/renewal/adr/2026-10-03-09-openapi-contract-generation.md)).
+서버 API 계약 산출물을 두는 곳이다([ADR-09](../docs/adr/0009-openapi-contract-generation.md)).
 여기의 JSON은 **빌드 산출물**이라 손으로 편집하지 않는다. 아직 생성된 파일은 없다.
 
 ## 파일
