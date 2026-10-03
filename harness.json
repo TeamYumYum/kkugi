@@ -1,0 +1,547 @@
+{
+  "harness_version": "0.2.0",
+  "project_name": "nyamnyam",
+  "platform": "gitlab",
+  "tracker": "jira",
+  "issue_prefix": "NYAM",
+  "default_branch": "main",
+  "integration_branch": "main",
+  "related_docs": [
+    {
+      "label": "문서 역할과 우선순위",
+      "path": "docs/README.md"
+    },
+    {
+      "label": "AI 병렬 작업 및 충돌 방지 규칙",
+      "path": "docs/ai-collaboration.md"
+    },
+    {
+      "label": "Git 컨벤션(브랜치·커밋·병합 요청)",
+      "path": "docs/git-convention.md"
+    },
+    {
+      "label": "개발 흐름(업무 항목 시작부터 병합까지)",
+      "path": "docs/development-workflow.md"
+    },
+    {
+      "label": "Secret 및 환경변수 관리 규칙",
+      "path": "docs/secret-environment-variables.md"
+    }
+  ],
+  "areas": [
+    {
+      "dir": "backend",
+      "verify": [
+        "cd backend && ./gradlew build"
+      ],
+      "triggers": [
+        "계약 문서(API·ERD·DB 스키마)의 변경, 또는 계약과 다른 구현",
+        "다른 담당자 소유 도메인, `global/`·`infrastructure/`·`SecurityConfig` 같은 공통 코드의 변경",
+        "`@Transactional` 경계의 신설·변경, 한 유스케이스에서 둘 이상의 Repository 쓰기",
+        "인증·인가 코드, 토큰·쿠키 처리",
+        "메시지(Kafka 등) 발행·소비, 캐시(Redis 등) 키·TTL",
+        "도메인 이벤트 추가·변경(ADR-08): 발행은 service에서만, 핸들러는 멱등하고 @TransactionalEventListener(AFTER_COMMIT), docs/renewal/events.md 갱신",
+        "다른 도메인의 repository·entity를 직접 쓰는 변경(ADR-08: 조회는 그 도메인 public service의 읽기 전용 DTO로)",
+        "contracts/openapi.json에 반영되는 API 계약 변경(ADR-09: 웹 F·폰 A 리뷰)",
+        "harness.json 이 영역 설정의 layers·allow·disabled_rules 변경(컨벤션 규칙을 바꾸거나 끈다)"
+      ],
+      "review_focus": [
+        "계약 정합성",
+        "정확성(경계 조건, 실패 경로)",
+        "보안(입력 검증, Secret)",
+        "테스트 실효성(플랜 목록과 실제 테스트의 대조)",
+        "트랜잭션 경계(Service 메서드 단위, 쓰기 메서드의 @Transactional)"
+      ],
+      "trigger_paths": {
+        "strict": [
+          "/src/main/resources/db/migration/",
+          "/build.gradle",
+          "/build.gradle.kts",
+          "/settings.gradle",
+          "/settings.gradle.kts",
+          "/src/main/resources/application*.yml",
+          "/src/main/resources/application*.yaml",
+          "/src/main/resources/application*.properties",
+          "**/global/",
+          "**/infrastructure/",
+          "**/*SecurityConfig.java",
+          "gradle.lockfile",
+          "settings-gradle.lockfile",
+          "/gradle/libs.versions.toml",
+          "/gradle/wrapper/"
+        ],
+        "standard": []
+      },
+      "test_paths": [
+        "/src/test/",
+        "*Test.java",
+        "*Tests.java"
+      ],
+      "profile": "spring-java",
+      "vars": {
+        "base_package": "com.nyamnyam.backend",
+        "java_src": "src/main/java",
+        "java_test": "src/test/java",
+        "lombok": "true",
+        "error_package": "com.nyamnyam.backend.global.error",
+        "webmvc_test_package": "org.springframework.boot.webmvc.test.autoconfigure"
+      },
+      "layers": {
+        "controller": [
+          "..controller.."
+        ],
+        "service": [
+          "..service.."
+        ],
+        "repository": [
+          "..repository.."
+        ],
+        "entity": [
+          "..entity.."
+        ],
+        "request": [
+          "..dto.request.."
+        ],
+        "response": [
+          "..dto.response.."
+        ],
+        "event": [
+          "..event.."
+        ]
+      },
+      "allow": {
+        "controller": [
+          "service",
+          "request",
+          "response"
+        ],
+        "service": [
+          "repository",
+          "entity",
+          "request",
+          "event"
+        ],
+        "repository": [
+          "entity"
+        ],
+        "entity": [],
+        "request": [
+          "entity"
+        ],
+        "response": [
+          "entity"
+        ],
+        "event": [
+          "service"
+        ]
+      },
+      "disabled_rules": {}
+    },
+    {
+      "dir": "web",
+      "verify": [
+        "npm --prefix web run lint",
+        "npm --prefix web run format:check",
+        "npm --prefix web run test:run",
+        "npm --prefix web run build"
+      ],
+      "triggers": [
+        "공용 컴포넌트(`src/components/`)의 생성·변경(여러 화면이 함께 쓴다)",
+        "라우팅(`routes/router.tsx`·`routes/paths.ts`) 변경",
+        "인증 가드(로그인이 필요한 라우트 보호)의 추가·변경·제거",
+        "새 라이브러리(의존성) 추가, `package.json`·lock·`vite.config.*`·`eslint.config.*` 변경",
+        "generated/ 손 수정이나 수동 DTO 추가(ADR-09: 생성 타입만, PR 마지막 커밋에서 재생성)",
+        "harness.json 이 영역 설정의 layers·allow·disabled_rules 변경(컨벤션 규칙을 바꾸거나 끈다)"
+      ],
+      "review_focus": [
+        "접근성(역할·이름·대체 텍스트, 키보드 조작)",
+        "화면 경계(`mocks/`·다른 화면 하위 컴포넌트 import 금지, 계층 허용 방향)",
+        "API 호출은 `src/api/` 도메인 함수와 공통 클라이언트를 거친다",
+        "테스트는 역할 기반 질의(`getByRole`)로 사용자 관점을 검증한다"
+      ],
+      "trigger_paths": {
+        "strict": [
+          "/package.json",
+          "package-lock.json",
+          "npm-shrinkwrap.json",
+          "yarn.lock",
+          "pnpm-lock.yaml",
+          "bun.lock",
+          "bun.lockb",
+          "/vite.config.*",
+          "/eslint.config.*"
+        ],
+        "standard": [
+          "/src/routes/",
+          "/src/components/"
+        ]
+      },
+      "test_paths": [
+        "*.test.ts",
+        "*.test.tsx"
+      ],
+      "profile": "react-ts",
+      "vars": {
+        "src_root": "src",
+        "api_client_import": "./client",
+        "api_client_fn": "request",
+        "lint_script": "lint",
+        "format_script": "format:check",
+        "test_script": "test:run",
+        "build_script": "build"
+      },
+      "layers": {
+        "routes": [
+          "routes"
+        ],
+        "pages": [
+          "pages"
+        ],
+        "components": [
+          "components"
+        ],
+        "api": [
+          "api"
+        ],
+        "types": [
+          "types"
+        ],
+        "utils": [
+          "utils"
+        ],
+        "generated": [
+          "generated"
+        ]
+      },
+      "allow": {
+        "routes": [
+          "pages",
+          "components",
+          "api",
+          "types",
+          "utils",
+          "generated"
+        ],
+        "pages": [
+          "components",
+          "api",
+          "types",
+          "utils",
+          "routes",
+          "generated"
+        ],
+        "components": [
+          "types",
+          "utils",
+          "generated"
+        ],
+        "api": [
+          "types",
+          "utils",
+          "generated"
+        ],
+        "types": [
+          "generated"
+        ],
+        "utils": [
+          "types"
+        ],
+        "generated": []
+      },
+      "disabled_rules": {}
+    },
+    {
+      "dir": "android/app",
+      "verify": [
+        "android/gradlew -p android :app:check"
+      ],
+      "triggers": [
+        "권한 추가·변경(AndroidManifest.xml의 uses-permission, 런타임 권한 요청)",
+        "토큰·인증 정보의 저장·전달(SharedPreferences·DataStore·Keystore·Intent)",
+        "백그라운드 작업(WorkManager·Service·알람·포그라운드 서비스)의 신설·변경",
+        "폰↔워치 데이터 동기화(Wearable Data Layer API)와 메시지 형식",
+        "계약(서버 API·DTO·직렬화 형식) 변경, 또는 계약과 다른 구현",
+        "app에 화면 조립·네비게이션·DI 루트 밖의 로직 추가(ADR-05)",
+        "harness.json 이 영역 설정의 layers·allow·disabled_rules 변경(컨벤션 규칙을 바꾸거나 끈다)"
+      ],
+      "review_focus": [
+        "생명주기·구성 변경에서 상태 보존(ViewModel·SavedStateHandle)",
+        "메인 스레드 차단과 코루틴 범위",
+        "Hilt 바인딩 위치(feature는 자기 Repository를 di/ 패키지의 @Binds로 제공)",
+        "접근성(contentDescription·터치 영역·글자 크기)"
+      ],
+      "trigger_paths": {
+        "strict": [
+          "**/build.gradle.kts",
+          "**/AndroidManifest.xml",
+          "**/proguard-rules.pro",
+          "*.jks",
+          "*.keystore",
+          "gradle.lockfile"
+        ],
+        "standard": []
+      },
+      "test_paths": [
+        "/src/test/",
+        "/src/androidTest/",
+        "*Test.kt",
+        "*Tests.kt"
+      ],
+      "profile": "android-kotlin",
+      "vars": {
+        "base_package": "com.nyamnyam",
+        "gradle_root": "android",
+        "module": "app",
+        "gradle_tasks": ":app:check",
+        "kotlin_src": "src/main/java",
+        "kotlin_test": "src/test/java",
+        "min_sdk": "26"
+      },
+      "layers": {},
+      "allow": {},
+      "disabled_rules": {}
+    },
+    {
+      "dir": "android/core",
+      "verify": [
+        "android/gradlew -p android :core:check"
+      ],
+      "triggers": [
+        "권한 추가·변경(AndroidManifest.xml의 uses-permission, 런타임 권한 요청)",
+        "토큰·인증 정보의 저장·전달(SharedPreferences·DataStore·Keystore·Intent)",
+        "백그라운드 작업(WorkManager·Service·알람·포그라운드 서비스)의 신설·변경",
+        "폰↔워치 데이터 동기화(Wearable Data Layer API)와 메시지 형식",
+        "계약(서버 API·DTO·직렬화 형식) 변경, 또는 계약과 다른 구현",
+        "Room 테이블 추가(ADR-03: Workout 세션·세트·업로드 상태만)",
+        "OpenAPI 생성 DTO(generated) 손 수정(ADR-09)",
+        "harness.json 이 영역 설정의 layers·allow·disabled_rules 변경(컨벤션 규칙을 바꾸거나 끈다)"
+      ],
+      "review_focus": [
+        "생명주기·구성 변경에서 상태 보존(ViewModel·SavedStateHandle)",
+        "메인 스레드 차단과 코루틴 범위",
+        "Hilt 바인딩 위치(feature는 자기 Repository를 di/ 패키지의 @Binds로 제공)",
+        "접근성(contentDescription·터치 영역·글자 크기)"
+      ],
+      "trigger_paths": {
+        "strict": [
+          "**/build.gradle.kts",
+          "**/AndroidManifest.xml",
+          "**/proguard-rules.pro",
+          "*.jks",
+          "*.keystore",
+          "gradle.lockfile"
+        ],
+        "standard": []
+      },
+      "test_paths": [
+        "/src/test/",
+        "/src/androidTest/",
+        "*Test.kt",
+        "*Tests.kt"
+      ],
+      "profile": "android-kotlin",
+      "vars": {
+        "base_package": "com.nyamnyam",
+        "gradle_root": "android",
+        "module": "core",
+        "gradle_tasks": ":core:check",
+        "kotlin_src": "src/main/java",
+        "kotlin_test": "src/test/java",
+        "min_sdk": "26"
+      },
+      "layers": {},
+      "allow": {},
+      "disabled_rules": {}
+    },
+    {
+      "dir": "android/wear",
+      "verify": [
+        "android/gradlew -p android :wear:check"
+      ],
+      "triggers": [
+        "권한 추가·변경(AndroidManifest.xml의 uses-permission, 런타임 권한 요청)",
+        "토큰·인증 정보의 저장·전달(SharedPreferences·DataStore·Keystore·Intent)",
+        "백그라운드 작업(WorkManager·Service·알람·포그라운드 서비스)의 신설·변경",
+        "폰↔워치 데이터 동기화(Wearable Data Layer API)와 메시지 형식",
+        "계약(서버 API·DTO·직렬화 형식) 변경, 또는 계약과 다른 구현",
+        "워치에 서버 호출·인증·토큰 코드 추가(ADR-02: Companion, 폰 경유)",
+        "harness.json 이 영역 설정의 layers·allow·disabled_rules 변경(컨벤션 규칙을 바꾸거나 끈다)"
+      ],
+      "review_focus": [
+        "생명주기·구성 변경에서 상태 보존(ViewModel·SavedStateHandle)",
+        "메인 스레드 차단과 코루틴 범위",
+        "Hilt 바인딩 위치(feature는 자기 Repository를 di/ 패키지의 @Binds로 제공)",
+        "접근성(contentDescription·터치 영역·글자 크기)"
+      ],
+      "trigger_paths": {
+        "strict": [
+          "**/build.gradle.kts",
+          "**/AndroidManifest.xml",
+          "**/proguard-rules.pro",
+          "*.jks",
+          "*.keystore",
+          "gradle.lockfile"
+        ],
+        "standard": []
+      },
+      "test_paths": [
+        "/src/test/",
+        "/src/androidTest/",
+        "*Test.kt",
+        "*Tests.kt"
+      ],
+      "profile": "android-kotlin",
+      "vars": {
+        "base_package": "com.nyamnyam.wear",
+        "gradle_root": "android",
+        "module": "wear",
+        "gradle_tasks": ":wear:check",
+        "kotlin_src": "src/main/java",
+        "kotlin_test": "src/test/java",
+        "min_sdk": "30"
+      },
+      "layers": {},
+      "allow": {},
+      "disabled_rules": {}
+    },
+    {
+      "dir": "android/feature",
+      "verify": [
+        "android/gradlew -p android :feature:member:check :feature:meal:check :feature:workout:check :feature:coaching:check :feature:growth:check"
+      ],
+      "triggers": [
+        "권한 추가·변경(AndroidManifest.xml의 uses-permission, 런타임 권한 요청)",
+        "토큰·인증 정보의 저장·전달(SharedPreferences·DataStore·Keystore·Intent)",
+        "백그라운드 작업(WorkManager·Service·알람·포그라운드 서비스)의 신설·변경",
+        "폰↔워치 데이터 동기화(Wearable Data Layer API)와 메시지 형식",
+        "계약(서버 API·DTO·직렬화 형식) 변경, 또는 계약과 다른 구현",
+        "harness.json 이 영역 설정의 layers·allow·disabled_rules 변경(컨벤션 규칙을 바꾸거나 끈다)"
+      ],
+      "review_focus": [
+        "생명주기·구성 변경에서 상태 보존(ViewModel·SavedStateHandle)",
+        "메인 스레드 차단과 코루틴 범위",
+        "Hilt 바인딩 위치(feature는 자기 Repository를 di/ 패키지의 @Binds로 제공)",
+        "접근성(contentDescription·터치 영역·글자 크기)"
+      ],
+      "trigger_paths": {
+        "strict": [
+          "**/build.gradle.kts",
+          "**/AndroidManifest.xml",
+          "**/proguard-rules.pro",
+          "*.jks",
+          "*.keystore",
+          "gradle.lockfile"
+        ],
+        "standard": []
+      },
+      "test_paths": [
+        "/src/test/",
+        "/src/androidTest/",
+        "*Test.kt",
+        "*Tests.kt"
+      ],
+      "profile": "android-kotlin",
+      "vars": {
+        "base_package": "com.nyamnyam",
+        "gradle_root": "android",
+        "module": "feature",
+        "gradle_tasks": ":feature:member:check :feature:meal:check :feature:workout:check :feature:coaching:check :feature:growth:check",
+        "kotlin_src": "src/main/java",
+        "kotlin_test": "src/test/java",
+        "min_sdk": "26"
+      },
+      "layers": {},
+      "allow": {},
+      "disabled_rules": {}
+    },
+    {
+      "dir": "android/konsist-test",
+      "verify": [
+        "android/gradlew -p android :konsist-test:test"
+      ],
+      "triggers": [
+        "Konsist 규칙 범위(app_dir·core_dir·feature_dir·wear_dir)나 이 모듈의 Konsist·JUnit 의존성 변경",
+        "feature에 첫 domain 패키지(UseCase)가 생길 때: 이 영역 layers·allow에 domain(com.nyamnyam..domain..)을 더하고 ui→domain, domain→data를 허용한 뒤 init --force",
+        "harness.json 이 영역 설정의 layers·allow·disabled_rules 변경(컨벤션 규칙을 바꾸거나 끈다)"
+      ],
+      "review_focus": [
+        "규칙 범위가 실제 모듈 디렉터리와 맞는지(범위가 비면 규칙이 거짓 통과한다)",
+        "규칙을 끈 이유(disabled_rules)가 ADR과 맞는지"
+      ],
+      "trigger_paths": {
+        "strict": [
+          "**/build.gradle.kts",
+          "gradle.lockfile"
+        ],
+        "standard": []
+      },
+      "test_paths": [
+        "/src/test/",
+        "*Test.kt"
+      ],
+      "profile": "android-konsist",
+      "vars": {
+        "base_package": "com.nyamnyam",
+        "gradle_root": "android",
+        "module": "konsist-test",
+        "kotlin_test": "src/test/kotlin",
+        "app_dir": "app",
+        "core_dir": "core",
+        "feature_dir": "feature",
+        "wear_dir": "wear"
+      },
+      "layers": {
+        "ui": [
+          "com.nyamnyam..ui.."
+        ],
+        "data": [
+          "com.nyamnyam..data.."
+        ]
+      },
+      "allow": {
+        "ui": [
+          "data"
+        ],
+        "data": []
+      },
+      "disabled_rules": {}
+    }
+  ],
+  "judge": {
+    "triggers": [
+      "harness.json 의 프로필 영역 설정(layers·allow·disabled_rules) 변경이면 엄격(컨벤션 규칙을 바꾸거나 끈다)",
+      "infra/(docker compose·nginx·CI) 변경, ai/·ml/ 계약(ai/schemas) 변경(ADR-09·11: E 리뷰)"
+    ],
+    "trigger_paths": {
+      "strict": [
+        "package-lock.json",
+        "npm-shrinkwrap.json",
+        "yarn.lock",
+        "pnpm-lock.yaml",
+        "bun.lock",
+        "bun.lockb",
+        "gradle.lockfile",
+        "poetry.lock",
+        "uv.lock",
+        "Pipfile.lock",
+        "Cargo.lock",
+        "go.sum",
+        "Gemfile.lock",
+        "composer.lock",
+        ".gitlab-ci.yml",
+        "/.github/workflows/",
+        "Jenkinsfile",
+        "**/db/migration/",
+        "**/db/migrate/",
+        "**/db/changelog/",
+        "migrations/",
+        "/android/gradle/libs.versions.toml",
+        "/android/settings.gradle.kts",
+        "/android/build.gradle.kts",
+        "/android/gradle/wrapper/",
+        "/contracts/"
+      ],
+      "standard": []
+    }
+  }
+}

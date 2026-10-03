@@ -1,0 +1,6 @@
+# 리눅스 CI(Gradle wrapper·셸 스크립트)와 harness check가 같은 줄바꿈을 보게 LF로 고정한다
+* text=auto eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.png binary
+*.jpg binary
