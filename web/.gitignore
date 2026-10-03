@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tsbuildinfo
+coverage/
+
+# 로컬 환경 변수. 커밋하는 것은 .env.example뿐이다
+.env
+.env.*
+!.env.example
