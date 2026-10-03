@@ -1,0 +1,31 @@
+# 접속 정보는 모두 환경 변수로 받는다. 값(비밀번호 등)을 이 파일에 쓰지 않는다(docs/secret-environment-variables.md).
+# 변수 목록은 backend/README.md를 본다. 테스트는 src/test/resources/application.yml(H2)이 이 파일을 가린다.
+spring:
+  application:
+    name: nyamnyam-backend
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:nyamnyam}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${DB_USERNAME:}
+    password: ${DB_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      # 스키마는 마이그레이션 도구(미결정)로 관리한다. Hibernate가 스키마를 만들거나 고치지 않는다
+      ddl-auto: none
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
