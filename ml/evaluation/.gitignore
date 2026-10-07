@@ -1,0 +1,4 @@
+# 평가셋 사진·라벨과 결과는 커밋하지 않는다(ml/README.md: 데이터셋 원본은 git에 넣지 않음)
+photo_meal/data/
+photo_meal/results/
+__pycache__/
