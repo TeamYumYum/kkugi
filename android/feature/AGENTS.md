@@ -1,32 +1,29 @@
 # android/feature AGENTS.md
 
-루트 `AGENTS.md`를 전제로 `android/feature/`에서 작업하는 AI 코딩 도구의 판정, 절차와 기록을 정한다.
-루트에 있는 규칙(기존 변경 보호, 테스트 약화 금지, worktree 분리, 완료 보고)은 반복하지 않는다.
-
-규칙 끝의 표시는 그 규칙을 누가 지키게 하는지다. `[hook]` 로컬 hooks, `[ci]` CI, `[사람]` 작업자와
-리뷰어. `[hook]`·`[ci]` 규칙도 해당 장치가 설치되기 전까지는 사람이 확인한다.
+루트 `AGENTS.md`를 전제로 `android/feature/`에서 작업하는 AI 코딩 도구의 기준 문서, 검증, 엄격 트리거와 리뷰 관점을 정한다.
+판정 단계, 플랜·리뷰 절차, 기록 규칙과 `[hook]`·`[ci]`·`[사람]` 표시는 루트 7장에 있고 여기서 반복하지 않는다.
+키트(ai-dev-harness)가 생성한 파일을 팀이 수정했다. 키트로 다시 생성하지 않는다.
 
 ## 1. 기준 문서
 
-- 아직 지정한 기준 문서가 없다. 계약·스키마·컨벤션 문서가 생기면 `--area-doc`으로 추가한다.
+- 요구사항 명세 — 도메인별: [member](../../docs/requirements/member.md) · [meal](../../docs/requirements/meal.md) · [workout](../../docs/requirements/workout.md) · [coaching](../../docs/requirements/coaching.md) · [growth](../../docs/requirements/growth.md) · [공통](../../docs/requirements/common.md)
+- [API 공통 규약](../../docs/api/conventions.md) — 11장 클라이언트 규칙(생성 타입만, 오프라인은 운동 세션만)
+- [ADR-0004](../../docs/adr/0004-android-two-layers.md) ui·data 2계층 + 조건부 UseCase, [ADR-0005](../../docs/adr/0005-android-feature-modules.md) feature는 `:core`만 의존
+- 모듈 표·스캐폴드·컨벤션은 [android/README.md](../README.md)
 
 계약과 다르게 구현해야 하면 임의로 진행하지 않고, 합의한 뒤 기준 문서를 먼저 고친다.
 
 ## 2. 검증
 
-- `android/gradlew -p android :feature:member:check :feature:meal:check :feature:workout:check :feature:coaching:check :feature:growth:check`
+저장소 루트에서 실행한다. 전제: JDK 17 이상, Android SDK(compileSdk 36, `ANDROID_HOME` 또는 `android/local.properties`).
 
-완료 검증은 파일을 수정하지 않는 명령으로 하고, 작업 범위 밖의 파일을 고치지 않는다.
+- 작업 중 빠른 확인: 바꾼 모듈만. 예 `android/gradlew -p android :feature:meal:check`
+- 작업 완료 전 필수(`harness.json verify`): `android/gradlew -p android :feature:member:check :feature:meal:check :feature:workout:check :feature:coaching:check :feature:growth:check`. 계층·ViewModel 규칙은 `android/gradlew -p android :konsist-test:test`가 검사하므로 함께 돌린다
+- CI 전용: Android SDK가 없는 환경에서는 위 명령을 돌릴 수 없다. CI가 없으므로 MR 검증 절에 미검증으로 적고 SDK가 있는 팀원이 확인한다
 
-## 3. 판정
+형식은 `android/gradlew -p android ktlintFormat`으로 맞춘다(완료 검증 전에 실행).
 
-변경이 닿는 범위로 세 단계 중 하나를 고른다. 섞이거나 애매하면 가장 높은 단계를 따른다.
-
-| 단계 | 조건 | 적용 |
-| --- | --- | --- |
-| 경량 (`lite`) | 문서·주석, 또는 생산 동작과 계약을 바꾸지 않는 테스트만 변경 | 2장 검증. 플랜·리뷰 파일을 만들지 않는다 |
-| 표준 (`standard`) | 트리거에 해당하지 않음 | 4장 산출물을 한 세션에서 만든다 |
-| 엄격 (`strict`) | 트리거 하나 이상 | 4장 산출물에 플랜 승인과 분리 리뷰를 더한다 |
+## 3. 엄격 트리거
 
 트리거. diff나 플랜에 하나라도 있으면 해당한다. 테스트 코드와 테스트 리소스만 바꾼 변경은 트리거로 보지 않는다.
 
@@ -37,35 +34,17 @@
 5. 계약(서버 API·DTO·직렬화 형식) 변경, 또는 계약과 다른 구현
 6. harness.json 이 영역 설정의 layers·allow·disabled_rules 변경(컨벤션 규칙을 바꾸거나 끈다)
 
-- 판정과 근거는 표준·엄격이면 플랜 첫 줄에, 경량이면 시작 보고와 MR 본문에 적는다. [ci]
+## 4. 이 영역에서 특히 볼 관점
 
-## 4. 절차
+공통 관점(루트 7장)에 덧붙인다. 생명주기·구성 변경에서 상태 보존(ViewModel·SavedStateHandle) · 메인 스레드 차단과 코루틴 범위 · Hilt 바인딩 위치(feature는 자기 Repository를 di/ 패키지의 @Binds로 제공) · 접근성(contentDescription·터치 영역·글자 크기). [사람]
 
-표준·엄격 단계는 플랜, 구현, 리뷰 산출물을 남긴다. 양식은 `docs/templates/plan.md`와 `review.md`다.
+## 5. 영역 규칙
 
-- **플랜** `plans/<Jira Issue Key>.md`: 설계, 미확정 항목, 기준선(시작 커밋과 기존 미커밋 변경), 판정과 트리거, 조건부 관점, 인수 테스트 목록을 적는다. [hook]
-- 인수 테스트는 동작마다 이름·전제·입력·기대 결과를 적고, 테스트로 확인할 수 없는 변경은 대체 검증과 통과 조건을 둔다. [hook]
-- 플랜 완료 기준: 모든 동작에 테스트나 대체 검증이 대응하고, 계약·공용 파일 영향이 합의돼 있다. [사람]
-- **구현** 완료 기준: 2장 검증이 통과한다. [ci]
-- 플랜의 인수 테스트가 모두 코드에 있다. [hook]
-- 플랜 대비 테스트의 추가·삭제·기대값 변경과 플랜 이탈은 사람 확인 후 플랜에 기록한다. [사람]
-- **리뷰** `plans/<Jira Issue Key>-review.md`: 변경 단위마다 diff와 그 단위가 참조하는 계약 절만 읽고 아래 관점(원본 `review-perspectives.md`, CI 리뷰와 공통)을 한 번에 적용한다. [사람]
-- 관점: 계약 정합성 · 정확성(경계 조건, 실패 경로) · 보안(입력 검증, Secret) · 테스트 실효성. 조건부 관점은 동시성·트랜잭션과 인가다. [사람]
-- 근거가 있는 결함, 보안 문제, 회귀 위험과 빠진 테스트만 발견 사항으로 남긴다. 스타일 취향, 확실하지 않은 추측, 실행 가능한 실패 경로와 실제 영향이 입증되지 않은 이론적 위험은 남기지 않는다. [사람]
-- 주장보다 코드를 대조한다. 작성자가 주장한 테스트를 그대로 믿지 말고 실제 테스트 메서드와 경계 조건, 변경된 동작과 상태 전이를 대응시켜 누락을 확인한다. diff만 떼어 본 추측을 피하고 주어진 저장소 문맥에서 호출 대상·방어 로직·유사 구현과 테스트를 확인하며, 동시성이나 경계 조건을 지적하기 전에 그 문맥에서 확인되는 원자적 가드·락·트랜잭션과 실패의 실제 영향을 함께 검토한다. [사람]
-- 조건부 관점은 해당 트리거에 걸린 단위에만 열고 개폐와 근거를 적는다. Secret 점검은 diff 전체에 한 번, 단위 간 정합성은 마지막에 한 번 본다. [사람]
-- 표준: 리뷰어 한 명이 한 세션에서 모든 관점을 적용한다(W1). [사람]
-- 엄격: 두 세션이 같은 대상을 독립으로 리뷰한다(W2). A는 관점 그대로 보고, B는 변경이 목적을 달성하지 못하는 경우를 찾는다. B는 인수 테스트마다 전제를 깨는 입력·실행 순서·실패 경로를 시도해 공격 시도 기록에 남기고, 결함이 없다는 결론도 시도 목록과 함께 적는다. [사람]
-- 이 영역에서 특히 볼 관점(공통 관점에 덧붙임): 생명주기·구성 변경에서 상태 보존(ViewModel·SavedStateHandle) · 메인 스레드 차단과 코루틴 범위 · Hilt 바인딩 위치(feature는 자기 Repository를 di/ 패키지의 @Binds로 제공) · 접근성(contentDescription·터치 영역·글자 크기). [사람]
-- 플랜과 리뷰의 측정 칸을 비워 두지 않는다. [hook]
-- A와 B는 `-review-A.md`와 `-review-B.md`에 따로 쓰고 서로의 파일을 읽지 않는다. 반영 전에 AI가 합집합 대조표를 `-review.md`에 만들어 A-n/B-n 번호를 유지한 채 채택·기각·후속을 표시하고, 사람은 갈래가 있는 항목만 판단한다. [사람]
-- 엄격 단계의 **플랜 승인**: 사람이 승인이나 수정 지시를 플랜 결정 기록에 적은 뒤 구현을 시작한다. [hook]
-- 엄격 단계의 **분리 리뷰**: 구현과 다른 세션에서 플랜, diff와 기준 문서만 보고 리뷰한다. [사람]
+Konsist(`:konsist-test`)가 강제하는 규칙이다. 위반하면 검증이 실패한다.
 
-## 5. 기록
-
-- 플랜과 리뷰 파일은 저장소 루트 `plans/`에 두고 커밋하지 않는다. `.gitignore`에 `/plans/`가 있어야 한다. [ci]
-- worktree에서 만든 플랜과 리뷰는 worktree를 정리하기 전에 기본 체크아웃의 `plans/`로 옮긴다. [사람]
-- MR 본문에 판정, 플랜 요약, 플랜 대비 변경점, 리뷰 결과, 인수 테스트 목록과 측정 칸을 옮긴다. [ci]
-- 계약·스키마·규칙 변경은 플랜이나 MR에만 두지 않고 기준 문서에 반영한다. 프로젝트 수준 결정은 `docs/adr/`로 올린다. [사람]
-- 검토 후보: 엄격 MR 5건 연속으로 사후 누락이 0이면 분리 리뷰 완화를, 표준 MR에서 사후 누락이 나오면 트리거 확대를 검토한다. 사후 누락은 병합 후 리뷰 측정 칸에 기입한다. [사람]
+- 계층은 `ui/`(Screen·Route·ViewModel·UiState) → `data/`(Repository)만 허용. `data`는 `ui`에 의존하지 않는다.
+- ViewModel은 Repository 인터페이스만 받는다. Retrofit·Room·DataSource·DAO를 import하지 않는다(ADR-0004).
+- feature는 Room을 쓰지 않는다. Room은 `:core`의 Workout 테이블만(ADR-0003).
+- feature 사이 의존은 없다. 화면 이동은 `:app`이 조립한다(ADR-0005).
+- `*Screen` Composable은 ViewModel을 받지 않는다. `GlobalScope` 금지. UseCase는 ViewModel 2곳 이상이 공유할 때만 `domain/`에 둔다. 첫 `domain/` 패키지가 생기면 `android/konsist-test/AGENTS.md` 트리거 2를 따른다.
+- Repository는 자기 feature의 `di/` 모듈에서 `@Binds`로 제공한다. feature마다 `ui/`·`data/` 파일을 하나 이상 남긴다(빈 범위 거짓 통과 방지).
