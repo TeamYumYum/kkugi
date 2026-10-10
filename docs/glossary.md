@@ -23,8 +23,8 @@
 | 수직 소유 | vertical ownership | 도메인 하나를 폰·백엔드·마이그레이션까지 한 사람이 소유하는 방식 | ADR-0012 |
 | MVP-1·2·3 | - | 3·5·7주차 시연 단위. 범위는 기획서 3.2 | 기획서 3.2 |
 | 기능 동결 | freeze | 7주 말 이후 신규 기능 금지. `freeze` 태그 이후 `fix/`·`docs/`만 병합 | Git 컨벤션 4장 |
-| 판정 | lite · standard · strict | 영역 `AGENTS.md`가 변경 범위로 정하는 절차 단계(경량·표준·엄격) | 영역 AGENTS.md 3장 |
-| 플랜·리뷰 | plans/ | 표준·엄격 판정의 산출물. 양식은 `docs/templates/` | 영역 AGENTS.md 4장 |
+| 판정 | lite · standard · strict | 루트 `AGENTS.md`가 변경 범위로 정하는 절차 단계(경량·표준·엄격). 트리거는 영역 `AGENTS.md` 3장 | 루트 AGENTS.md 5장 |
+| 플랜·리뷰 | plans/ | 표준·엄격 판정의 산출물. 양식은 `docs/templates/` | 루트 AGENTS.md 5장 |
 
 ## Member
 
