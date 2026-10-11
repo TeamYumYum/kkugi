@@ -27,7 +27,7 @@ cd backend && ./gradlew bootRun        # 로컬 실행. MySQL·Redis가 떠 있�
 ```
 
 - 테스트는 `src/test/resources/application.yml`(H2 메모리 DB, MySQL 호환 모드)이 main 설정을 가린다.
-- 기동 후 `GET /actuator/health`, `GET /v3/api-docs`, `/swagger-ui/index.html`로 상태와 문서를 확인한다.
+- 기동 후 관리 포트의 `GET :8081/actuator/health`, `GET /v3/api-docs`, `/swagger-ui/index.html`로 상태와 문서를 확인한다.
 
 ## 환경 변수
 
@@ -45,8 +45,21 @@ cd backend && ./gradlew bootRun        # 로컬 실행. MySQL·Redis가 떠 있�
 | `REDIS_PORT` | 선택 | 아니오 | `6379` | Redis 포트 |
 | `REDIS_PASSWORD` | 선택 | 예 | (없음) | Redis 비밀번호 |
 | `SERVER_PORT` | 선택 | 아니오 | `8080` | HTTP 포트 |
+| `APP_ENV` | 선택 | 아니오 | `local` | 지표 태그·로그 필드 `env` |
+| `APP_VERSION` | 선택 | 아니오 | `dev` | 지표 태그·로그 필드 `version` |
 
 인증(JWT·OAuth 키), FastAPI 주소, FCM, MLflow 주소는 해당 기능을 붙이는 작업에서 추가한다.
+
+## 관측
+
+설정은 `src/main/resources/observability.yml`에 있고, main과 테스트의 `application.yml`이 함께 import한다.
+테스트(`global/config/ObservabilityConfigTest`)가 이 파일을 그대로 검증한다.
+
+- **지표**: actuator는 관리 포트 `8081`에만 있고 `health`·`prometheus`만 연다. nginx는 `8080`의 `/api/`만 프록시하므로 외부에서 닿지 않는다.
+  공통 태그는 `service`·`env`·`version`이다. `http.server.requests`는 히스토그램 버킷을 낸다(p95·p99).
+- **로그**: 콘솔에 Logstash 형식 JSON을 한 줄씩 낸다. `service`·`env`·`version` 필드가 붙고, OTel Java Agent가 붙어 있으면 `trace_id`·`span_id`도 나온다.
+- **추적**: 앱 코드에는 추적 의존성이 없다. 로컬 관측 overlay가 OTel Java Agent를 붙인다([infra/README.md](../infra/README.md)).
+- 사용자 ID·trace_id처럼 값이 많은 것은 지표 태그로 쓰지 않는다. 바인딩 값, 토큰, 요청 본문을 로그 메시지에 넣지 않는다.
 
 ## 패키지 구조
 
@@ -58,7 +71,7 @@ cd backend && ./gradlew bootRun        # 로컬 실행. MySQL·Redis가 떠 있�
 | `global/response` | 있음(초안) | `ApiResponse<T>` — `success`·`data`·`error{code,message}`, `ok(T)`·`error(ErrorCode)` |
 | `global/error` | 있음(초안) | `ErrorCode`(공통 코드), `BusinessException`, `GlobalExceptionHandler` |
 | `global/security` | 있음(초안) | `SecurityConfig` — stateless, CSRF·폼 로그인 끔. **1주차는 모든 요청 허용**(TODO: 인증 방식 확정 후 `authenticated()`) |
-| `global/config` | 있음 | `OpenApiConfig`(springdoc 문서 정보) |
+| `global/config` | 있음 | `OpenApiConfig`(springdoc 문서 정보). 관측 설정은 `observability.yml`(위 "관측" 절) |
 | `global/event` | 예정 | 도메인 이벤트 공통 인프라(ADR-08: `@Async`, 실패 로그·재시도) — D |
 | `global/properties` | 예정 | `@ConfigurationProperties` 묶음 |
 | `domain/{member,meal,workout,coaching,growth,admin}` | 예정 | 기능 우선 패키지 `controller`·`dto/request`·`dto/response`·`entity`·`event`·`repository`·`service`(ADR-07) |

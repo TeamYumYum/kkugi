@@ -1,0 +1,34 @@
+# 관측 설정(지표·로그). 플랜 결정4~6. main과 테스트의 application.yml이 함께 import해서 테스트가 이 파일을 그대로 검증한다.
+# import한 파일이 import한 쪽보다 우선하므로 여기 값을 application.yml에서 덮어쓰지 않는다.
+# 관리 포트(management.server.port)는 배포 배선이라 main application.yml에 둔다.
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # 관리 포트에서도 health와 prometheus만 연다. env·beans 등은 열지 않는다
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    # 공통 태그. 사용자 ID·trace_id처럼 값이 많은 것은 태그로 쓰지 않는다(카디널리티 제한)
+    tags:
+      service: ggugi-backend
+      env: ${APP_ENV:local}
+      version: ${APP_VERSION:dev}
+    distribution:
+      # p95·p99 계산용 버킷
+      percentiles-histogram:
+        http.server.requests: true
+
+logging:
+  structured:
+    format:
+      # 콘솔 JSON(Logstash 형식). OTel Java Agent가 MDC에 넣는 trace_id·span_id가 최상위 필드로 나온다
+      console: logstash
+    json:
+      add:
+        service: ggugi-backend
+        env: ${APP_ENV:local}
+        version: ${APP_VERSION:dev}
