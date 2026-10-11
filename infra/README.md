@@ -31,9 +31,40 @@ docker compose -f infra/docker-compose.yml --env-file infra/.env ps
 - 설정 검사만: `docker compose -f infra/docker-compose.yml --env-file infra/.env config --quiet`
 - MLflow UI: `http://127.0.0.1:5000`. `ml/` 스크립트는 `MLFLOW_TRACKING_URI=http://127.0.0.1:5000`으로 붙는다.
 
+## 관측 스택(지표·로그·추적)
+
+`docker-compose.observability.yml`을 `-f`로 겹칠 때만 켜진다. 기존 실행 방식은 그대로다.
+
+```bash
+sh infra/observability/otel/download-agent.sh      # OTel Java Agent(버전·SHA-256 고정, jar는 커밋하지 않는다)
+docker compose -f infra/docker-compose.yml -f infra/docker-compose.observability.yml --env-file infra/.env up -d --build
+```
+
+| 서비스 | 이미지 | 역할 | 호스트 포트 | 보관 |
+|---|---|---|---|---|
+| `prometheus` | `prom/prometheus:v3.15.0` | backend 관리 포트 `backend:8081/actuator/prometheus`를 15초마다 수집 | `127.0.0.1:9090` | 14일 |
+| `alloy` | `grafana/alloy:v1.20.1` | backend Docker 로그 → Loki, agent 추적(OTLP) → `url.query` 제거 → Tempo | `127.0.0.1:12345` | 없음 |
+| `loki` | `grafana/loki:3.7.8` | 로그. 라벨은 `service`·`env`·`version`·`level`, `trace_id`·`span_id`는 structured metadata | `127.0.0.1:3100` | 7일 |
+| `tempo` | `grafana/tempo:3.1.0` | 추적(HTTP·JDBC span) | `127.0.0.1:3200` | 7일 |
+| `grafana` | `grafana/grafana:13.2.3` | 데이터 소스·대시보드 파일 프로비저닝, 로그 ↔ 추적 이동 | `127.0.0.1:3000` | 볼륨 |
+
+- 설정 파일은 `observability/` 아래에 있다. Grafana에서 고친 데이터 소스·대시보드는 재기동하면 파일 내용으로 돌아간다.
+- Grafana는 `GRAFANA_ADMIN_USER`·`GRAFANA_ADMIN_PASSWORD`(`.env`)로 로그인한다. 익명 접근은 꺼져 있다.
+  이 값은 `grafana-data` 볼륨을 처음 만들 때만 반영된다. 비밀번호를 바꾸거나 폐기하려면 `.env`를 고치고 grafana를 다시 만든 뒤,
+  컨테이너 환경 변수로 재설정한다(비밀번호를 명령줄에 쓰지 않아 셸 기록에 남지 않는다).
+
+  ```bash
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.observability.yml --env-file infra/.env up -d grafana
+  docker compose -f infra/docker-compose.yml -f infra/docker-compose.observability.yml --env-file infra/.env \
+    exec grafana sh -c 'grafana cli admin reset-admin-password "$GF_SECURITY_ADMIN_PASSWORD"'
+  ```
+- overlay를 빼고 띄우면 backend는 agent 없이 뜬다. 지표·JSON 로그는 backend 설정이라 그대로 나온다.
+- Alloy가 멈춰도 API는 영향을 받지 않는다. 그동안의 로그는 Docker 로그에서 다시 읽고, 추적은 agent 재시도로 버티지 못한 만큼 버려진다.
+- Alloy는 로그 수집을 위해 Docker 소켓을 마운트한다. `:ro`를 붙여도 Docker API 권한은 줄지 않아 호스트 권한에 준하므로, 로컬에서만 쓴다(서버 배포 때 다시 정한다).
+- 요청당 JDBC 실행 횟수는 Grafana Explore의 Tempo에서 TraceQL로 센다. 예: `{ span.http.route = "/api/meals" } >> { span.db.system = "mysql" } | count() > 10`
+
 ## 아직 없는 것
 
-- `backend/Dockerfile` — backend 셸 담당이 추가해야 `docker compose up`의 backend 빌드가 된다.
 - backend가 FastAPI 주소를 읽을 변수 이름 — compose는 임시로 `AI_BASE_URL=http://ai:8000`을 넘긴다(결정 필요).
 - 배포 환경(서버·도메인·TLS)과 운영 Secret 저장소 — 배포 방식이 정해지면 합의한다.
 

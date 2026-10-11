@@ -1,0 +1,108 @@
+// Alloy 로컬 설정. 두 경로를 맡는다.
+// 1) 로그: Docker 로그(backend 컨테이너) → JSON 파싱 → Loki. 라벨은 service·env·version·level만 쓰고
+//    trace_id·span_id는 structured metadata로 보낸다(플랜 결정6, 카디널리티 제한).
+// 2) 추적: backend OTel Java Agent(OTLP HTTP) → actuator span 버림 → url.query 제거·url.full의 쿼리 제거 → Tempo.
+//    쿼리 문자열 값이 추적 저장소에 남지 않게 한다(플랜 V5, 7장 2026-10-10 이탈 기록).
+//    Prometheus scrape(관리 포트 /actuator/*)는 15초마다 trace를 만들어 검색을 가리므로 저장하지 않는다.
+
+// ---------- 로그 ----------
+discovery.docker "backend" {
+  host = "unix:///var/run/docker.sock"
+  filter {
+    name   = "label"
+    // 프로젝트 값은 infra/docker-compose.yml의 compose 프로젝트 이름(name: nyamnyam)과 같아야 한다
+    values = ["com.docker.compose.project=nyamnyam", "com.docker.compose.service=backend"]
+  }
+}
+
+loki.source.docker "backend" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.backend.targets
+  // JSON이 아닌 줄(JVM·agent 기동 메시지)도 service 라벨로 찾을 수 있게 한다
+  labels     = { service = "ggugi-backend" }
+  forward_to = [loki.process.backend.receiver]
+}
+
+loki.process "backend" {
+  stage.json {
+    expressions = {
+      level    = "level",
+      service  = "service",
+      env      = "env",
+      version  = "version",
+      trace_id = "trace_id",
+      span_id  = "span_id",
+    }
+  }
+
+  stage.labels {
+    values = { level = "", service = "", env = "", version = "" }
+  }
+
+  stage.structured_metadata {
+    values = { trace_id = "", span_id = "" }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// ---------- 추적 ----------
+otelcol.receiver.otlp "default" {
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    traces = [otelcol.processor.filter.drop_actuator.input]
+  }
+}
+
+otelcol.processor.filter "drop_actuator" {
+  error_mode = "ignore"
+
+  traces {
+    span = [
+      `IsMatch(attributes["url.path"], "^/actuator(/|$)")`,
+    ]
+  }
+
+  output {
+    traces = [otelcol.processor.transform.redact.input]
+  }
+}
+
+otelcol.processor.transform "redact" {
+  error_mode = "ignore"
+
+  trace_statements {
+    context    = "span"
+    statements = [
+      `delete_key(attributes, "url.query")`,
+      `replace_pattern(attributes["url.full"], "\\?.*$", "")`,
+    ]
+  }
+
+  output {
+    traces = [otelcol.processor.batch.default.input]
+  }
+}
+
+otelcol.processor.batch "default" {
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
