@@ -19,7 +19,7 @@ loki.source.docker "backend" {
   host       = "unix:///var/run/docker.sock"
   targets    = discovery.docker.backend.targets
   // JSON이 아닌 줄(JVM·agent 기동 메시지)도 service 라벨로 찾을 수 있게 한다
-  labels     = { service = "ggugi-backend" }
+  labels     = { service = "kkugi-backend" }
   forward_to = [loki.process.backend.receiver]
 }
 

@@ -12,7 +12,7 @@ services:
       APP_ENV: ${APP_ENV:-local}
       APP_VERSION: ${APP_VERSION:-dev}
       JAVA_TOOL_OPTIONS: -javaagent:/otel/opentelemetry-javaagent.jar
-      OTEL_SERVICE_NAME: ggugi-backend
+      OTEL_SERVICE_NAME: kkugi-backend
       OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=${APP_ENV:-local},service.version=${APP_VERSION:-dev}
       OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
       OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318

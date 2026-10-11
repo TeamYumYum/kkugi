@@ -49,7 +49,7 @@ class ObservabilityConfigTest {
                 .contains("hikaricp_connections")
                 .contains("jvm_memory_used_bytes")
                 // 공통 태그(플랜 결정6)
-                .containsPattern("jvm_memory_used_bytes\\{[^}]*service=\"ggugi-backend\"")
+                .containsPattern("jvm_memory_used_bytes\\{[^}]*service=\"kkugi-backend\"")
                 .containsPattern("jvm_memory_used_bytes\\{[^}]*env=\"[^\"]+\"")
                 .containsPattern("jvm_memory_used_bytes\\{[^}]*version=\"[^\"]+\"");
     }
@@ -87,7 +87,7 @@ class ObservabilityConfigTest {
         assertThat(checked).as("검사용 로그 줄").isNotNull();
         assertThat(checked.path("@timestamp").asString()).isNotBlank();
         assertThat(checked.path("level").asString()).isEqualTo("INFO");
-        assertThat(checked.path("service").asString()).isEqualTo("ggugi-backend");
+        assertThat(checked.path("service").asString()).isEqualTo("kkugi-backend");
         assertThat(checked.path("env").asString()).isNotBlank();
         assertThat(checked.path("version").asString()).isNotBlank();
         assertThat(checked.path("trace_id").asString()).isEqualTo(traceId);

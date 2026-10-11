@@ -2,7 +2,7 @@
 apiVersion: 1
 
 providers:
-  - name: ggugi
+  - name: kkugi
     folder: 꾸기
     type: file
     disableDeletion: true

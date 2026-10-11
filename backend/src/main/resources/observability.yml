@@ -14,7 +14,7 @@ management:
   metrics:
     # 공통 태그. 사용자 ID·trace_id처럼 값이 많은 것은 태그로 쓰지 않는다(카디널리티 제한)
     tags:
-      service: ggugi-backend
+      service: kkugi-backend
       env: ${APP_ENV:local}
       version: ${APP_VERSION:dev}
     distribution:
@@ -29,6 +29,6 @@ logging:
       console: logstash
     json:
       add:
-        service: ggugi-backend
+        service: kkugi-backend
         env: ${APP_ENV:local}
         version: ${APP_VERSION:dev}
