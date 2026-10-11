@@ -1,12 +1,5 @@
-# Prometheus 로컬 설정. backend 관리 포트(8081)의 /actuator/prometheus를 15초마다 수집한다(플랜 결정4).
-# 보관 기간(14일)은 compose의 --storage.tsdb.retention.time으로 준다.
+# Prometheus 설정(모니터링 서버 쪽). 직접 수집하지 않고, backend 쪽 Alloy가 보내는 metric을 받아 저장한다.
+# remote write 수신은 compose의 --web.enable-remote-write-receiver로 켠다. 보관 기간(14일)도 compose에서 준다.
 
 global:
-  scrape_interval: 15s
   evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: backend
-    metrics_path: /actuator/prometheus
-    static_configs:
-      - targets: ["backend:8081"]

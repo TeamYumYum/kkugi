@@ -1,0 +1,66 @@
+# 모니터링 backend 쪽: backend에 OTel Java Agent를 붙이고, Alloy가 metric·로그·trace를 모니터링 서버로 보낸다(push).
+# backend가 있는 호스트에서 기존 compose에 -f로 겹친다. 모니터링 서버 쪽은 docker-compose.monitoring-server.yml이다.
+#   경우 1(같은 호스트): 기존 compose + 이 파일 + monitoring-server 파일을 한 프로젝트로 띄운다
+#   경우 2(별도 모니터링 서버): 기존 compose + 이 파일만 띄우고, infra/.env의 *_URL·*_ENDPOINT를 모니터링 서버 주소로 바꾼다
+# 설정 파일은 infra/monitoring/ 아래에 있어야 한다. 없으면 빈 디렉터리를 만들지 않고 container 생성에서 멈춘다
+# 저장소 루트에서 먼저 agent를 받는다: sh infra/monitoring/otel/download-agent.sh
+
+services:
+  # agent는 trace만 보낸다. metric은 Alloy가 관리 포트에서 읽고, 로그는 Alloy가 Docker 로그에서 읽는다
+  backend:
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_VERSION: ${APP_VERSION:-dev}
+      JAVA_TOOL_OPTIONS: -javaagent:/otel/opentelemetry-javaagent.jar
+      OTEL_SERVICE_NAME: kkugi-backend
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment.name=${APP_ENV:-local},service.version=${APP_VERSION:-dev}
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4318
+      OTEL_TRACES_EXPORTER: otlp
+      OTEL_METRICS_EXPORTER: none
+      OTEL_LOGS_EXPORTER: none
+      # SQL 리터럴을 ?로 바꾼다(기본값이지만 명시한다). 요청·응답 헤더는 기본으로 수집하지 않는다
+      OTEL_INSTRUMENTATION_COMMON_DB_QUERY_SANITIZATION_ENABLED: "true"
+    volumes:
+      # jar가 없으면 Docker가 그 자리에 빈 디렉터리를 만들고 JVM이 기동에 실패한다. 없으면 compose가 바로 멈추게 한다
+      - type: bind
+        source: ./monitoring/otel/opentelemetry-javaagent.jar
+        target: /otel/opentelemetry-javaagent.jar
+        read_only: true
+        bind:
+          create_host_path: false
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+
+  alloy:
+    image: grafana/alloy:v1.20.1
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+      - --server.http.listen-addr=0.0.0.0:12345
+    environment:
+      # 보낼 곳. 기본값을 두지 않는다: 경우 2에서 하나를 빠뜨리면 경우 1 주소로 조용히 보내므로 compose가 바로 멈추게 한다.
+      # 경우 1 값은 infra/.env.example에 채워 두었다
+      LOKI_PUSH_URL: ${LOKI_PUSH_URL:?infra/.env에 LOKI_PUSH_URL을 넣으세요}
+      TEMPO_OTLP_ENDPOINT: ${TEMPO_OTLP_ENDPOINT:?infra/.env에 TEMPO_OTLP_ENDPOINT를 넣으세요}
+      PROMETHEUS_REMOTE_WRITE_URL: ${PROMETHEUS_REMOTE_WRITE_URL:?infra/.env에 PROMETHEUS_REMOTE_WRITE_URL을 넣으세요}
+    volumes:
+      - type: bind
+        source: ./monitoring/alloy/config.alloy
+        target: /etc/alloy/config.alloy
+        read_only: true
+        bind:
+          create_host_path: false
+      # Docker 로그 수집용. :ro여도 Docker API 권한은 줄지 않아 호스트 권한에 준한다(서버 배포 전에 다시 정한다)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # metric remote write WAL과 로그 읽기 위치. 모니터링 서버가 멈춘 동안 밀린 데이터를 여기서 이어 보낸다
+      - alloy-data:/var/lib/alloy/data
+    ports:
+      - "127.0.0.1:${ALLOY_HOST_PORT:-12345}:12345"
+
+volumes:
+  alloy-data:
