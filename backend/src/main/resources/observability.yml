@@ -14,6 +14,8 @@ management:
   metrics:
     # 공통 태그. 사용자 ID·trace_id처럼 값이 많은 것은 태그로 쓰지 않는다(카디널리티 제한)
     tags:
+      # application은 Micrometer 커뮤니티 대시보드(JVM (Micrometer) 등)가 앱을 고르는 태그다
+      application: kkugi-backend
       service: kkugi-backend
       env: ${APP_ENV:local}
       version: ${APP_VERSION:dev}

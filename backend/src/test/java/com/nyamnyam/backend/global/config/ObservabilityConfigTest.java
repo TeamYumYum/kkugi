@@ -49,6 +49,7 @@ class ObservabilityConfigTest {
                 .contains("hikaricp_connections")
                 .contains("jvm_memory_used_bytes")
                 // 공통 태그(플랜 결정6)
+                .containsPattern("jvm_memory_used_bytes\\{[^}]*application=\"kkugi-backend\"")
                 .containsPattern("jvm_memory_used_bytes\\{[^}]*service=\"kkugi-backend\"")
                 .containsPattern("jvm_memory_used_bytes\\{[^}]*env=\"[^\"]+\"")
                 .containsPattern("jvm_memory_used_bytes\\{[^}]*version=\"[^\"]+\"");

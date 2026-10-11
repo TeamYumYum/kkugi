@@ -49,6 +49,9 @@ docker compose -f infra/docker-compose.yml -f infra/docker-compose.observability
 | `grafana` | `grafana/grafana:13.2.3` | 데이터 소스·대시보드 파일 프로비저닝, 로그 ↔ 추적 이동 | `127.0.0.1:3000` | 볼륨 |
 
 - 설정 파일은 `observability/` 아래에 있다. Grafana에서 고친 데이터 소스·대시보드는 재기동하면 파일 내용으로 돌아간다.
+- 대시보드는 두 개다. `JVM (Micrometer)`는 grafana.com 커뮤니티 대시보드 4701 revision 10을 그대로 들여온 것으로, JVM 메모리·GC·스레드를 본다. 앱은 metric의 `application` 태그로 고른다.
+  `꾸기 backend`는 직접 만든 것으로, 경로별 요청량, p95·p99 응답 시간, 5xx 비율, HikariCP 연결과 backend 로그(trace_id → Tempo 이동)를 본다.
+- 커뮤니티 대시보드를 새로 들여오거나 갱신할 때는 JSON의 `${DS_PROMETHEUS}`를 데이터 소스 이름 `Prometheus`로 바꾸고, `__inputs`·`__requires`를 지우고, `uid`를 고정한다.
 - Grafana는 `GRAFANA_ADMIN_USER`·`GRAFANA_ADMIN_PASSWORD`(`.env`)로 로그인한다. 익명 접근은 꺼져 있다.
   이 값은 `grafana-data` 볼륨을 처음 만들 때만 반영된다. 비밀번호를 바꾸거나 폐기하려면 `.env`를 고치고 grafana를 다시 만든 뒤,
   컨테이너 환경 변수로 재설정한다(비밀번호를 명령줄에 쓰지 않아 셸 기록에 남지 않는다).
