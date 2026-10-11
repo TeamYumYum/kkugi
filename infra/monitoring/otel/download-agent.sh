@@ -1,6 +1,6 @@
 #!/bin/sh
 # OTel Java Agent를 버전과 SHA-256을 고정해 내려받는다(플랜 결정3). jar는 커밋하지 않는다(infra/.gitignore).
-# 저장소 루트에서: sh infra/observability/otel/download-agent.sh
+# 저장소 루트에서: sh infra/monitoring/otel/download-agent.sh
 # 버전을 올리면 VERSION과 SHA256을 함께 바꾼다. SHA256은 Maven Central의 .sha256 파일 값과 대조한다.
 set -eu
 
