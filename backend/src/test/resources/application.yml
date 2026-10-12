@@ -1,5 +1,8 @@
 # 테스트 전용 설정. 클래스패스에서 main의 application.yml을 가려 MySQL·Redis 없이 ./gradlew build가 돈다.
 spring:
+  config:
+    # main의 관측 설정을 그대로 쓴다(관리 포트는 main application.yml에만 있어 테스트는 같은 포트를 쓴다)
+    import: classpath:observability.yml
   datasource:
     url: jdbc:h2:mem:nyamnyam;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
     username: sa
@@ -18,7 +21,3 @@ management:
     # 테스트 환경에는 Redis가 없다. 연결은 처음 쓸 때 맺으므로 컨텍스트 기동은 막지 않는다
     redis:
       enabled: false
-  endpoints:
-    web:
-      exposure:
-        include: health

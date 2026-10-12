@@ -68,7 +68,7 @@
 7. **health**. nginx 밖으로 노출되지 않은 서비스는 컨테이너 안에서 확인한다.
 
    ```bash
-   docker compose -f infra/docker-compose.yml --env-file infra/.env exec backend curl -fsS localhost:8080/actuator/health
+   docker compose -f infra/docker-compose.yml --env-file infra/.env exec backend curl -fsS localhost:8081/actuator/health   # actuator는 관리 포트 8081에만 있다
    docker compose -f infra/docker-compose.yml --env-file infra/.env exec ai curl -fsS localhost:8000/ai/health
    curl -fsS http://<호스트>/            # 웹 셸
    ```

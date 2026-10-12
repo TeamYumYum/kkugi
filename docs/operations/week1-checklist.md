@@ -78,7 +78,7 @@ ADR-0012 결과: "1주차 끝에 규칙 파일이 완성돼 있어야 한다."
 | [ ] | `backend/Dockerfile`이 있어 `docker compose up --build`가 backend를 빌드한다 | D | compose 로그 | 필수 |
 | [ ] | backend가 FastAPI 주소를 읽는 변수 이름이 정해졌고 compose의 임시 `AI_BASE_URL`과 맞췄다 | D·C | infra/README 갱신 | 결정 |
 | [ ] | `backend/.env.example` 위치가 정해졌고 변수 목록이 README와 같다 | D·C | 파일 | 결정 |
-| [ ] | compose 전체(mysql·redis·mlflow·backend·ai·nginx)가 뜨고 health가 통과한다 | C | `docker compose ps`, `GET /actuator/health`, `GET /ai/health` | 필수 |
+| [ ] | compose 전체(mysql·redis·mlflow·backend·ai·nginx)가 뜨고 health가 통과한다 | C | `docker compose ps`, `GET :8081/actuator/health`(backend 관리 포트, 컨테이너 안에서), `GET /ai/health` | 필수 |
 | [ ] | nginx가 `web/dist`를 서빙하고 `/api/`를 backend로 넘긴다 | C | 브라우저에서 웹 셸 + API 호출 | 필수 |
 | [ ] | SSE 경로(`/api/chat/stream` vs `/api/v1/...`) 접두사가 정해졌다 | C·D | API 규약 9장 갱신 | 결정 |
 | [ ] | MLflow UI가 `127.0.0.1:5000`에서 열리고 `ai`가 레지스트리 없이도 기동한다(ADR-0011) | E | 브라우저, ai 로그 | 필수 |

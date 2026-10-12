@@ -2,3 +2,7 @@
 .env
 .env.*
 !.env.example
+
+# 관측: download-agent.sh로 내려받는 OTel Java Agent(버전·체크섬은 스크립트에 고정)
+observability/otel/*.jar
+observability/otel/*.jar.tmp

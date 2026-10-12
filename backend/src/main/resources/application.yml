@@ -3,6 +3,9 @@
 spring:
   application:
     name: nyamnyam-backend
+  config:
+    # 관측 설정(management·logging.structured). 테스트도 같은 파일을 import한다
+    import: classpath:observability.yml
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:nyamnyam}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${DB_USERNAME:}
@@ -22,10 +25,6 @@ server:
   port: ${SERVER_PORT:8080}
 
 management:
-  endpoints:
-    web:
-      exposure:
-        include: health
-  endpoint:
-    health:
-      show-details: never
+  server:
+    # actuator는 관리 포트에만 둔다. nginx는 8080의 /api/만 프록시하므로 8081은 compose 내부망에서만 닿는다
+    port: 8081
