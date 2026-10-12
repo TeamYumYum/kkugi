@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # 꾸기 backend 최소 이미지(빌드: JDK 21, 실행: JRE 21).
 # infra/docker-compose.yml이 `build: ../backend`로 사용한다. 테스트는 이미지 빌드에서 돌리지 않는다(영역 검증은 ./gradlew build).
-# OTel Java Agent는 이미지에 넣지 않는다. 관측 overlay(infra/docker-compose.observability.yml)가 마운트해서 켠다.
+# OTel Java Agent는 이미지에 넣지 않는다. 모니터링 compose(infra/docker-compose.monitoring-agent.yml)가 마운트해서 켠다.
 
 FROM eclipse-temurin:21-jdk-noble AS build
 WORKDIR /workspace

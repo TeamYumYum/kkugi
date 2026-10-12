@@ -1,0 +1,5 @@
+# Prometheus 설정(모니터링 서버 쪽). 직접 수집하지 않고, backend 쪽 Alloy가 보내는 metric을 받아 저장한다.
+# remote write 수신은 compose의 --web.enable-remote-write-receiver로 켠다. 보관 기간(14일)도 compose에서 준다.
+
+global:
+  evaluation_interval: 15s

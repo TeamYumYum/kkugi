@@ -1,9 +1,28 @@
-// Alloy 로컬 설정. 두 경로를 맡는다.
-// 1) 로그: Docker 로그(backend 컨테이너) → JSON 파싱 → Loki. 라벨은 service·env·version·level만 쓰고
-//    trace_id·span_id는 structured metadata로 보낸다(플랜 결정6, 카디널리티 제한).
-// 2) 추적: backend OTel Java Agent(OTLP HTTP) → actuator span 버림 → url.query 제거·url.full의 쿼리 제거 → Tempo.
-//    쿼리 문자열 값이 추적 저장소에 남지 않게 한다(플랜 V5, 7장 2026-10-10 이탈 기록).
-//    Prometheus scrape(관리 포트 /actuator/*)는 15초마다 trace를 만들어 검색을 가리므로 저장하지 않는다.
+// Alloy 설정(backend 쪽). backend가 있는 호스트에서 돌며 세 경로를 모두 모니터링 서버로 보낸다(push).
+// 보낼 주소는 환경 변수로 받는다. 기본값은 compose가 경우 1의 내부 주소로 채운다(docker-compose.monitoring-agent.yml).
+// 1) metric: backend 관리 포트 /actuator/prometheus를 15초마다 읽어 Prometheus로 remote write한다.
+//    WAL에 쌓아 두므로 모니터링 서버가 잠시 멈춰도 복구 후 이어서 보낸다.
+// 2) 로그: Docker 로그(backend 컨테이너) → JSON 파싱 → Loki. 라벨은 service·env·version·level만 쓰고
+//    trace_id·span_id는 structured metadata로 보낸다(카디널리티 제한).
+// 3) trace: backend OTel Java Agent(OTLP HTTP) → actuator span 버림 → url.query 제거·url.full의 쿼리 제거 → Tempo.
+//    쿼리 문자열 값이 backend 호스트 밖으로 나가지 않게 한다.
+//    metric 수집 요청(관리 포트 /actuator/*)은 15초마다 trace를 만들어 검색을 가리므로 저장하지 않는다.
+
+// ---------- metric ----------
+prometheus.scrape "backend" {
+  // job·instance label을 Prometheus가 직접 수집하던 때와 같게 둔다(job="backend", instance="backend:8081")
+  job_name        = "backend"
+  targets         = [{"__address__" = "backend:8081"}]
+  metrics_path    = "/actuator/prometheus"
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.monitoring.receiver]
+}
+
+prometheus.remote_write "monitoring" {
+  endpoint {
+    url = sys.env("PROMETHEUS_REMOTE_WRITE_URL")
+  }
+}
 
 // ---------- 로그 ----------
 discovery.docker "backend" {
@@ -48,7 +67,7 @@ loki.process "backend" {
 
 loki.write "local" {
   endpoint {
-    url = "http://loki:3100/loki/api/v1/push"
+    url = sys.env("LOKI_PUSH_URL")
   }
 }
 
@@ -100,7 +119,7 @@ otelcol.processor.batch "default" {
 
 otelcol.exporter.otlp "tempo" {
   client {
-    endpoint = "tempo:4317"
+    endpoint = sys.env("TEMPO_OTLP_ENDPOINT")
     tls {
       insecure = true
     }

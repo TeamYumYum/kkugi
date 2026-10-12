@@ -1,5 +1,5 @@
 # Tempo 단일 바이너리(-target=all) 로컬 설정. 추적은 Alloy가 OTLP gRPC(4317)로 보낸다(agent → Alloy → Tempo).
-# 보관 7일(플랜 결정9). 지표 생성기(metrics_generator)는 쓰지 않는다: 지표 경로는 Prometheus scrape 하나로 둔다.
+# 보관 7일. 지표 생성기(metrics_generator)는 쓰지 않는다: metric 경로는 Alloy의 remote write 하나로 둔다.
 
 server:
   http_listen_port: 3200

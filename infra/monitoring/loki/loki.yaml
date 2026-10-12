@@ -32,6 +32,9 @@ schema_config:
 limits_config:
   retention_period: 168h
   allow_structured_metadata: true
+  # 로그 삭제 API를 끈다. 경우 2에서 3100은 backend 호스트에 열리므로, 그쪽에서 로그를 지울 수 없게 한다.
+  # 보관 기간에 따른 삭제(compactor retention)는 이 설정과 무관하게 동작한다
+  deletion_mode: disabled
 
 compactor:
   working_directory: /loki/compactor

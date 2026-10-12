@@ -46,17 +46,25 @@
    npm --prefix web ci && npm --prefix web run build
    ```
 
-4. **설정 검사**.
+4. **설정 검사**. 이 호스트에서 모니터링을 운영하는지에 따라 compose 파일 조합이 다르다. 5단계도 같은 조합을 쓴다.
 
    ```bash
+   # 모니터링 없음
    docker compose -f infra/docker-compose.yml --env-file infra/.env config --quiet
+   # 모니터링을 같은 호스트에서 운영(backend 쪽 + 모니터링 서버 쪽)
+   docker compose -f infra/docker-compose.yml -f infra/docker-compose.monitoring-agent.yml -f infra/docker-compose.monitoring-server.yml --env-file infra/.env config --quiet
+   # 모니터링 서버가 따로 있음(backend 쪽만)
+   docker compose -f infra/docker-compose.yml -f infra/docker-compose.monitoring-agent.yml --env-file infra/.env config --quiet
    ```
 
-5. **기동**. 이미지를 다시 빌드해 올린다.
+5. **기동**. 이미지를 다시 빌드해 올린다. 4단계와 같은 조합으로 실행한다.
+   모니터링을 운영하는 호스트에서 모니터링 파일 없이 기동하면 backend가 OTel Java Agent 없이 다시 만들어져 trace만 조용히 끊긴다.
+   모니터링을 처음 켜는 호스트는 먼저 `sh infra/monitoring/otel/download-agent.sh`로 agent를 받는다([infra/README.md](../../../infra/README.md) 모니터링 절).
 
    ```bash
-   docker compose -f infra/docker-compose.yml --env-file infra/.env up -d --build
-   docker compose -f infra/docker-compose.yml --env-file infra/.env ps
+   # 모니터링을 같은 호스트에서 운영하는 경우의 예
+   docker compose -f infra/docker-compose.yml -f infra/docker-compose.monitoring-agent.yml -f infra/docker-compose.monitoring-server.yml --env-file infra/.env up -d --build
+   docker compose -f infra/docker-compose.yml -f infra/docker-compose.monitoring-agent.yml -f infra/docker-compose.monitoring-server.yml --env-file infra/.env ps
    ```
 
 6. **마이그레이션 확인**. backend 기동 로그에서 마이그레이션 적용 줄과 오류 유무를 본다. 적용 실패는 기동 실패이므로 backend 컨테이너가 재시작을 반복한다.
@@ -95,7 +103,7 @@
 
 | 항목 | 기대 |
 |---|---|
-| `docker compose ps` | 6개 서비스 모두 `running`(healthy) |
+| `docker compose ps` | 6개 서비스 모두 `running`(healthy). 모니터링을 운영하면 `alloy`와, 같은 호스트일 때 `prometheus`·`loki`·`tempo`·`grafana`도 `running` |
 | backend health | `{"status":"UP"}` |
 | ai health | 상태와 Claude 모드, Vision 모델 로드 여부가 보인다. 모델이 없어도 기동은 정상 |
 | 웹 | 셸이 열리고 API 호출이 2xx |

@@ -3,6 +3,8 @@
 .env.*
 !.env.example
 
-# 관측: download-agent.sh로 내려받는 OTel Java Agent(버전·체크섬은 스크립트에 고정)
+# 모니터링: download-agent.sh로 내려받는 OTel Java Agent(버전·체크섬은 스크립트에 고정)
+monitoring/otel/*.jar
+monitoring/otel/*.jar.tmp
+# 이전 경로(infra/observability/). 이 디렉터리 이름을 쓰던 체크아웃에 남은 jar가 커밋되지 않게 한다
 observability/otel/*.jar
-observability/otel/*.jar.tmp
