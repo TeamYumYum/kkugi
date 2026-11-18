@@ -6,6 +6,9 @@ struct MealDiary: View {
     @State private var day: DailyMealsResponse?
     @State private var failure = false
     @State private var adding = false
+    @State private var selectedForRemoval: Int?
+    @State private var showRemoval = false
+    @State private var mutationError = ""
 
     private var dateKey: String {
         let formatter = DateFormatter()
@@ -19,6 +22,7 @@ struct MealDiary: View {
         List {
             DatePicker("날짜", selection: $date, displayedComponents: .date)
                 .environment(\.timeZone, TimeZone(identifier: "Asia/Seoul")!)
+            if !mutationError.isEmpty { Text(mutationError).foregroundStyle(.red) }
             if failure {
                 Text("식사 기록을 불러오지 못했어요")
                 Button("다시 시도") { Task { await load(dateKey) } }
@@ -32,12 +36,30 @@ struct MealDiary: View {
                             Text(item.foodName)
                         }
                         LabeledContent("열량", value: "\(meal.totalNutrition.kcal.formatted()) kcal")
+                        Button("식사 삭제", role: .destructive) {
+                            selectedForRemoval = meal.id
+                            showRemoval = true
+                        }
                     }
                 }
             } else { ProgressView() }
         }
         .navigationTitle("식사 기록")
         .toolbar { Button("식사 추가") { adding = true } }
+        .alert("이 식사 기록을 삭제할까요?", isPresented: $showRemoval) {
+            Button("취소", role: .cancel) { selectedForRemoval = nil }
+            Button("삭제", role: .destructive) {
+                guard let id = selectedForRemoval else { return }
+                selectedForRemoval = nil
+                Task {
+                    do {
+                        _ = try await session.protectedRequest("api/v1/meals/\(id)", method: "DELETE")
+                        mutationError = ""
+                        await load(dateKey)
+                    } catch { mutationError = "식사를 삭제하지 못했어요. 다시 시도해 주세요" }
+                }
+            }
+        }
         .sheet(isPresented: $adding) {
             ManualMealForm(session: session, date: date) {
                 adding = false
