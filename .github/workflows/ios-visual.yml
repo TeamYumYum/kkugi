@@ -1,0 +1,37 @@
+name: iOS visual evidence
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-visual-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: macos-15
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      SIMCTL_CHILD_KKUGI_SOURCE_COMMIT: ${{ github.sha }}
+    steps:
+      - name: Read approved source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify comparison tools
+        run: python3 -m unittest discover -s ios/verification/tests -v
+      - name: Build and render actual SwiftUI views
+        run: python3 ios/verification/run_macos.py
+      - name: Preserve evidence and failure logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ios-visual-${{ github.run_id }}
+          path: ios/artifacts/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 6

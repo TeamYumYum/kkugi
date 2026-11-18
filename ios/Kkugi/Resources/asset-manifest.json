@@ -1,0 +1,41 @@
+{
+  "androidCommit": "218f3248",
+  "files": [
+    {
+      "source": "android/designsystem/src/main/res/font/noto_sans_kr_variable.ttf",
+      "destination": "Fonts/noto_sans_kr_variable.ttf",
+      "sha256": "194018e6b2b293a7964f037b25c0249ce1418bc9ab3c971060a03aa57861e252",
+      "bytes": 10414588
+    },
+    {
+      "source": "android/designsystem/third_party/noto-sans-kr/OFL.txt",
+      "destination": "ThirdParty/NotoSansKR-OFL.txt",
+      "sha256": "1c05c68c34f9708415aada51f17e1b0092d2cea709bf4a94cd38114f9e73d7d9",
+      "bytes": 4388
+    },
+    {
+      "source": "android/feature/member/src/main/res/drawable-nodpi/member_login_garden_back.webp",
+      "destination": "Images/member_login_garden_back.webp",
+      "sha256": "3a373ae6a496b07322a44433cb68c13ae743f485f6b68a55072e65baf70834c4",
+      "bytes": 48714
+    },
+    {
+      "source": "android/feature/member/src/main/res/drawable-nodpi/member_login_garden_front.webp",
+      "destination": "Images/member_login_garden_front.webp",
+      "sha256": "8dcf365e72f9d4445e98ba48cafc7b0fd8a2bc762e3351915e2a3176bef10da2",
+      "bytes": 27700
+    },
+    {
+      "source": "android/feature/member/src/main/res/drawable-nodpi/member_google_g_logo.png",
+      "destination": "Images/member_google_g_logo.png",
+      "sha256": "d1ce9c2af0b10a7333abc99bc706f9a6a199e5b65bf3e3009624f076b8638e6a",
+      "bytes": 33661
+    },
+    {
+      "source": "android/designsystem/src/main/res/drawable-nodpi/kkugi_g_character_wave.webp",
+      "destination": "Images/kkugi_g_character_wave.webp",
+      "sha256": "09464d9fd6dcf46b1e113877b10fbb0e9b59c679b0308d66db5dbc9d7a54db3b",
+      "bytes": 16286
+    }
+  ]
+}
