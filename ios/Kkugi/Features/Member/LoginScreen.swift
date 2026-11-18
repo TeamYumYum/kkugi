@@ -9,30 +9,27 @@ struct LoginScreen: View {
     @State private var reviewPresented = false
 
     var body: some View {
-        ZStack(alignment: .bottom) {
+        VStack(spacing: 0) {
             VStack(spacing: 0) {
-                VStack(spacing: 0) {
-                    GText(text: LoginText.name, size: 30, weight: 800, color: GColor.loginInk)
-                    GText(text: LoginText.tagline, color: GColor.loginInkSoft, trackingAdjustment: -0.30)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, G.dp(48))
-                .padding(.bottom, G.small)
-
-                LoginGarden()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .layoutPriority(-1)
-
-                panel
+                GText(text: LoginText.name, size: 30, weight: 800, color: GColor.loginInk)
+                GText(text: LoginText.tagline, color: GColor.loginInkSoft, trackingAdjustment: -0.30)
             }
-            .background(GColor.loginSky)
+            .frame(maxWidth: .infinity)
+            .padding(.top, G.dp(48))
+            .padding(.bottom, G.small)
 
+            LoginGarden()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .layoutPriority(-1)
+
+            panel
             if let error = state.error {
                 Button(action: onDismissError) {
                     GText(text: error, color: .white)
                         .padding(G.dp(16))
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(GColor.text, in: RoundedRectangle(cornerRadius: G.dp(4)))
+                        .frame(minHeight: G.dp(48), alignment: .leading)
+                        .background(Color(hex: 0x322F35), in: RoundedRectangle(cornerRadius: G.dp(4)))
                 }
                 .buttonStyle(.plain)
                 .padding(G.dp(12))
@@ -40,6 +37,7 @@ struct LoginScreen: View {
                 .accessibilityHint("누르면 닫습니다")
             }
         }
+        .background(GColor.loginSky)
         .overlay {
             if reviewPresented {
                 ReviewLoginDialog(

@@ -42,7 +42,7 @@ final class AppFlowUITests: XCTestCase {
         let frame = viewport.frame
         XCTAssertEqual(frame.width, 360)
         XCTAssertEqual(frame.height, 720)
-        let scale = CGFloat(XCUIScreen.main.screenshot().image.cgImage!.width) / app.frame.width
+        let scale = XCUIScreen.main.screenshot().image.scale
         XCTAssertEqual(scale, 3)
         var buttons: [String: [Int]] = [:]
         for (key, label) in labels {

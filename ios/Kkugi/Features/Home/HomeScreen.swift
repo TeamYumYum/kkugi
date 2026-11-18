@@ -113,7 +113,7 @@ struct HomeScreen: View {
     }
 
     private func railButton(_ title: String, icon: String) -> some View {
-        VStack(spacing: aligned(3)) {
+        VStack(spacing: aligned(3) + 1 / displayScale) {
             roundIcon(icon)
             GText(text: title, size: 10, weight: 800, alignment: .center)
                 .lineLimit(2)
@@ -129,7 +129,7 @@ struct HomeScreen: View {
             Image(systemName: icon).resizable().scaledToFit().frame(width: aligned(18), height: aligned(18))
             GText(text: text, size: 12, weight: 500)
         }
-        .padding(.leading, aligned(8)).padding(.trailing, aligned(12)).padding(.vertical, aligned(5))
+        .padding(.leading, aligned(8)).padding(.trailing, aligned(12) + 2 / displayScale).padding(.vertical, aligned(5))
         .background(.regularMaterial, in: Capsule())
     }
 

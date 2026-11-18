@@ -32,7 +32,7 @@ struct OnboardingScreen: View {
                             if step > 1 {
                                 Button { step -= 1; error = "" } label: {
                                     Image(systemName: "chevron.left")
-                                        .frame(width: G.dp(48), height: G.dp(48))
+                                        .frame(width: G.dp(24), height: G.dp(32))
                                 }.accessibilityLabel("뒤로")
                             }
                             Spacer()

@@ -76,6 +76,10 @@ final class LoginUITests: XCTestCase {
         XCTAssertTrue(entry.waitForExistence(timeout: 10))
         entry.tap()
         XCTAssertTrue(app.staticTexts["테스트 계정으로 로그인"].waitForExistence(timeout: 3))
+        let dialog = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        dialog.name = "review-login-full.png"
+        dialog.lifetime = .keepAlways
+        add(dialog)
         XCTAssertFalse(app.buttons["로그인"].isEnabled)
         app.textFields["아이디"].tap()
         app.textFields["아이디"].typeText("fixture-review")
