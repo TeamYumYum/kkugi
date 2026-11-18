@@ -97,7 +97,7 @@ def main() -> None:
     try:
         command(["xcodebuild", "-project", "ios/Kkugi.xcodeproj", "-scheme", "Kkugi", "-destination", f"platform=iOS Simulator,id={device['udid']}",
                  "-derivedDataPath", "ios/DerivedData", "-resultBundlePath", str(result), "-parallel-testing-enabled", "NO",
-                 "-maximum-concurrent-test-simulator-destinations", "1", "test", "CODE_SIGNING_ALLOWED=NO"], artifacts / "xcodebuild.log")
+                 "-maximum-concurrent-test-simulator-destinations", "1", "test", "CODE_SIGN_IDENTITY=-"], artifacts / "xcodebuild.log")
     except subprocess.CalledProcessError as error:
         test_error = error
     finally:
