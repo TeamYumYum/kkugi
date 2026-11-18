@@ -42,18 +42,30 @@ enum LoginText {
 final class LoginModel: ObservableObject {
     @Published private(set) var state: LoginState
 
+    private let social: ((LoginProvider) async throws -> Void)?
     private let review: ((String, String) async throws -> Void)?
 
-    init(initialState: LoginState = LoginState(), review: ((String, String) async throws -> Void)? = nil) {
+    init(initialState: LoginState = LoginState(), social: ((LoginProvider) async throws -> Void)? = nil, review: ((String, String) async throws -> Void)? = nil) {
+        self.social = social
         self.review = review
         state = initialState
     }
 
     func signIn(_ provider: LoginProvider) {
         guard !state.isBusy else { return }
-        // S15P31E101-714: wire the iOS identity provider in the authentication work item.
-        // This foundation must never grant a session without server authentication.
-        state.error = "지금은 로그인할 수 없어요. 잠시 후 다시 시도해 주세요"
+        guard let social, provider != .review else {
+            state.error = "지금은 로그인할 수 없어요. 잠시 후 다시 시도해 주세요"
+            return
+        }
+        state.error = nil
+        state.signingIn = provider
+        Task {
+            defer { state.signingIn = nil }
+            do {
+                try await social(provider)
+                state.recentProvider = provider
+            } catch { state.error = "로그인하지 못했어요. 다시 시도해 주세요" }
+        }
     }
 
     func signInForReview(_ identifier: String, _ password: String) {

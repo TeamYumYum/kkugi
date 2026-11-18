@@ -51,6 +51,32 @@
 			"defaultConfigurationIsVisible" = "0";
 			"defaultConfigurationName" = "Release";
 		};
+		"C27FE071C77148EAF5CB5AD3" = {
+			"isa" = "XCRemoteSwiftPackageReference";
+			"repositoryURL" = "https://github.com/google/GoogleSignIn-iOS.git";
+			"requirement" = {
+				"kind" = "exactVersion";
+				"version" = "9.2.0";
+			};
+		};
+		"4A78042634D379C1CE11E71F" = {
+			"isa" = "XCSwiftPackageProductDependency";
+			"package" = "C27FE071C77148EAF5CB5AD3";
+			"productName" = "GoogleSignIn";
+		};
+		"097442E0A8F70D9DCBE30D0E" = {
+			"isa" = "XCRemoteSwiftPackageReference";
+			"repositoryURL" = "https://github.com/kakao/kakao-ios-sdk.git";
+			"requirement" = {
+				"kind" = "exactVersion";
+				"version" = "2.30.0";
+			};
+		};
+		"DDF13942D27D688E51336261" = {
+			"isa" = "XCSwiftPackageProductDependency";
+			"package" = "097442E0A8F70D9DCBE30D0E";
+			"productName" = "KakaoSDKUser";
+		};
 		"2154FEA51A8CF231E5E449D0" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -110,6 +136,16 @@
 		"18F718E44BF6E3B7D54BED3F" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "C6551262BBC005C9453150AF";
+		};
+		"9BC7ED7DEF6D05DBF886A95C" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Auth/SocialSignIn.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"512C19336766FB97132930CD" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "9BC7ED7DEF6D05DBF886A95C";
 		};
 		"A1D5BEE0A4FEA9C1AB396EA9" = {
 			"isa" = "PBXFileReference";
@@ -330,6 +366,7 @@
 				"72B3A1485E0756AAE958C89F",
 				"CFB85BECB5EDA65052004346",
 				"C6551262BBC005C9453150AF",
+				"9BC7ED7DEF6D05DBF886A95C",
 				"A1D5BEE0A4FEA9C1AB396EA9",
 				"D7EA249BE85F62A5DA513048",
 				"71BA004ADB8EEED046F8A6AD",
@@ -362,6 +399,14 @@
 			"path" = "Kkugi.app";
 			"sourceTree" = "BUILT_PRODUCTS_DIR";
 		};
+		"87608F9E84BE3F12D9A53602" = {
+			"isa" = "PBXBuildFile";
+			"productRef" = "4A78042634D379C1CE11E71F";
+		};
+		"A5A752DAAE11524109B5F970" = {
+			"isa" = "PBXBuildFile";
+			"productRef" = "DDF13942D27D688E51336261";
+		};
 		"F0F77B5814666E08C15BD4A8" = {
 			"isa" = "PBXSourcesBuildPhase";
 			"buildActionMask" = "2147483647";
@@ -372,6 +417,7 @@
 				"73BE6ABBDF455DC0EC940DCF",
 				"AA1230C82406DCEC34A28571",
 				"18F718E44BF6E3B7D54BED3F",
+				"512C19336766FB97132930CD",
 				"C53A8936BE09782F1101AD57",
 				"5DCC14E0EC227C6B0C23B40F",
 				"96C08BB73709C703DA75F637",
@@ -397,7 +443,8 @@
 			"isa" = "PBXFrameworksBuildPhase";
 			"buildActionMask" = "2147483647";
 			"files" = (
-
+				"87608F9E84BE3F12D9A53602",
+				"A5A752DAAE11524109B5F970",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -469,6 +516,10 @@
 		"386D03C9F4C43AA6A7AB8521" = {
 			"isa" = "PBXNativeTarget";
 			"buildConfigurationList" = "2B7028DAA3F4AB48A0781E2E";
+			"packageProductDependencies" = (
+				"4A78042634D379C1CE11E71F",
+				"DDF13942D27D688E51336261",
+			);
 			"buildPhases" = (
 				"F0F77B5814666E08C15BD4A8",
 				"BEADD5B07D91123190E4C8A4",
@@ -672,6 +723,9 @@
 		"19ECA988BE58989AEDA1419F" = {
 			"isa" = "PBXNativeTarget";
 			"buildConfigurationList" = "34BD68284BB094360629AB5E";
+			"packageProductDependencies" = (
+
+			);
 			"buildPhases" = (
 				"495A7A0F1D2CEA82D5790DC6",
 				"026E2F354AC4DB8A2B1EA3DB",
@@ -813,6 +867,9 @@
 		"6431E27D678281E6BD8E2A92" = {
 			"isa" = "PBXNativeTarget";
 			"buildConfigurationList" = "C984127C2A42242CBD5DD96B";
+			"packageProductDependencies" = (
+
+			);
 			"buildPhases" = (
 				"D00C42951D4DFC00F27BA027",
 				"10108F1ACDEFF21933953A6C",
@@ -865,6 +922,10 @@
 				"Base",
 			);
 			"mainGroup" = "C69913C7EE4DFDD011BE172F";
+			"packageReferences" = (
+				"C27FE071C77148EAF5CB5AD3",
+				"097442E0A8F70D9DCBE30D0E",
+			);
 			"productRefGroup" = "0A3E27B8CA818264D75C8D81";
 			"projectDirPath" = "";
 			"projectRoot" = "";

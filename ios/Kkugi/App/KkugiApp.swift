@@ -6,6 +6,7 @@ struct KkugiApp: App {
         WindowGroup {
             LoginRoot()
                 .preferredColorScheme(.light)
+                .onOpenURL(perform: SocialSignIn.handle)
         }
     }
 }
@@ -36,9 +37,9 @@ struct LoginRoot: View {
         _flow = StateObject(wrappedValue: flow)
         let model: LoginModel
         if url != nil {
-            model = LoginModel(initialState: initialState) { login, password in
+            model = LoginModel(initialState: initialState, social: flow.social, review: { login, password in
                 try await flow.review(login, password)
-            }
+            })
         } else {
             model = LoginModel(initialState: initialState)
         }

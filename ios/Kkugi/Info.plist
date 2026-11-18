@@ -16,10 +16,40 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>$(KKUGI_GOOGLE_REVERSED_CLIENT_ID)</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>kakao</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kakao$(KKUGI_KAKAO_NATIVE_APP_KEY)</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>GIDClientID</key>
+	<string>$(KKUGI_GOOGLE_IOS_CLIENT_ID)</string>
+	<key>GIDServerClientID</key>
+	<string>$(KKUGI_GOOGLE_SERVER_CLIENT_ID)</string>
 	<key>KkugiAPIBaseURL</key>
 	<string>$(KKUGI_API_BASE_URL)</string>
+	<key>KkugiKakaoAppKey</key>
+	<string>$(KKUGI_KAKAO_NATIVE_APP_KEY)</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>kakaokompassauth</string>
+		<string>kakaolink</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>식사 사진을 찍어 음식 기록에 사용합니다.</string>
 	<key>UIAppFonts</key>

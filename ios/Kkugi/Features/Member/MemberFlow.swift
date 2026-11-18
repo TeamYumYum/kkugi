@@ -21,6 +21,13 @@ final class MemberFlow: ObservableObject {
         route = item.onboarded ? .home : .onboarding
     }
 
+    func social(_ provider: LoginProvider) async throws {
+        guard let session, let identity = SocialProvider(rawValue: provider.rawValue) else { throw URLError(.badURL) }
+        let token = try await SocialSignIn.token(for: provider)
+        let member = try await session.social(provider: identity, token: token)
+        route = member.onboarded ? .home : .onboarding
+    }
+
     func review(_ login: String, _ password: String) async throws {
         guard let session else { throw URLError(.badURL) }
         let member = try await session.review(loginID: login, password: password)

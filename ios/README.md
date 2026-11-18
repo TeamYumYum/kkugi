@@ -1,8 +1,20 @@
 # 꾸기 iOS
 
-SwiftUI 앱을 추가하는 작업 공간이다. 현재는 로그인 화면과 캡처 기반을 구현하는 중이다.
-인증 SDK와 서버 연결은 아직 없으며, 로그인 시 명시적인 실패를 표시한다.
-이 상태는 배포 가능한 앱이나 전체 이식 완료가 아니다.
+꾸기 Android 앱을 SwiftUI로 이식하고 있다. 심사용 계정 로그인, 온보딩, 식사, 운동, 코칭, 성장 화면을 구현 중이다. 전체 기능과 화면 비교는 에픽 S15P31E101-714에서 추적한다.
+
+## 인증 설정
+
+로컬 Xcode 빌드 설정 또는 비공개 빌드 환경에서 다음 값을 지정한다. 공개 저장소와 테스트 첨부물에는 실제 계정이나 설정값을 저장하지 않는다.
+
+| 빌드 설정 | 용도 |
+| --- | --- |
+| `KKUGI_API_BASE_URL` | 꾸기 Spring API의 HTTPS 기본 주소 |
+| `KKUGI_GOOGLE_IOS_CLIENT_ID` | 이 번들 ID에 등록한 iOS OAuth 클라이언트 |
+| `KKUGI_GOOGLE_REVERSED_CLIENT_ID` | 해당 클라이언트의 iOS 반환 URL 스킴 |
+| `KKUGI_GOOGLE_SERVER_CLIENT_ID` | Spring이 Google ID 토큰에서 검사하는 서버 클라이언트 ID |
+| `KKUGI_KAKAO_NATIVE_APP_KEY` | 카카오 개발자 콘솔에서 같은 iOS 번들 ID로 등록한 앱의 네이티브 앱 키 |
+
+심사용 계정은 로그인 창에서 입력한다. Google과 카카오 SDK가 받은 토큰은 Spring의 로그인 응답을 받은 뒤 꾸기 세션으로 교환한다. 세션은 Keychain에 저장한다.
 
 ## 기준
 
@@ -15,7 +27,7 @@ SwiftUI 앱을 추가하는 작업 공간이다. 현재는 로그인 화면과 �
 
 ## 프로젝트 생성
 
-외부 Swift 패키지나 프로젝트 생성 라이브러리는 사용하지 않는다.
+Xcode가 Swift Package Manager로 Google Sign-In과 KakaoSDKUser를 가져온다.
 Python 3의 표준 라이브러리로 Xcode 프로젝트를 생성한다.
 
 ```sh

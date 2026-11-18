@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the dependency-free Xcode project; --check never writes files."""
+"""Generate the Xcode project; --check never writes files."""
 from __future__ import annotations
 
 import argparse
@@ -56,6 +56,16 @@ def generate() -> dict[Path, bytes]:
         "ENABLE_USER_SCRIPT_SANDBOXING": "YES", "GCC_C_LANGUAGE_STANDARD": "gnu17",
         "SWIFT_STRICT_CONCURRENCY": "complete", "DEBUG_INFORMATION_FORMAT": "dwarf-with-dsym",
     })
+    packages = []
+    social_products = []
+    for repo, version, product in [
+        ("google/GoogleSignIn-iOS", "9.2.0", "GoogleSignIn"),
+        ("kakao/kakao-ios-sdk", "2.30.0", "KakaoSDKUser"),
+    ]:
+        package = add(repo, isa="XCRemoteSwiftPackageReference", repositoryURL=f"https://github.com/{repo}.git",
+                      requirement={"kind": "exactVersion", "version": version})
+        packages.append(package)
+        social_products.append(add(product, isa="XCSwiftPackageProductDependency", package=package, productName=product))
     children = []
     products = []
     targets = []
@@ -85,7 +95,9 @@ def generate() -> dict[Path, bytes]:
                       includeInIndex=0, path=f"{name}.{extension}", sourceTree="BUILT_PRODUCTS_DIR")
         products.append(product)
         phases = []
-        for phase, isa, files in [("sources", "PBXSourcesBuildPhase", sources), ("frameworks", "PBXFrameworksBuildPhase", []),
+        framework_files = [add(ref + "-link", isa="PBXBuildFile", productRef=ref)
+                           for ref in social_products] if name == "Kkugi" else []
+        for phase, isa, files in [("sources", "PBXSourcesBuildPhase", sources), ("frameworks", "PBXFrameworksBuildPhase", framework_files),
                                   ("resources", "PBXResourcesBuildPhase", resources)]:
             phases.append(add(name + "-" + phase, isa=isa, buildActionMask=2147483647, files=files, runOnlyForDeploymentPostprocessing=0))
         settings = {
@@ -108,6 +120,7 @@ def generate() -> dict[Path, bytes]:
             else:
                 settings["TEST_TARGET_NAME"] = "Kkugi"
         targets.append(add(name + "-target", isa="PBXNativeTarget", buildConfigurationList=configs(name, settings),
+                           packageProductDependencies=social_products if name == "Kkugi" else [],
                            buildPhases=phases, buildRules=[], dependencies=dependencies, name=name, productName=name,
                            productReference=product, productType="com.apple.product-type." + kind))
     product_group = add("products", isa="PBXGroup", children=products, name="Products", sourceTree="<group>")
@@ -115,7 +128,7 @@ def generate() -> dict[Path, bytes]:
     project = add("project", isa="PBXProject", attributes={"LastUpgradeCheck": "1600", "BuildIndependentTargetsInParallel": "YES"},
                   buildConfigurationList=project_configs, compatibilityVersion="Xcode 14.0", developmentRegion="ko",
                   hasScannedForEncodings=0, knownRegions=["ko", "en", "Base"], mainGroup=root_group,
-                  productRefGroup=product_group, projectDirPath="", projectRoot="", targets=targets)
+                  packageReferences=packages, productRefGroup=product_group, projectDirPath="", projectRoot="", targets=targets)
     pbx = {"archiveVersion": 1, "classes": {}, "objectVersion": 56, "objects": objects, "rootObject": project}
 
     def reference(parent: ET.Element, name: str) -> None:
@@ -149,6 +162,13 @@ def generate() -> dict[Path, bytes]:
         "CFBundleVersion": "1",
         "CFBundleDevelopmentRegion": "ko", "CFBundleDisplayName": "꾸기",
         "NSCameraUsageDescription": "식사 사진을 찍어 음식 기록에 사용합니다.",
+        "GIDClientID": "$(KKUGI_GOOGLE_IOS_CLIENT_ID)", "GIDServerClientID": "$(KKUGI_GOOGLE_SERVER_CLIENT_ID)",
+        "KkugiKakaoAppKey": "$(KKUGI_KAKAO_NATIVE_APP_KEY)",
+        "LSApplicationQueriesSchemes": ["kakaokompassauth", "kakaolink"],
+        "CFBundleURLTypes": [
+            {"CFBundleURLName": "google", "CFBundleURLSchemes": ["$(KKUGI_GOOGLE_REVERSED_CLIENT_ID)"]},
+            {"CFBundleURLName": "kakao", "CFBundleURLSchemes": ["kakao$(KKUGI_KAKAO_NATIVE_APP_KEY)"]},
+        ],
         "KkugiAPIBaseURL": "$(KKUGI_API_BASE_URL)",
         "UIAppFonts": ["Fonts/noto_sans_kr_variable.ttf"],
         "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
