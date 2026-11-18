@@ -1,0 +1,54 @@
+#if DEBUG
+import Foundation
+
+enum AppUIFixture {
+    @MainActor static func flow(onboarded: Bool) throws -> MemberFlow {
+        let transport = URLSessionConfiguration.ephemeral
+        transport.protocolClasses = [FixtureProtocol.self]
+        let vault = SessionVault(service: "com.kkugi.ios.uitest.fixture")
+        try vault.save(StoredSession(sessionID: UUID(), memberID: 123, onboarded: onboarded,
+                                     accessToken: "fixture-access", refreshToken: "fixture-refresh"))
+        let api = AuthClient(baseURL: URL(string: "https://ui.fixture.invalid")!, session: URLSession(configuration: transport))
+        return MemberFlow(session: AuthSession(api: api, vault: vault))
+    }
+}
+
+private final class FixtureProtocol: URLProtocol {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func stopLoading() {}
+
+    override func startLoading() {
+        guard let url = request.url else { return }
+        let payload = fixture(url)
+        let code = payload == nil ? 404 : 200
+        let response = HTTPURLResponse(url: url, statusCode: code, httpVersion: nil, headerFields: nil)!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        let json = "{\"success\":\(code == 200),\"data\":\(payload ?? "null")}"
+        client?.urlProtocol(self, didLoad: Data(json.utf8))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    private func fixture(_ url: URL) -> String? {
+        guard url.host == "ui.fixture.invalid",
+              request.value(forHTTPHeaderField: "Authorization") == "Bearer fixture-access" else { return nil }
+        switch url.path {
+        case "/api/v1/growth/me":
+            return #"{"started":true,"startedOn":"2026-01-01","today":"2026-01-08","diet":{"currentDays":2,"longestDays":3,"thisWeek":[]},"workout":{"currentWeeks":1,"longestWeeks":2},"badges":[{"code":"FIRST","name":"첫 기록","description":"첫 기록을 남겼어요","category":"DIET","conditionKind":"COUNT","threshold":1,"earnedAt":"2026-01-01"}],"path":{"days":[],"weeklyGoals":[]}}"#
+        case "/api/v1/weekly-workout-goal/me":
+            return #"{"configured":true,"thisWeek":{"weekStartDate":"2026-01-05","targetCount":3,"firstWeek":false},"progress":{"countedCount":1,"achieved":false}}"#
+        case "/api/v1/members/me/notifications/unread-count": return #"{"unreadCount":0}"#
+        case "/api/v1/members/me/notifications": return #"{"items":[],"page":0,"size":20,"totalElements":0}"#
+        case "/api/v1/routines": return #"{"items":[{"id":1,"name":"아침 루틴","exercises":[]}]}"#
+        case "/api/v1/workout-sessions", "/api/v1/weight-records": return #"{"items":[]}"#
+        case "/api/v1/coaching-plan/me":
+            return #"{"targetKcal":1800,"carbRatio":50,"proteinRatio":25,"fatRatio":25,"startedOn":"2026-01-01","recalcPending":false}"#
+        case "/api/v1/meals":
+            guard let day = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "date" })?.value,
+                  day.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) != nil else { return nil }
+            return "{\"date\":\"\(day)\",\"asOf\":\"2026-01-08\",\"meals\":[],\"totalNutrition\":{\"kcal\":0,\"carbohydrateG\":0,\"proteinG\":0,\"fatG\":0}}"
+        default: return nil
+        }
+    }
+}
+#endif

@@ -23,7 +23,16 @@ struct LoginRoot: View {
         #endif
         let configured = Bundle.main.object(forInfoDictionaryKey: "KkugiAPIBaseURL") as? String
         let url = configured.flatMap(URL.init(string:)).flatMap { $0.scheme == "https" ? $0 : nil }
-        let flow = MemberFlow(baseURL: url)
+        let flow: MemberFlow
+        #if DEBUG
+        if let fixture = ProcessInfo.processInfo.environment["KKUGI_UI_FIXTURE"],
+           ["home", "onboarding"].contains(fixture) {
+            do { flow = try AppUIFixture.flow(onboarded: fixture == "home") }
+            catch { preconditionFailure("UI fixture setup failed") }
+        } else { flow = MemberFlow(baseURL: url) }
+        #else
+        flow = MemberFlow(baseURL: url)
+        #endif
         _flow = StateObject(wrappedValue: flow)
         let model: LoginModel
         if url != nil {
