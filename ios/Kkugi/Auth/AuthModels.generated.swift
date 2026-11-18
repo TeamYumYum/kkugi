@@ -43,3 +43,8 @@ struct ApiResponseTokenResponse: Codable {
     let data: TokenResponse?
     let error: ErrorDetail?
 }
+
+struct ApiResponseVoid: Codable {
+    let success: Bool?
+    let error: ErrorDetail?
+}

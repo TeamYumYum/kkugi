@@ -62,6 +62,13 @@ final class MemberFlow: ObservableObject {
         return profile
     }
 
+    func withdraw() async throws {
+        guard let session else { throw URLError(.userAuthenticationRequired) }
+        try await session.withdraw()
+        profile = nil
+        route = .login
+    }
+
     func logout() async throws {
         try await session?.logout()
         profile = nil
@@ -73,6 +80,8 @@ struct MemberProfileScreen: View {
     @ObservedObject var flow: MemberFlow
     @State private var message = ""
     @State private var editing = false
+    @State private var confirmingWithdrawal = false
+    @State private var withdrawing = false
     var body: some View {
         List {
             Button("홈으로", action: flow.showHome)
@@ -87,7 +96,22 @@ struct MemberProfileScreen: View {
             Button("로그아웃") {
                 Task { do { try await flow.logout() } catch { message = "로그아웃하지 못했어요" } }
             }
-        }.task { await load() }
+            Button("회원 탈퇴", role: .destructive) { confirmingWithdrawal = true }
+        }.disabled(withdrawing)
+        .alert("꾸기를 탈퇴할까요?", isPresented: $confirmingWithdrawal) {
+            Button("취소", role: .cancel) {}
+            Button("탈퇴", role: .destructive) {
+                Task {
+                    guard !withdrawing else { return }
+                    withdrawing = true
+                    defer { withdrawing = false }
+                    do { try await flow.withdraw() } catch { message = "탈퇴하지 못했어요. 다시 시도해 주세요" }
+                }
+            }
+        } message: {
+            Text("개인 데이터가 삭제되며, 같은 계정으로 다시 로그인하면 새 회원으로 시작합니다.")
+        }
+        .task { await load() }
         .sheet(isPresented: $editing) {
             if let profile = flow.profile { ProfileEditor(profile: profile, save: flow.updateProfile) }
         }

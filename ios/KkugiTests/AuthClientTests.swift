@@ -7,10 +7,13 @@ private final class AuthFixtureProtocol: URLProtocol {
     override func startLoading() {
         guard let url = request.url else { return }
         let success = request.httpMethod == "POST" && url.path == "/api/v1/auth/login/review"
+        let withdrawn = request.httpMethod == "DELETE" && url.path == "/api/v1/members/me"
+            && request.value(forHTTPHeaderField: "Authorization") == "Bearer fixture-a"
         let body = success
             ? #"{"success":true,"data":{"memberId":42,"onboarded":false,"accessToken":"fixture-a","refreshToken":"fixture-r"}}"#
+            : withdrawn ? #"{"success":true,"data":null}"#
             : #"{"success":false,"error":{"code":"AUTH_REFRESH_INVALID"}}"#
-        let response = HTTPURLResponse(url: url, statusCode: success ? 200 : 401,
+        let response = HTTPURLResponse(url: url, statusCode: (success || withdrawn) ? 200 : 401,
                                        httpVersion: "HTTP/1.1", headerFields: nil)!
         client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: Data(body.utf8))
@@ -20,6 +23,20 @@ private final class AuthFixtureProtocol: URLProtocol {
 }
 
 final class AuthClientTests: XCTestCase {
+    func testWithdrawalClearsOnlyAfterAuthenticatedSuccess() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [AuthFixtureProtocol.self]
+        let transport = URLSession(configuration: configuration)
+        defer { transport.invalidateAndCancel() }
+        let vault = SessionVault(service: "com.kkugi.test." + UUID().uuidString)
+        defer { try? vault.clear() }
+        let auth = AuthSession(api: AuthClient(baseURL: URL(string: "https://fixture.invalid")!, session: transport), vault: vault)
+        _ = try await auth.review(loginID: "fixture", password: "fixture")
+        XCTAssertNotNil(try vault.read())
+        try await auth.withdraw()
+        XCTAssertNil(try vault.read())
+    }
+
     func testReviewResponseAndExpiredRefresh() async throws {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [AuthFixtureProtocol.self]

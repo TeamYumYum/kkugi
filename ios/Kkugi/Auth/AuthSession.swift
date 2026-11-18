@@ -67,7 +67,8 @@ actor AuthSession {
             do {
                 let tokens = try await api.refresh(token: previous.refreshToken)
                 guard generation == attempt else { throw CancellationError() }
-                let updated = StoredSession(sessionID: previous.sessionID, memberID: previous.memberID, onboarded: previous.onboarded, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken)
+                guard let current = try vault.read(), current.sessionID == previous.sessionID else { throw CancellationError() }
+                let updated = StoredSession(sessionID: current.sessionID, memberID: current.memberID, onboarded: current.onboarded, accessToken: tokens.accessToken, refreshToken: tokens.refreshToken)
                 try vault.save(updated)
                 return updated
             } catch let error as AuthClient.RequestFailure {
@@ -77,6 +78,16 @@ actor AuthSession {
         }
         refreshTask = task
         return try await task.value
+    }
+
+    func withdraw() async throws {
+        guard let member = try vault.read() else { throw URLError(.userAuthenticationRequired) }
+        let response = try await protectedRequest("api/v1/members/me", method: "DELETE")
+        let envelope = try JSONDecoder().decode(ApiResponseVoid.self, from: response)
+        guard envelope.success == true else { throw URLError(.badServerResponse) }
+        guard try vault.read()?.sessionID == member.sessionID else { throw CancellationError() }
+        _ = beginOperation()
+        try vault.clear()
     }
 
     func logout() async throws {

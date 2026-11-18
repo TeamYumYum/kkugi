@@ -91,6 +91,8 @@ private struct ManualMealForm: View {
     @State private var date: Date
     @State private var kind = "LUNCH"
     @State private var names = ""
+    @State private var foods: [Portion] = []
+    @State private var searching = false
     @State private var id = UUID()
     @State private var revision = 1
     @State private var previousBody: Data?
@@ -111,22 +113,47 @@ private struct ManualMealForm: View {
                     Text("아침").tag("BREAKFAST"); Text("점심").tag("LUNCH")
                     Text("저녁").tag("DINNER"); Text("간식").tag("SNACK")
                 }
-                Section("음식 이름 (한 줄에 하나)") { TextEditor(text: $names) }
+                Section("음식 목록") {
+                    Button("음식 검색") { searching = true }
+                    ForEach($foods) { $portion in
+                        VStack(alignment: .leading) {
+                            Text(portion.food.name)
+                            TextField("섭취량 (g)", text: $portion.grams).keyboardType(.numberPad)
+                            Button("목록에서 빼기") { foods.removeAll { $0.id == portion.id } }
+                        }
+                    }
+                }
+                Section("목록에 없는 음식 (한 줄에 하나)") { TextEditor(text: $names) }
                 if !error.isEmpty { Text(error).foregroundStyle(.red) }
                 Button("저장") { Task { await save() } }
-                    .disabled(names.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(foods.isEmpty && names.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }.disabled(busy)
             .navigationTitle("직접 입력")
             .toolbar { Button("취소") { dismiss() }.disabled(busy) }
         }.interactiveDismissDisabled(busy)
+        .sheet(isPresented: $searching) {
+            FoodSearch(session: session) { food in
+                foods.append(Portion(food: food, grams: String(food.servingGrams ?? 100)))
+                searching = false
+            }
+        }
     }
 
     @MainActor private func save() async {
         guard !busy else { return }
         busy = true
         defer { busy = false }
-        let items = names.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }.map { MealItemRequest(candidateRegionNo: nil, candidateRank: nil, foodId: nil, grams: nil, foodName: $0) }
+        let unlisted = names.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard unlisted.allSatisfy({ $0.count <= 50 }) else { error = "음식 이름은 50자 이하로 입력해 주세요"; return }
+        var items = unlisted.map { MealItemRequest(candidateRegionNo: nil, candidateRank: nil, foodId: nil, grams: nil, foodName: $0) }
+        for food in foods {
+            guard let grams = Int(food.grams), (1...5000).contains(grams) else {
+                error = "섭취량은 1~5000g 사이 정수로 입력해 주세요"
+                return
+            }
+            items.append(MealItemRequest(candidateRegionNo: nil, candidateRank: nil, foodId: food.food.id, grams: grams, foodName: nil))
+        }
         guard !items.isEmpty else { return }
         do {
             let encoder = JSONEncoder()
@@ -142,5 +169,65 @@ private struct ManualMealForm: View {
             _ = try await session.protectedRequest("api/v1/meals", method: "POST", body: body(revision))
             saved()
         } catch { self.error = "식사를 저장하지 못했어요. 다시 시도해 주세요" }
+    }
+}
+
+private struct Portion: Identifiable {
+    let id = UUID()
+    let food: FoodResponse
+    var grams: String
+}
+
+private struct FoodSearch: View {
+    let session: AuthSession
+    let select: (FoodResponse) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var keyword = ""
+    @State private var results: [FoodResponse] = []
+    @State private var nextPage: Int?
+    @State private var message = ""
+    @State private var busy = false
+
+    var body: some View {
+        NavigationStack {
+            List {
+                TextField("음식 이름이나 업체명", text: $keyword)
+                    .onChange(of: keyword) { _, _ in results = []; nextPage = nil; message = "" }
+                Button("검색") { Task { await search(0) } }.disabled(busy || keyword.trimmingCharacters(in: .whitespaces).isEmpty)
+                if busy { ProgressView() }
+                if !message.isEmpty { Text(message) }
+                ForEach(results, id: \.id) { food in
+                    Button { select(food) } label: {
+                        LabeledContent(food.name, value: "\(food.nutritionPer100g.kcal.formatted()) kcal / 100g")
+                    }
+                }
+                if let nextPage { Button("더 보기") { Task { await search(nextPage) } }.disabled(busy) }
+            }
+            .navigationTitle("음식 검색")
+            .toolbar { Button("닫기") { dismiss() } }
+        }
+    }
+
+    @MainActor private func search(_ page: Int) async {
+        guard !busy else { return }
+        let input = keyword
+        let query = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard (1...50).contains(query.count) else { message = "검색어를 1~50자로 입력해 주세요"; return }
+        busy = true
+        defer { busy = false }
+        do {
+            let bytes = try await session.protectedRequest("api/v1/foods", method: "GET", query: [
+                URLQueryItem(name: "keyword", value: query), URLQueryItem(name: "page", value: String(page))
+            ])
+            let response = try JSONDecoder().decode(ApiResponseFoodSearchResponse.self, from: bytes)
+            guard response.success == true, let data = response.data else { throw URLError(.badServerResponse) }
+            guard keyword == input else { return }
+            let existing = Set(page == 0 ? [] : results.map(\.id))
+            results = (page == 0 ? [] : results) + data.items.filter { !existing.contains($0.id) }
+            nextPage = (data.page + 1) * data.size < data.totalElements ? data.page + 1 : nil
+            message = results.isEmpty ? "검색 결과가 없어요" : ""
+        } catch {
+            if keyword == input { message = "음식을 검색하지 못했어요. 다시 시도해 주세요" }
+        }
     }
 }
