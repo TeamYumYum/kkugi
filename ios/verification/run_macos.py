@@ -93,9 +93,17 @@ def main() -> None:
         command(["xcrun", "simctl", "boot", device["udid"]])
     command(["xcrun", "simctl", "bootstatus", device["udid"], "-b"])
     command(["xcrun", "simctl", "status_bar", device["udid"], "override", "--time", "9:41", "--batteryState", "charged", "--batteryLevel", "100"])
-    command(["xcodebuild", "-project", "ios/Kkugi.xcodeproj", "-scheme", "Kkugi", "-destination", f"platform=iOS Simulator,id={device['udid']}",
-             "-derivedDataPath", "ios/DerivedData", "-resultBundlePath", str(result), "-parallel-testing-enabled", "NO",
-             "-maximum-concurrent-test-simulator-destinations", "1", "test", "CODE_SIGNING_ALLOWED=NO"], artifacts / "xcodebuild.log")
+    try:
+        command(["xcodebuild", "-project", "ios/Kkugi.xcodeproj", "-scheme", "Kkugi", "-destination", f"platform=iOS Simulator,id={device['udid']}",
+                 "-derivedDataPath", "ios/DerivedData", "-resultBundlePath", str(result), "-parallel-testing-enabled", "NO",
+                 "-maximum-concurrent-test-simulator-destinations", "1", "test", "CODE_SIGNING_ALLOWED=NO"], artifacts / "xcodebuild.log")
+    finally:
+        products = ROOT / "ios/DerivedData/Build/Products/Debug-iphonesimulator"
+        for name, relative in [("app-info.plist", "Kkugi.app/Info.plist"), ("tests-info.plist", "Kkugi.app/PlugIns/KkugiTests.xctest/Info.plist")]:
+            source = products / relative
+            if source.is_file():
+                shutil.copyfile(source, artifacts / name)
+                print(command(["plutil", "-p", str(source)]))
     export = artifacts / "attachments"
     command(["xcrun", "xcresulttool", "export", "attachments", "--path", str(result), "--output-path", str(export)])
     expected = {f"{case}-{scale}x.{suffix}" for case in CASES for scale in [1, 3] for suffix in ["png", "json"]}
