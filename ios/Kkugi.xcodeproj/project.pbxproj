@@ -539,6 +539,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "AEB5AC80057AF44F48B404A9";
 		};
+		"298D7EFAEADFE2A4705BAE18" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Features/Workout/WorkoutSchedule.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"C15BECD5D95F3D98D572A7DF" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "298D7EFAEADFE2A4705BAE18";
+		};
 		"42CF3EC07C7A0A5C847C0343" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -617,6 +627,7 @@
 				"FA8457F221519298413A1831",
 				"62EB2F61DE401C1A4FCF71EE",
 				"AEB5AC80057AF44F48B404A9",
+				"298D7EFAEADFE2A4705BAE18",
 				"42CF3EC07C7A0A5C847C0343",
 				"E4E1FB9E57A8588BB1F3142B",
 				"308B5155969503DFA8E472EB",
@@ -679,6 +690,7 @@
 				"2F4E9A18884661E70CFD2BE8",
 				"1363D7B43223EE642F524D55",
 				"168EFE3B393BD0CE5DC638D6",
+				"C15BECD5D95F3D98D572A7DF",
 				"45971865F27A107CDD05218A",
 				"4CB0EB02959A1D4B988AF70C",
 			);

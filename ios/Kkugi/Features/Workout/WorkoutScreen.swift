@@ -14,6 +14,7 @@ struct WorkoutScreen: View {
     var body: some View {
         List {
             NavigationLink("운동 수행") { WorkoutRecorder(session: session) }
+            NavigationLink("운동 일정") { WorkoutSchedule(session: session, routines: routines) }
             NavigationLink("날짜별 운동 기록") { WorkoutHistory(session: session) }
             if loading { ProgressView() }
             if !message.isEmpty { Text(message); Button("다시 불러오기") { Task { await load() } } }
@@ -133,7 +134,7 @@ private struct WorkoutHistory: View {
     }
 }
 
-private struct WorkoutDetail: View {
+struct WorkoutDetail: View {
     let session: AuthSession
     let id: Int
     @State private var detail: WorkoutRecordDetailResponse?

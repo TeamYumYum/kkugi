@@ -231,3 +231,29 @@ struct ApiResponseWorkoutSessionUploadResponse: Codable {
     let `data`: WorkoutSessionUploadResponse?
     let `error`: ErrorDetail?
 }
+
+struct WorkoutScheduleResponse: Codable {
+    let `id`: Int
+    let `routineId`: Int?
+    let `scheduledDate`: String
+    let `completedSessionId`: Int?
+}
+
+struct WorkoutScheduleListResponse: Codable {
+    let `items`: [WorkoutScheduleResponse]
+}
+
+struct ApiResponseWorkoutScheduleListResponse: Codable {
+    let `success`: Bool?
+    let `data`: WorkoutScheduleListResponse?
+    let `error`: ErrorDetail?
+}
+
+struct WorkoutScheduleCreateRequest: Codable {
+    let `routineId`: Int
+    let `scheduledDate`: String
+}
+
+struct WorkoutScheduleMoveRequest: Codable {
+    let `scheduledDate`: String
+}
