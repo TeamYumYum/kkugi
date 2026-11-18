@@ -26,7 +26,7 @@ struct ArtImage: View {
 
     var body: some View {
         if let image = BundledArt.load(asset) {
-            Image(uiImage: image).resizable()
+            Image(uiImage: image).interpolation(.low).resizable()
         } else {
             // AssetTests fails for this case. Never replace the image with invented artwork.
             Color.clear
