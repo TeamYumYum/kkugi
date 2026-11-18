@@ -45,6 +45,10 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
+	<key>FirebaseMessagingAutoInitEnabled</key>
+	<false/>
 	<key>GIDClientID</key>
 	<string>$(KKUGI_GOOGLE_IOS_CLIENT_ID)</string>
 	<key>GIDServerClientID</key>
@@ -53,6 +57,14 @@
 	<string>$(KKUGI_API_BASE_URL)</string>
 	<key>KkugiAppGroup</key>
 	<string>$(KKUGI_APP_GROUP_ID)</string>
+	<key>KkugiFirebaseAPIKey</key>
+	<string>$(KKUGI_FIREBASE_API_KEY)</string>
+	<key>KkugiFirebaseAppID</key>
+	<string>$(KKUGI_FIREBASE_APP_ID)</string>
+	<key>KkugiFirebaseProjectID</key>
+	<string>$(KKUGI_FIREBASE_PROJECT_ID)</string>
+	<key>KkugiFirebaseSenderID</key>
+	<string>$(KKUGI_FIREBASE_SENDER_ID)</string>
 	<key>KkugiKakaoAppKey</key>
 	<string>$(KKUGI_KAKAO_NATIVE_APP_KEY)</string>
 	<key>LSApplicationQueriesSchemes</key>

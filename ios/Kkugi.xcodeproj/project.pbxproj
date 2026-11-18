@@ -77,6 +77,19 @@
 			"package" = "097442E0A8F70D9DCBE30D0E";
 			"productName" = "KakaoSDKUser";
 		};
+		"5FA0BE6111C6750A75470F58" = {
+			"isa" = "XCRemoteSwiftPackageReference";
+			"repositoryURL" = "https://github.com/firebase/firebase-ios-sdk.git";
+			"requirement" = {
+				"kind" = "exactVersion";
+				"version" = "11.15.0";
+			};
+		};
+		"BD071A69D019CFD546DDB181" = {
+			"isa" = "XCSwiftPackageProductDependency";
+			"package" = "5FA0BE6111C6750A75470F58";
+			"productName" = "FirebaseMessaging";
+		};
 		"38C15759854FBB71A6E2BA5F" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -235,6 +248,16 @@
 		"234084B13221C13B676DB9C8" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "A8C63F22F20C9C73BB238E27";
+		};
+		"B8DFCD1A54473FE0792737D1" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/App/PushRegistration.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"27D9C82A67178DDCA4F6E04E" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "B8DFCD1A54473FE0792737D1";
 		};
 		"A88E7F3B0B170698470947CD" = {
 			"isa" = "PBXFileReference";
@@ -565,6 +588,7 @@
 			"children" = (
 				"2154FEA51A8CF231E5E449D0",
 				"A8C63F22F20C9C73BB238E27",
+				"B8DFCD1A54473FE0792737D1",
 				"A88E7F3B0B170698470947CD",
 				"72B3A1485E0756AAE958C89F",
 				"CFB85BECB5EDA65052004346",
@@ -616,12 +640,17 @@
 			"isa" = "PBXBuildFile";
 			"productRef" = "DDF13942D27D688E51336261";
 		};
+		"E29620C0604A34842C08E9DE" = {
+			"isa" = "PBXBuildFile";
+			"productRef" = "BD071A69D019CFD546DDB181";
+		};
 		"F0F77B5814666E08C15BD4A8" = {
 			"isa" = "PBXSourcesBuildPhase";
 			"buildActionMask" = "2147483647";
 			"files" = (
 				"81CF58B7840479C5F1997F90",
 				"234084B13221C13B676DB9C8",
+				"27D9C82A67178DDCA4F6E04E",
 				"62F9BAEAEA74A1A59B0CD0C9",
 				"73BE6ABBDF455DC0EC940DCF",
 				"AA1230C82406DCEC34A28571",
@@ -661,6 +690,7 @@
 			"files" = (
 				"87608F9E84BE3F12D9A53602",
 				"A5A752DAAE11524109B5F970",
+				"E29620C0604A34842C08E9DE",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -725,10 +755,12 @@
 				);
 				"CODE_SIGN_ENTITLEMENTS" = "Shared/Garden.entitlements";
 				"KKUGI_APP_GROUP_ID" = "group.com.kkugi.ios";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Kkugi/Kkugi.entitlements";
 				"INFOPLIST_FILE" = "Kkugi/Info.plist";
 				"INFOPLIST_KEY_CFBundleDisplayName" = "꾸기";
 				"INFOPLIST_KEY_UILaunchScreen_Generation" = "YES";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = "YES";
+				"KKUGI_APS_ENVIRONMENT" = "development";
 			};
 		};
 		"26E1CEB7126200719535BAAB" = {
@@ -750,10 +782,12 @@
 				);
 				"CODE_SIGN_ENTITLEMENTS" = "Shared/Garden.entitlements";
 				"KKUGI_APP_GROUP_ID" = "group.com.kkugi.ios";
+				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Kkugi/Kkugi.entitlements";
 				"INFOPLIST_FILE" = "Kkugi/Info.plist";
 				"INFOPLIST_KEY_CFBundleDisplayName" = "꾸기";
 				"INFOPLIST_KEY_UILaunchScreen_Generation" = "YES";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation" = "YES";
+				"KKUGI_APS_ENVIRONMENT" = "production";
 			};
 		};
 		"2B7028DAA3F4AB48A0781E2E" = {
@@ -771,6 +805,7 @@
 			"packageProductDependencies" = (
 				"4A78042634D379C1CE11E71F",
 				"DDF13942D27D688E51336261",
+				"BD071A69D019CFD546DDB181",
 			);
 			"buildPhases" = (
 				"F0F77B5814666E08C15BD4A8",
@@ -1229,6 +1264,7 @@
 			"packageReferences" = (
 				"C27FE071C77148EAF5CB5AD3",
 				"097442E0A8F70D9DCBE30D0E",
+				"5FA0BE6111C6750A75470F58",
 			);
 			"productRefGroup" = "0A3E27B8CA818264D75C8D81";
 			"projectDirPath" = "";

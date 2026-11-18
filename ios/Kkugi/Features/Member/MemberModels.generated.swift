@@ -20,6 +20,10 @@ struct ProfileUpdateRequest: Codable {
     let activityLevel: String
 }
 
+struct MemberDeviceRequest: Codable {
+    let fcmToken: String
+}
+
 struct MemberProfileResponse: Codable {
     let nickname: String
     let healthGoal: String

@@ -40,6 +40,8 @@ def generate() -> dict[Path, bytes]:
         entries = []
         for mode in ("Debug", "Release"):
             settings = dict(values)
+            if name == "Kkugi":
+                settings["KKUGI_APS_ENVIRONMENT"] = "development" if mode == "Debug" else "production"
             if name == "project":
                 settings.update({
                     "SWIFT_OPTIMIZATION_LEVEL": "-Onone" if mode == "Debug" else "-O",
@@ -61,6 +63,7 @@ def generate() -> dict[Path, bytes]:
     for repo, version, product in [
         ("google/GoogleSignIn-iOS", "9.2.0", "GoogleSignIn"),
         ("kakao/kakao-ios-sdk", "2.30.0", "KakaoSDKUser"),
+        ("firebase/firebase-ios-sdk", "11.15.0", "FirebaseMessaging"),
     ]:
         package = add(repo, isa="XCRemoteSwiftPackageReference", repositoryURL=f"https://github.com/{repo}.git",
                       requirement={"kind": "exactVersion", "version": version})
@@ -120,6 +123,7 @@ def generate() -> dict[Path, bytes]:
             settings.update({"CODE_SIGN_ENTITLEMENTS": "Shared/Garden.entitlements",
                              "KKUGI_APP_GROUP_ID": "group.com.kkugi.ios"})
         if name == "Kkugi":
+            settings["CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]"] = "Kkugi/Kkugi.entitlements"
             embed = add("embed-widget", isa="PBXBuildFile", fileRef=identifier("KkugiWidget-product"),
                         settings={"ATTRIBUTES": ["RemoveHeadersOnCopy"]})
             phases.append(add("embed-extensions", isa="PBXCopyFilesBuildPhase", buildActionMask=2147483647,
@@ -188,6 +192,9 @@ def generate() -> dict[Path, bytes]:
         "GIDClientID": "$(KKUGI_GOOGLE_IOS_CLIENT_ID)", "GIDServerClientID": "$(KKUGI_GOOGLE_SERVER_CLIENT_ID)",
         "KkugiKakaoAppKey": "$(KKUGI_KAKAO_NATIVE_APP_KEY)",
         "LSApplicationQueriesSchemes": ["kakaokompassauth", "kakaolink"],
+        "FirebaseAppDelegateProxyEnabled": False, "FirebaseMessagingAutoInitEnabled": False,
+        "KkugiFirebaseAppID": "$(KKUGI_FIREBASE_APP_ID)", "KkugiFirebaseSenderID": "$(KKUGI_FIREBASE_SENDER_ID)",
+        "KkugiFirebaseProjectID": "$(KKUGI_FIREBASE_PROJECT_ID)", "KkugiFirebaseAPIKey": "$(KKUGI_FIREBASE_API_KEY)",
         "KkugiAppGroup": "$(KKUGI_APP_GROUP_ID)",
         "CFBundleURLTypes": [
             {"CFBundleURLName": "widget", "CFBundleURLSchemes": ["kkugi"]},
@@ -203,6 +210,8 @@ def generate() -> dict[Path, bytes]:
         IOS / "Kkugi.xcodeproj/project.pbxproj": ("// !$*UTF8*$!\n" + openstep(pbx) + "\n").encode(),
         IOS / "Kkugi.xcodeproj/xcshareddata/xcschemes/Kkugi.xcscheme": ET.tostring(scheme, encoding="utf-8", xml_declaration=True) + b"\n",
         IOS / "Kkugi/Info.plist": plistlib.dumps(info, sort_keys=True),
+        IOS / "Kkugi/Kkugi.entitlements": plistlib.dumps({"com.apple.security.application-groups": ["$(KKUGI_APP_GROUP_ID)"],
+                                                          "aps-environment": "$(KKUGI_APS_ENVIRONMENT)"}),
         IOS / "Shared/Garden.entitlements": plistlib.dumps({"com.apple.security.application-groups": ["$(KKUGI_APP_GROUP_ID)"]}),
         IOS / "KkugiWidget/Info.plist": plistlib.dumps({
             "CFBundleDisplayName": "꾸기", "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",

@@ -151,7 +151,7 @@ private extension AuthSession {
     }
 }
 
-private struct NotificationInbox: View {
+struct NotificationInbox: View {
     let session: AuthSession
     @State private var items: [MemberNotificationResponse] = []
     @State private var pageIndex = 0

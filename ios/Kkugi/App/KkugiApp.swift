@@ -2,15 +2,19 @@ import SwiftUI
 
 @main
 struct KkugiApp: App {
+    @UIApplicationDelegateAdaptor(PushRegistration.self) private var push
     var body: some Scene {
         WindowGroup {
             LoginRoot()
+                .environmentObject(push)
                 .preferredColorScheme(.light)
         }
     }
 }
 
 struct LoginRoot: View {
+    @EnvironmentObject private var push: PushRegistration
+    @State private var inboxShown = false
     @State private var homeIdentity = UUID()
     @StateObject private var flow: MemberFlow
     @StateObject private var model: LoginModel
@@ -57,6 +61,14 @@ struct LoginRoot: View {
             }
         }.task { await flow.restore() }
         .task { await flow.observeExpiry() }
+        .task(id: flow.route) {
+            await push.attach(flow.session)
+            openPendingNotification()
+        }
+        .onChange(of: push.openedInbox) { _, _ in openPendingNotification() }
+        .sheet(isPresented: $inboxShown) {
+            if let session = flow.session { NavigationStack { NotificationInbox(session: session) } }
+        }
         .onOpenURL { url in
             if url.scheme == "kkugi", url.host == "home" {
                 Task {
@@ -65,6 +77,14 @@ struct LoginRoot: View {
                     flow.showHome()
                 }
             } else { SocialSignIn.handle(url) }
+        }
+    }
+
+    private func openPendingNotification() {
+        guard push.openedInbox != nil else { return }
+        if flow.route == .home || flow.route == .profile {
+            inboxShown = true
+            push.consumeInbox()
         }
     }
 

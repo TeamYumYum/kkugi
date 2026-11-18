@@ -101,6 +101,7 @@ final class MemberFlow: ObservableObject {
     }
 
     func logout() async throws {
+        try await PushRegistration.current?.detachBeforeLogout()
         try await session?.logout()
         profile = nil
         route = .login
@@ -124,6 +125,7 @@ struct MemberProfileScreen: View {
             }
             if !message.isEmpty { Text(message) }
             Button("다시 불러오기") { Task { await load() } }
+            if let push = PushRegistration.current { NotificationSettingsRow(registration: push) }
             Button("로그아웃") {
                 Task { do { try await flow.logout() } catch { message = "로그아웃하지 못했어요" } }
             }
