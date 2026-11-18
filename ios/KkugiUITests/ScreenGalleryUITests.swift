@@ -90,6 +90,7 @@ final class ScreenGalleryUITests: XCTestCase {
                                     ("아침 루틴", "아침 루틴", "routine-detail")] {
             try tap(app, label)
             try capture(shot, when: app.navigationBars[title])
+            if shot == "workout-recorder" { try attachButtonBounds(app, screen: shot) }
             back(app)
         }
         try tap(app, "루틴 만들기")

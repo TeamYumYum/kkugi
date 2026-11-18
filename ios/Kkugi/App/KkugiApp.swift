@@ -7,7 +7,13 @@ struct KkugiApp: App {
         WindowGroup {
             Group {
                 #if DEBUG
-                if ProcessInfo.processInfo.environment["KKUGI_UI_FIXTURE"] == "home",
+                if ProcessInfo.processInfo.environment["KKUGI_UI_FIXTURE"] == "meal-recognizing",
+                   let session = try? AppUIFixture.flow(onboarded: true).session {
+                    MealPhotoPicker.reference(session: session, photo: Data(), recognizing: true)
+                        .frame(width: 360, height: 720)
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("reference-viewport")
+                } else if ProcessInfo.processInfo.environment["KKUGI_UI_FIXTURE"] == "home",
                    ProcessInfo.processInfo.environment["KKUGI_LAYOUT_REFERENCE"] == "1" {
                     LoginRoot()
                         .frame(width: 360, height: 720)

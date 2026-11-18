@@ -6,6 +6,7 @@ struct MealPhotoPicker: View {
     let use: (MealPhotoRecognitionResponse) -> Void
     var manualSearch: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.displayScale) private var scale
     @State private var selected: PhotosPickerItem?
     @State private var photo: Data?
     @State private var requestID = UUID()
@@ -19,13 +20,22 @@ struct MealPhotoPicker: View {
             Group {
                 if busy {
                     VStack(alignment: .leading, spacing: G.gap) {
+                        Button {
+                            recognitionTask?.cancel()
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark").resizable().scaledToFit()
+                                .frame(width: aligned(G.dp(22)), height: aligned(G.dp(22)))
+                        }
+                        .buttonStyle(.plain).accessibilityLabel("닫기")
+                        .padding(.top, aligned(G.dp(11)))
                         if let photo, let image = UIImage(data: photo) {
                             Image(uiImage: image).resizable().scaledToFit().frame(maxHeight: G.dp(240))
                         }
                         GText(text: "꾸기가 음식을\n살펴보는 중이에요", size: 24, weight: 700)
                         ProgressView()
                         Spacer()
-                    }.frame(maxWidth: .infinity, alignment: .leading).padding(G.gutter)
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, aligned(G.gutter))
                         .background(Color(hex: 0xF5F7FA))
                 } else {
                 Form {
@@ -46,7 +56,8 @@ struct MealPhotoPicker: View {
                 }
             }
             .gListCanvas().navigationTitle("사진으로 식사 기록")
-            .toolbar { Button("닫기") { recognitionTask?.cancel(); dismiss() } }
+            .toolbar { if !busy { Button("닫기") { recognitionTask?.cancel(); dismiss() } } }
+            .toolbar(busy ? .hidden : .visible, for: .navigationBar)
             .task(id: selected) {
                 guard let selected else { return }
                 photo = nil
@@ -65,6 +76,8 @@ struct MealPhotoPicker: View {
             }
         }.onDisappear { recognitionTask?.cancel() }
     }
+
+    private func aligned(_ value: CGFloat) -> CGFloat { (value * scale).rounded() / scale }
 
     private func prepare(_ image: UIImage) {
         guard let data = image.jpegData(compressionQuality: 0.85), data.count <= 10_000_000 else {
