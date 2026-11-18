@@ -37,7 +37,7 @@ struct LoginRoot: View {
             .accessibilityIdentifier("login-content")
             #if DEBUG
             .accessibilityValue(ProcessInfo.processInfo.arguments.contains("--capture-layout")
-                ? NSStringFromCGRect(bounds) : "")
+                ? NSCoder.string(for: bounds) : "")
             #endif
         }
         .background(GColor.loginSky.ignoresSafeArea())
