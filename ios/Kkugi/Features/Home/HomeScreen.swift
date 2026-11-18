@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeScreen: View {
     let session: AuthSession
     let profile: () -> Void
+    @Environment(\.displayScale) private var displayScale
     @State private var growth: GrowthSummaryResponse?
     @State private var unread = 0
     @State private var failed = false
@@ -19,20 +20,29 @@ struct HomeScreen: View {
         NavigationStack {
             ZStack {
                 HomeGarden().ignoresSafeArea()
-                VStack(spacing: G.gap) {
-                    HStack {
+                VStack(spacing: aligned(8)) {
+                    HStack(spacing: aligned(5)) {
                         if let growth {
                             NavigationLink { GrowthScreen(session: session) } label: {
-                                Label("\(growth.diet.currentDays)일", systemImage: "fork.knife")
-                                Label("\(growth.workout.currentWeeks)주", systemImage: "dumbbell.fill")
+                                HStack(spacing: aligned(5)) {
+                                    streakChip("\(growth.diet.currentDays)일", icon: "fork.knife")
+                                    streakChip("\(growth.workout.currentWeeks)주", icon: "dumbbell.fill")
+                                }.frame(minHeight: aligned(48))
                             }.accessibilityLabel("연속 기록")
                         } else if failed { Button("다시 시도") { Task { await load() } } }
                         Spacer()
-                        Button(action: profile) { Image(systemName: "person.crop.circle") }.accessibilityLabel("내 프로필")
+                        Button(action: profile) {
+                            ArtImage(asset: .idle).scaledToFit()
+                                .frame(width: aligned(30), height: aligned(30))
+                                .frame(width: aligned(35), height: aligned(35))
+                                .background(.white, in: Circle())
+                        }.accessibilityLabel("내 프로필")
                         NavigationLink { NotificationInbox(session: session) } label: {
-                            Image(systemName: unread > 0 ? "bell.badge" : "bell")
+                            roundIcon(unread > 0 ? "bell.badge" : "bell")
                         }.accessibilityLabel("알림")
-                    }.padding(G.small).background(.regularMaterial, in: Capsule())
+                    }
+                    .frame(minHeight: aligned(48))
+                    .padding(.horizontal, aligned(12))
                     HStack(alignment: .top) {
                         if let recommendation, !recommendation.hidden,
                            let entry = recommendation.pages.indices.contains(page) ? recommendation.pages[page] : nil {
@@ -56,18 +66,20 @@ struct HomeScreen: View {
                         }
                         Spacer()
                         if !expanded {
-                            NavigationLink { CoachingChat(session: session) } label: {
-                                Image(systemName: "bubble.left.and.bubble.right").padding(G.small)
-                                    .background(.regularMaterial, in: Circle())
-                            }.accessibilityLabel("꾸기에게 묻기")
+                            VStack(spacing: aligned(7)) {
+                                NavigationLink { CoachingChat(session: session) } label: {
+                                    roundIcon("bubble.left.and.bubble.right")
+                                        .frame(width: aligned(46)).contentShape(Rectangle())
+                                }.accessibilityLabel("꾸기에게 묻기")
+                                if hasReport {
+                                    NavigationLink { LatestWeeklyReport(session: session) } label: {
+                                        roundIcon("chart.bar.doc.horizontal")
+                                            .frame(width: aligned(46)).contentShape(Rectangle())
+                                    }.accessibilityLabel("주간 리포트")
+                                }
+                            }
                         }
-                        if hasReport && !expanded {
-                            NavigationLink { LatestWeeklyReport(session: session) } label: {
-                                Image(systemName: "chart.bar.doc.horizontal").padding(G.small)
-                                    .background(.regularMaterial, in: Circle())
-                            }.accessibilityLabel("주간 리포트")
-                        }
-                    }
+                    }.padding(.leading, aligned(12)).padding(.trailing, aligned(8))
                     if !recommendationError.isEmpty { Text(recommendationError).padding(6).background(.regularMaterial) }
                     Spacer()
                     HStack {
@@ -79,7 +91,8 @@ struct HomeScreen: View {
                         Spacer()
                         NavigationLink("성장") { GrowthScreen(session: session) }
                     }.padding(G.gap).background(.regularMaterial, in: Capsule())
-                }.padding(G.gutter)
+                        .padding(.horizontal, G.gutter).padding(.bottom, G.gutter)
+                }.padding(.top, aligned(8))
             }.foregroundStyle(GColor.text)
             .task { await load() }
             .sheet(isPresented: $recording) {
@@ -89,6 +102,25 @@ struct HomeScreen: View {
                 }
             }
         }
+    }
+
+    private func aligned(_ dp: CGFloat) -> CGFloat {
+        (G.dp(dp) * displayScale).rounded() / displayScale
+    }
+
+    private func roundIcon(_ name: String) -> some View {
+        Image(systemName: name)
+            .frame(width: aligned(38), height: aligned(38))
+            .background(.regularMaterial, in: Circle())
+    }
+
+    private func streakChip(_ text: String, icon: String) -> some View {
+        HStack(spacing: aligned(4)) {
+            Image(systemName: icon).resizable().scaledToFit().frame(width: aligned(18), height: aligned(18))
+            GText(text: text, size: 12, weight: 500)
+        }
+        .padding(.leading, aligned(8)).padding(.trailing, aligned(12)).padding(.vertical, aligned(5))
+        .background(.regularMaterial, in: Capsule())
     }
 
     private var dateKey: String {
