@@ -74,7 +74,7 @@ struct WorkoutRecorder: View {
             }
             if !message.isEmpty { Text(message) }
         }
-        .navigationTitle("운동 수행")
+        .gListCanvas().navigationTitle("운동 수행")
         .disabled(busy)
         .task { await restore() }
         .onChange(of: phase) { _, phase in if phase == .active { Task { await restore() } } }

@@ -44,7 +44,7 @@ struct ExerciseRecords: View {
                 }
             }
         }
-        .navigationTitle("종목별 기록")
+        .gListCanvas().navigationTitle("종목별 기록")
         .sheet(isPresented: $choosing) {
             ExerciseCatalog(session: session) { row in selected = row; choosing = false }
         }

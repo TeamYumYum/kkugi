@@ -52,7 +52,8 @@ final class ScreenGalleryUITests: XCTestCase {
         try capture("body-edit", when: app.textFields["키 (cm)"])
         try tap(app, "취소")
         try tap(app, "회원 탈퇴")
-        try capture("withdrawal", when: app.alerts.firstMatch)
+        try capture("withdrawal", when: app.staticTexts["탈퇴하기 전에 확인해 주세요"])
+        XCTAssertFalse(app.buttons["탈퇴하기"].isEnabled)
         try tap(app, "취소")
     }
 

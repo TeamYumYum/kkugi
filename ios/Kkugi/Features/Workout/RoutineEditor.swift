@@ -102,7 +102,7 @@ struct RoutineEditor: View {
                 if !message.isEmpty { Text(message) }
                 Button("저장") { Task { await save() } }
             }
-            .navigationTitle(original == nil ? "루틴 만들기" : "루틴 수정")
+            .gListCanvas().navigationTitle(original == nil ? "루틴 만들기" : "루틴 수정")
             .toolbar { Button("닫기") { dismiss() }; EditButton() }
             .disabled(saving)
             .sheet(isPresented: $searching) {
@@ -154,7 +154,7 @@ struct ExerciseCatalog: View {
                 if !message.isEmpty { Text(message); Button("다시 시도") { Task { await load(0) } } }
                 ForEach(items, id: \.id) { item in Button(item.nameKo) { select(item) } }
                 if hasNext { Button("더 보기") { Task { await load(page + 1) } } }
-            }.navigationTitle("운동 검색").task(id: keyword) {
+            }.gListCanvas().navigationTitle("운동 검색").task(id: keyword) {
                 items = []
                 hasNext = false
                 if !keyword.isEmpty { try? await Task.sleep(for: .milliseconds(250)) }

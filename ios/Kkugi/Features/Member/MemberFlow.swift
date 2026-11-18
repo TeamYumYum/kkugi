@@ -112,7 +112,6 @@ struct MemberProfileScreen: View {
     @State private var message = ""
     @State private var editing = false
     @State private var confirmingWithdrawal = false
-    @State private var withdrawing = false
     var body: some View {
         List {
             Button("홈으로", action: flow.showHome)
@@ -133,19 +132,9 @@ struct MemberProfileScreen: View {
                 Task { do { try await flow.logout() } catch { message = "로그아웃하지 못했어요" } }
             }
             Button("회원 탈퇴", role: .destructive) { confirmingWithdrawal = true }
-        }.disabled(withdrawing)
-        .alert("꾸기를 탈퇴할까요?", isPresented: $confirmingWithdrawal) {
-            Button("취소", role: .cancel) {}
-            Button("탈퇴", role: .destructive) {
-                Task {
-                    guard !withdrawing else { return }
-                    withdrawing = true
-                    defer { withdrawing = false }
-                    do { try await flow.withdraw() } catch { message = "탈퇴하지 못했어요. 다시 시도해 주세요" }
-                }
-            }
-        } message: {
-            Text("개인 데이터가 삭제되며, 같은 계정으로 다시 로그인하면 새 회원으로 시작합니다.")
+        }.gListCanvas()
+        .fullScreenCover(isPresented: $confirmingWithdrawal) {
+            WithdrawalPage(withdraw: flow.withdraw)
         }
         .task { await load() }
         .sheet(isPresented: $editing) {
@@ -155,6 +144,71 @@ struct MemberProfileScreen: View {
 
     private func load() async {
         do { try await flow.loadProfile(); message = "" } catch { message = "프로필을 불러오지 못했어요" }
+    }
+}
+
+private struct WithdrawalPage: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var acknowledged = false
+    @State private var confirming = false
+    @State private var busy = false
+    @State private var failed = false
+    let withdraw: () async throws -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: G.gap) {
+            HStack(spacing: G.gap) {
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left").frame(width: 44, height: 44)
+                }.accessibilityLabel("취소").disabled(busy)
+                GText(text: "탈퇴하기", size: 20, weight: 700)
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: G.gap) {
+                    HStack(spacing: G.gap) {
+                        ArtImage(asset: .idle).scaledToFit().frame(width: 60, height: 60)
+                        GText(text: "정말 떠나요?\n꾸기가 기다릴게요", size: 22, weight: 700)
+                    }
+                    GText(text: "탈퇴하기 전에 확인해 주세요")
+                    card("지워지는 데이터", lines: [
+                        "· 프로필과 카카오·Google 로그인 연결", "· 사진 없이 남긴 식사 기록",
+                        "· 운동 기록, 루틴, 운동 일정", "· 체중 기록과 목표",
+                        "· 꾸기, 배지, 스트릭", "· 이 폰에 남은 보내지 않은 운동 기록"
+                    ])
+                    card("남는 데이터", lines: ["식사 사진, 사진 인식 결과, 내가 고친 값은 누구의 기록인지 알 수 없게 바꾼 뒤 서비스를 마칠 때까지 보관해요. 음식 인식을 더 정확하게 만드는 데 써요."])
+                    GText(text: "탈퇴는 되돌릴 수 없어요. 같은 계정으로 다시 로그인해도 이전 기록은 돌아오지 않고 새 회원으로 시작해요.", color: GColor.muted)
+                    Toggle("되돌릴 수 없다는 걸 확인했어요", isOn: $acknowledged).disabled(busy)
+                    if failed { Text("탈퇴하지 못했어요. 연결을 확인하고 잠시 뒤 다시 시도해 주세요") }
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }
+            Button { confirming = true } label: {
+                GText(text: busy ? "탈퇴하는 중" : "탈퇴하기", weight: 700, color: .white)
+            }
+            .buttonStyle(GButtonStyle(background: acknowledged ? .red : GColor.disabled, outline: false))
+            .disabled(!acknowledged || busy)
+        }
+        .padding(G.gutter)
+        .background(Color(hex: 0xF5F7FA))
+        .interactiveDismissDisabled(busy)
+        .alert("정말 탈퇴할까요?", isPresented: $confirming) {
+            Button("계속 쓸게요", role: .cancel) {}
+            Button("탈퇴하기", role: .destructive) {
+                Task { @MainActor in
+                    guard acknowledged && !busy else { return }
+                    busy = true
+                    defer { busy = false }
+                    do { try await withdraw(); dismiss() } catch { failed = true }
+                }
+            }
+        } message: { Text("탈퇴하면 다시 로그인해도 기록을 되돌릴 수 없어요.\n꾸기와 배지, 스트릭\n식사·운동·체중 기록") }
+    }
+
+    private func card(_ heading: String, lines: [String]) -> some View {
+        VStack(alignment: .leading, spacing: G.small) {
+            GText(text: heading, size: 16, weight: 700)
+            ForEach(lines, id: \.self) { GText(text: $0) }
+        }.padding(G.gap).frame(maxWidth: .infinity, alignment: .leading)
+            .background(.white, in: RoundedRectangle(cornerRadius: G.dp(16)))
     }
 }
 
@@ -205,7 +259,7 @@ private struct ProfileEditor: View {
                 }
                 if !message.isEmpty { Text(message) }
             }
-            .navigationTitle("프로필 수정")
+            .gListCanvas().navigationTitle("프로필 수정")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) { Button("저장") { Task { await submit() } } }

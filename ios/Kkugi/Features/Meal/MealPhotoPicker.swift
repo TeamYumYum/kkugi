@@ -45,7 +45,7 @@ struct MealPhotoPicker: View {
                 }
                 }
             }
-            .navigationTitle("사진으로 식사 기록")
+            .gListCanvas().navigationTitle("사진으로 식사 기록")
             .toolbar { Button("닫기") { recognitionTask?.cancel(); dismiss() } }
             .task(id: selected) {
                 guard let selected else { return }

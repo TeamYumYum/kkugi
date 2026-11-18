@@ -18,7 +18,7 @@ struct GrowthScreen: View {
                     NavigationLink("날짜별 식단 기록") {
                         List(summary.path.days, id: \.date) { day in
                             LabeledContent(day.date, value: achievement(day.dietAchieved))
-                        }.navigationTitle("날짜별 식단 기록")
+                        }.gListCanvas().navigationTitle("날짜별 식단 기록")
                     }
                 }
                 Section("운동 연속 기록") {
@@ -27,7 +27,7 @@ struct GrowthScreen: View {
                     NavigationLink("주간 목표 달성 기록") {
                         List(summary.path.weeklyGoals, id: \.weekStartDate) { week in
                             LabeledContent(week.weekStartDate, value: week.recovered ? "복구" : achievement(week.achieved))
-                        }.navigationTitle("주간 목표 달성 기록")
+                        }.gListCanvas().navigationTitle("주간 목표 달성 기록")
                     }
                 }
                 NavigationLink("배지 모음") {
@@ -37,10 +37,10 @@ struct GrowthScreen: View {
                             Text(badge.description)
                             if let date = badge.earnedAt { Text(String(date.prefix(10)) + " 획득") }
                         }
-                    }.navigationTitle("배지 모음")
+                    }.gListCanvas().navigationTitle("배지 모음")
                 }
             } else if !failure { ProgressView() }
-        }.navigationTitle("성장").task { await load() }.refreshable { await load() }
+        }.gListCanvas().navigationTitle("성장").task { await load() }.refreshable { await load() }
     }
 
     private func achievement(_ value: Bool?) -> String {

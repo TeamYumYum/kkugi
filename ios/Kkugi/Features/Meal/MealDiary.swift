@@ -315,7 +315,7 @@ struct ManualMealForm: View {
                 }
                     .disabled(previousItems.isEmpty && !ranks.values.contains(where: { $0 > 0 }) && foods.isEmpty && names.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }.disabled(busy)
-            .navigationTitle(original == nil ? "식사 추가" : "식사 수정")
+            .gListCanvas().navigationTitle(original == nil ? "식사 추가" : "식사 수정")
             .toolbar { Button("취소") { dismiss() }.disabled(busy) }
         }.interactiveDismissDisabled(busy)
         .sheet(isPresented: $confirming) {
@@ -471,7 +471,7 @@ private struct FoodSearch: View {
                 }
                 if let nextPage { Button("더 보기") { Task { await search(nextPage) } }.disabled(busy) }
             }
-            .navigationTitle("음식 검색")
+            .gListCanvas().navigationTitle("음식 검색")
             .toolbar { Button("닫기") { dismiss() } }
         }
     }

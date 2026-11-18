@@ -48,7 +48,7 @@ struct WorkoutSchedule: View {
         }
         .environment(\.timeZone, Calendar.koreanLocal.timeZone)
         .disabled(busy)
-        .navigationTitle("운동 일정")
+        .gListCanvas().navigationTitle("운동 일정")
         .task(id: day) { moving = nil; await load(day) }
         .alert("운동 일정을 삭제할까요?", isPresented: $confirming) {
             Button("취소", role: .cancel) { deleting = nil }

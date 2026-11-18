@@ -27,9 +27,9 @@ struct WorkoutScreen: View {
                     Button("목표 저장") { Task { await saveGoal() } }
                 }.disabled(saving)
             }
-            NavigationLink("루틴 목록") { List { routineSection }.navigationTitle("루틴 목록") }
+            NavigationLink("루틴 목록") { List { routineSection }.gListCanvas().navigationTitle("루틴 목록") }
             routineSection
-        }.navigationTitle("운동").task { await load() }
+        }.gListCanvas().navigationTitle("운동").task { await load() }
         .sheet(isPresented: $editorOpen, onDismiss: { Task { await load() } }) {
             RoutineEditor(session: session, routine: editing) { editorOpen = false }
         }
@@ -59,7 +59,7 @@ struct WorkoutScreen: View {
                                 }
                             }
                         }
-                    }.navigationTitle(routine.name)
+                    }.gListCanvas().navigationTitle(routine.name)
                 }
             }
         }
@@ -127,7 +127,7 @@ private struct WorkoutHistory: View {
                     }
                 }
             } else { ProgressView() }
-        }.navigationTitle("운동 기록").task(id: key) { await load(key) }
+        }.gListCanvas().navigationTitle("운동 기록").task(id: key) { await load(key) }
     }
 
     @MainActor private func load(_ day: String) async {
@@ -169,7 +169,7 @@ struct WorkoutDetail: View {
                 }
             } else if failed { Button("운동 상세 다시 불러오기") { Task { await load() } } }
             else { ProgressView() }
-        }.navigationTitle(detail?.routineName ?? "운동 상세").task { await load() }
+        }.gListCanvas().navigationTitle(detail?.routineName ?? "운동 상세").task { await load() }
     }
 
     @MainActor private func load() async {

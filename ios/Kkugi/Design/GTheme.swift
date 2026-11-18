@@ -40,6 +40,16 @@ extension Color {
     }
 }
 
+extension View {
+    func gListCanvas() -> some View {
+        let canvas = Color(hex: 0xF5F7FA)
+        return scrollContentBackground(.hidden)
+            .background(canvas)
+            .toolbarBackground(canvas, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
 enum GFont {
     static let postScriptName = "NotoSansKR-Thin"
 

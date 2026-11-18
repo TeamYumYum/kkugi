@@ -53,7 +53,7 @@ struct TargetCalorieScreen: View {
                     if !choiceMessage.isEmpty { Text(choiceMessage) }
                 }
             } else if !failed { ProgressView() }
-        }.disabled(saving).navigationTitle("목표 칼로리").task { await load() }.refreshable { await load() }
+        }.disabled(saving).gListCanvas().navigationTitle("목표 칼로리").task { await load() }.refreshable { await load() }
     }
 
     @MainActor private func changeTarget(_ low: Int, _ high: Int) async {
@@ -138,7 +138,7 @@ struct WeightDiary: View {
                     LabeledContent(record.recordedOn, value: "\(record.weightKg.formatted()) kg")
                 }
             }
-        }.disabled(saving).navigationTitle("체중 기록").task(id: key(date)) { await load(date) }
+        }.disabled(saving).gListCanvas().navigationTitle("체중 기록").task(id: key(date)) { await load(date) }
     }
 
     @MainActor private func load(_ selected: Date) async {
@@ -204,7 +204,7 @@ struct LatestWeeklyReport: View {
             } else if empty { Text("아직 주간 리포트가 없어요") }
             else if failed { Button("리포트 다시 불러오기") { Task { await load() } } }
             else { ProgressView() }
-        }.navigationTitle("주간 리포트").task { await load() }
+        }.gListCanvas().navigationTitle("주간 리포트").task { await load() }
     }
 
     @MainActor private func load() async {
