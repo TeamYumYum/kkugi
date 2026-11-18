@@ -59,18 +59,16 @@ struct GText: View {
     var color: Color = GColor.text
     var alignment: TextAlignment = .leading
     var underline = false
-    @Environment(\.displayScale) private var displayScale
     @ScaledMetric(relativeTo: .body) private var fontScale: CGFloat = 1
 
     var body: some View {
         let pointSize = G.dp(size) * fontScale
         let font = GFont.uiFont(size: pointSize, weight: weight)
-        let lineBox = (pointSize * G.lineHeight * displayScale).rounded() / displayScale
-        let extraLeading = lineBox - font.lineHeight
+        let extraLeading = max(0, pointSize * G.lineHeight - font.lineHeight)
         Text(text)
             .font(Font(font))
             .tracking(pointSize * G.letterSpacing)
-            .lineSpacing(max(0, extraLeading))
+            .lineSpacing(extraLeading)
             .padding(.vertical, extraLeading / 2)
             .foregroundStyle(color)
             .multilineTextAlignment(alignment)

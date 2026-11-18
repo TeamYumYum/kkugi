@@ -80,7 +80,7 @@ final class LoginUITests: XCTestCase {
         app.textFields["아이디"].tap()
         app.textFields["아이디"].typeText("fixture-review")
         XCTAssertFalse(app.buttons["로그인"].isEnabled)
-        app.secureTextFields["비밀번호"].tap()
+        app.textFields["아이디"].typeText("\n")
         app.secureTextFields["비밀번호"].typeText("fixture-password")
         XCTAssertTrue(app.buttons["로그인"].isEnabled)
         app.buttons["취소"].tap()

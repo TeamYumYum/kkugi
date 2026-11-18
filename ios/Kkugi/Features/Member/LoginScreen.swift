@@ -5,6 +5,7 @@ struct LoginScreen: View {
     let onSocialLogin: (LoginProvider) -> Void
     let onReviewLogin: (String, String) -> Void
     let onDismissError: () -> Void
+    @Environment(\.displayScale) private var displayScale
     @State private var reviewPresented = false
 
     var body: some View {
@@ -53,7 +54,7 @@ struct LoginScreen: View {
     }
 
     private var panel: some View {
-        VStack(spacing: G.small) {
+        VStack(spacing: pixelAligned(G.small)) {
             GText(text: LoginText.headline, size: 18, weight: 700, color: GColor.loginInk, alignment: .center)
             if let recent = state.recentTitle {
                 GText(text: recent, color: GColor.muted)
@@ -64,16 +65,20 @@ struct LoginScreen: View {
             Button { reviewPresented = true } label: {
                 GText(text: state.title(for: .review), size: 11, color: GColor.muted, underline: true)
                     .padding(.horizontal, G.gap)
-                    .padding(.vertical, G.small)
+                    .padding(.vertical, pixelAligned(G.small))
             }
             .buttonStyle(.plain)
             .disabled(state.isBusy)
         }
         .padding(.horizontal, G.gutter)
-        .padding(.bottom, G.gutter)
+        .padding(.bottom, pixelAligned(G.gutter))
         .frame(maxWidth: .infinity)
         .background(GColor.loginPanel)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func pixelAligned(_ points: CGFloat) -> CGFloat {
+        (points * displayScale).rounded() / displayScale
     }
 
     private func socialButton(_ provider: LoginProvider) -> some View {
@@ -134,6 +139,8 @@ private struct LoginGarden: View {
 private struct ReviewLoginDialog: View {
     let onCancel: () -> Void
     let onSubmit: (String, String) -> Void
+    private enum Field: Hashable { case identifier, password }
+    @FocusState private var focusedField: Field?
     @State private var identifier = ""
     @State private var password = ""
 
@@ -144,11 +151,17 @@ private struct ReviewLoginDialog: View {
                 GText(text: LoginText.reviewTitle, size: 18, weight: 700)
                 GText(text: LoginText.reviewDescription)
                 TextField("아이디", text: $identifier)
+                    .focused($focusedField, equals: .identifier)
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .password }
                     .textContentType(.username)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .textFieldStyle(.roundedBorder)
                 SecureField("비밀번호", text: $password)
+                    .focused($focusedField, equals: .password)
+                    .submitLabel(.done)
+                    .onSubmit { focusedField = nil }
                     .textContentType(.password)
                     .textFieldStyle(.roundedBorder)
                 HStack {
