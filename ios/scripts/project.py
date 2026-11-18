@@ -140,6 +140,12 @@ def generate() -> dict[Path, bytes]:
     ET.SubElement(scheme, "ArchiveAction", buildConfiguration="Release", revealArchiveInOrganizer="YES")
     ET.indent(scheme)
     info = {
+        "CFBundleIdentifier": "$(PRODUCT_BUNDLE_IDENTIFIER)",
+        "CFBundleExecutable": "$(EXECUTABLE_NAME)",
+        "CFBundleName": "$(PRODUCT_NAME)",
+        "CFBundlePackageType": "APPL",
+        "CFBundleShortVersionString": "1.0",
+        "CFBundleVersion": "1",
         "CFBundleDevelopmentRegion": "ko", "CFBundleDisplayName": "꾸기",
         "UIAppFonts": ["Resources/Fonts/noto_sans_kr_variable.ttf"],
         "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],

@@ -6,6 +6,18 @@
 	<string>ko</string>
 	<key>CFBundleDisplayName</key>
 	<string>꾸기</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Resources/Fonts/noto_sans_kr_variable.ttf</string>
