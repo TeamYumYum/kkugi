@@ -58,9 +58,9 @@ struct OnboardingScreen: View {
                         GText(text: "나중에 마이에서 바꿀 수 있어요.", color: GColor.muted)
                     case 2:
                         GText(text: "어떤 목표로\n시작할까요?", size: 24, weight: 700)
-                        goalChoice("LOSE", "체중 감량", "천천히, 일주일에 0.5kg씩")
-                        goalChoice("MAINTAIN", "지금 체중 유지", "먹은 만큼 움직이기")
-                        goalChoice("GAIN", "근력 키우기", "단백질을 넉넉히, 루틴은 점진적으로")
+                        choice("LOSE", "체중 감량", "천천히, 일주일에 0.5kg씩", $draft.goal)
+                        choice("MAINTAIN", "지금 체중 유지", "먹은 만큼 움직이기", $draft.goal)
+                        choice("GAIN", "근력 키우기", "단백질을 넉넉히, 루틴은 점진적으로", $draft.goal)
                         GText(text: "주 몇 번 운동할지는 운동 탭에서 정해요", color: GColor.muted)
                     case 3:
                         GText(text: "몸 정보를 알려 주세요", size: 24, weight: 700)
@@ -69,20 +69,39 @@ struct OnboardingScreen: View {
                         TextField("키 (cm)", text: $draft.height).keyboardType(.decimalPad)
                         TextField("몸무게 (kg)", text: $draft.weight).keyboardType(.decimalPad)
                         GText(text: "평소 활동량", weight: 700)
-                        choices([("SEDENTARY","거의 앉아 있어요"),("LIGHT","가볍게 움직여요"),("MODERATE","보통이에요"),("ACTIVE","활동적이에요"),("VERY_ACTIVE","매우 활동적이에요")], $draft.activity)
+                        VStack(spacing: G.small) {
+                            choice("SEDENTARY", "거의 앉아 있어요", "사무직, 운동은 거의 안 해요", $draft.activity)
+                            choice("LIGHT", "가볍게 움직여요", "주 1~3회 가벼운 운동", $draft.activity)
+                            choice("MODERATE", "보통이에요", "주 3~5회 중강도 운동", $draft.activity)
+                            choice("ACTIVE", "활동적이에요", "주 6~7회 고강도 운동", $draft.activity)
+                            choice("VERY_ACTIVE", "매우 활동적이에요", "하루 2회 운동이나 육체 노동", $draft.activity)
+                        }
                         GText(text: "목표 칼로리를 계산하는 데만 써요", color: GColor.muted)
                     default:
-                        ArtImage(asset: .heart).scaledToFit()
-                            .frame(maxWidth: .infinity).frame(height: G.dp(240))
-                            .accessibilityHidden(true)
+                        ZStack {
+                            EllipticalGradient(colors: [Color(hex: 0x26292E).opacity(0.14), .clear],
+                                               startRadiusFraction: 0, endRadiusFraction: 0.5)
+                                .frame(width: G.dp(240 * 0.68), height: G.dp(28))
+                                .padding(.bottom, G.dp(30))
+                                .frame(maxHeight: .infinity, alignment: .bottom)
+                            ArtImage(asset: .heart).scaledToFit().padding(.bottom, G.dp(12))
+                                .frame(width: G.dp(240), height: G.dp(240))
+                        }.frame(maxWidth: .infinity).frame(height: G.dp(280)).accessibilityHidden(true)
                         GText(text: "\(draft.normalizedNickname ?? draft.nickname)님, 꾸기를 만났어요!", size: 24, weight: 700)
                         VStack(alignment: .leading, spacing: G.small) {
                             GText(text: "하루 목표", color: GColor.muted)
-                            if let kcal { GText(text: "\(kcal.formatted())kcal", size: 24, weight: 700) }
+                            if let kcal { GText(text: "\(kcal.formatted())kcal", size: 24, weight: 800) }
                             else if targetFailed {
                                 Button("하루 목표 다시 불러오기") { Task { await loadTarget() } }
-                            } else { Text("계산 중") }
-                        }.task { await loadTarget() }
+                            } else { GText(text: "계산 중", size: 24, weight: 800) }
+                            if let goal = ["LOSE": "체중 감량", "MAINTAIN": "지금 체중 유지", "GAIN": "근력 키우기"][draft.goal] {
+                                GText(text: goal, color: Color(hex: 0x2E6DB4))
+                            }
+                        }
+                        .padding(G.dp(14)).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(.white, in: RoundedRectangle(cornerRadius: G.dp(16)))
+                        .shadow(color: .black.opacity(0.05), radius: G.dp(1.5), y: G.dp(1))
+                        .task { await loadTarget() }
                     }
                     if !error.isEmpty { Text(error).foregroundStyle(.red) }
                 }
@@ -105,10 +124,10 @@ struct OnboardingScreen: View {
         do { kcal = try await dailyTarget() } catch { targetFailed = true }
     }
 
-    private func goalChoice(_ value: String, _ title: String, _ description: String) -> some View {
-        let selected = draft.goal == value
+    private func choice(_ value: String, _ title: String, _ description: String, _ selection: Binding<String>) -> some View {
+        let selected = selection.wrappedValue == value
         let shape = RoundedRectangle(cornerRadius: G.dp(14), style: .circular)
-        return Button { draft.goal = value } label: {
+        return Button { selection.wrappedValue = value } label: {
             HStack(spacing: G.dp(10)) {
                 VStack(alignment: .leading, spacing: 0) {
                     GText(text: title, size: 14, weight: 700)
@@ -169,9 +188,13 @@ struct OnboardingScreen: View {
 
 #if DEBUG
 extension OnboardingScreen {
-    static func reference(showGoal: Bool) -> Self {
+    static func reference(step: Int) -> Self {
         var screen = Self(submit: { _ in }, openHome: {}, dailyTarget: { 1800 })
-        screen._step = State(initialValue: showGoal ? 2 : 1)
+        screen._step = State(initialValue: step)
+        if step == 4 {
+            screen._draft = State(initialValue: OnboardingDraft(nickname: "꾸기", goal: "MAINTAIN"))
+            screen._kcal = State(initialValue: 1800)
+        }
         return screen
     }
 }

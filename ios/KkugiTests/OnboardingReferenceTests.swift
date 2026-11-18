@@ -4,8 +4,8 @@ import XCTest
 
 final class OnboardingReferenceTests: XCTestCase {
     @MainActor func testFixedSizeNativeOnboardingScreens() async throws {
-        for (name, goal) in [("nickname", false), ("goal", true)] {
-            let root = OnboardingScreen.reference(showGoal: goal)
+        for (name, step) in [("nickname", 1), ("goal", 2), ("body", 3), ("meet", 4)] {
+            let root = OnboardingScreen.reference(step: step)
                 .environment(\.locale, Locale(identifier: "ko_KR"))
                 .environment(\.displayScale, 3)
                 .dynamicTypeSize(.large)
