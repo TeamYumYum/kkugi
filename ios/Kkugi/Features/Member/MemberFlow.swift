@@ -2,10 +2,10 @@ import SwiftUI
 
 @MainActor
 final class MemberFlow: ObservableObject {
-    enum Route { case login, onboarding, profile }
+    enum Route { case login, onboarding, home, profile }
     @Published private(set) var route: Route = .login
     @Published var profile: MemberProfileResponse?
-    private let session: AuthSession?
+    let session: AuthSession?
 
     init(baseURL: URL?) {
         session = baseURL.map {
@@ -16,13 +16,13 @@ final class MemberFlow: ObservableObject {
 
     func restore() async {
         guard let item = try? await session?.current() else { return }
-        route = item.onboarded ? .profile : .onboarding
+        route = item.onboarded ? .home : .onboarding
     }
 
     func review(_ login: String, _ password: String) async throws {
         guard let session else { throw URLError(.badURL) }
         let member = try await session.review(loginID: login, password: password)
-        route = member.onboarded ? .profile : .onboarding
+        route = member.onboarded ? .home : .onboarding
     }
 
     func submit(_ draft: OnboardingDraft) async throws {
@@ -38,6 +38,8 @@ final class MemberFlow: ObservableObject {
         try await session.markOnboarded(for: item.sessionID)
         profile = saved
     }
+
+    func showHome() { route = .home }
 
     func showProfile() { route = .profile }
 
@@ -65,6 +67,7 @@ struct MemberProfileScreen: View {
     @State private var message = ""
     var body: some View {
         List {
+            Button("홈으로", action: flow.showHome)
             if let profile = flow.profile {
                 Text(profile.nickname)
                 LabeledContent("생년월일", value: profile.birthDate)

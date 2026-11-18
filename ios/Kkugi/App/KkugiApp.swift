@@ -32,7 +32,9 @@ struct LoginRoot: View {
         Group {
             switch flow.route {
             case .login: login
-            case .onboarding: OnboardingScreen(submit: flow.submit, openHome: flow.showProfile)
+            case .onboarding: OnboardingScreen(submit: flow.submit, openHome: flow.showHome)
+            case .home:
+                if let session = flow.session { HomeScreen(session: session, profile: flow.showProfile) }
             case .profile: MemberProfileScreen(flow: flow)
             }
         }.task { await flow.restore() }
