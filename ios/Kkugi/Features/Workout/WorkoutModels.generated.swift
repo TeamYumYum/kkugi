@@ -257,3 +257,41 @@ struct WorkoutScheduleCreateRequest: Codable {
 struct WorkoutScheduleMoveRequest: Codable {
     let `scheduledDate`: String
 }
+
+struct PersonalRecordResponse: Codable {
+    let `reps`: Int
+    let `weightKg`: Double
+    let `kind`: String
+    let `achievedAt`: String
+    let `sessionId`: Int
+}
+
+struct PersonalRecordListResponse: Codable {
+    let `exerciseId`: Int
+    let `exerciseName`: String
+    let `records`: [PersonalRecordResponse]
+}
+
+struct ApiResponsePersonalRecordListResponse: Codable {
+    let `success`: Bool?
+    let `data`: PersonalRecordListResponse?
+    let `error`: ErrorDetail?
+}
+
+struct WorkoutRecentSetResponse: Codable {
+    let `sessionId`: Int
+    let `clientUuid`: String
+    let `startedAt`: String
+    let `endedAt`: String
+    let `exercise`: WorkoutRecordExerciseResponse
+}
+
+struct WorkoutRecentSetListResponse: Codable {
+    let `items`: [WorkoutRecentSetResponse]
+}
+
+struct ApiResponseWorkoutRecentSetListResponse: Codable {
+    let `success`: Bool?
+    let `data`: WorkoutRecentSetListResponse?
+    let `error`: ErrorDetail?
+}
