@@ -6,6 +6,7 @@ struct MealDiary: View {
     @State private var day: DailyMealsResponse?
     @State private var failure = false
     @State private var adding = false
+    @State private var editing: MealDetailResponse?
     @State private var selectedForRemoval: Int?
     @State private var showRemoval = false
     @State private var mutationError = ""
@@ -36,16 +37,19 @@ struct MealDiary: View {
                             Text(item.foodName)
                         }
                         LabeledContent("열량", value: "\(meal.totalNutrition.kcal.formatted()) kcal")
+                        if MealDay.isToday(date) {
+                            Button("식사 수정") { editing = meal; adding = true }
+                        }
                         Button("식사 삭제", role: .destructive) {
                             selectedForRemoval = meal.id
                             showRemoval = true
-                        }
+                        }.disabled(!MealDay.isToday(date))
                     }
                 }
             } else { ProgressView() }
         }
         .navigationTitle("식사 기록")
-        .toolbar { Button("식사 추가") { adding = true } }
+        .toolbar { Button("식사 추가") { editing = nil; adding = true }.disabled(!MealDay.isToday(date)) }
         .alert("이 식사 기록을 삭제할까요?", isPresented: $showRemoval) {
             Button("취소", role: .cancel) { selectedForRemoval = nil }
             Button("삭제", role: .destructive) {
@@ -61,7 +65,7 @@ struct MealDiary: View {
             }
         }
         .sheet(isPresented: $adding) {
-            ManualMealForm(session: session, date: date) {
+            ManualMealForm(session: session, date: Date(), original: editing) {
                 adding = false
                 Task { await load(dateKey) }
             }
@@ -88,6 +92,8 @@ struct ManualMealForm: View {
     let session: AuthSession
     let saved: () -> Void
     let fromRecommendation: Bool
+    let original: MealDetailResponse?
+    @State private var previousItems: [ExistingMealRow]
     @Environment(\.dismiss) private var dismiss
     @State private var date: Date
     @State private var kind = "LUNCH"
@@ -103,38 +109,55 @@ struct ManualMealForm: View {
     @State private var busy = false
     @State private var error = ""
 
-    init(session: AuthSession, date: Date, recommendation: [LastMealFood] = [], saved: @escaping () -> Void) {
+    init(session: AuthSession, date: Date, original: MealDetailResponse? = nil, recommendation: [LastMealFood] = [], saved: @escaping () -> Void) {
         self.session = session
         self.saved = saved
+        self.original = original
+        _previousItems = State(initialValue: original?.items.map(ExistingMealRow.init) ?? [])
         fromRecommendation = !recommendation.isEmpty
         _foods = State(initialValue: recommendation.map { item in
             Portion(food: FoodResponse(id: item.foodId, name: item.foodName, nutritionPer100g: item.nutritionPer100g,
                                       servingGrams: item.grams, owned: false), grams: String(item.grams))
         })
-        _kind = State(initialValue: recommendation.isEmpty ? "LUNCH" : "DINNER")
-        _date = State(initialValue: date)
+        _kind = State(initialValue: original?.mealType ?? (recommendation.isEmpty ? "LUNCH" : "DINNER"))
+        _date = State(initialValue: original.flatMap { MealDay.parse($0.eatenAt) } ?? date)
     }
 
     var body: some View {
         NavigationStack {
             Form {
-                DatePicker("식사 시각", selection: $date, in: ...Date())
+                DatePicker("식사 시각", selection: $date, in: MealDay.calendar.startOfDay(for: Date())...Date(),
+                           displayedComponents: .hourAndMinute).environment(\.timeZone, MealDay.calendar.timeZone)
                 Picker("식사 구분", selection: $kind) {
                     Text("아침").tag("BREAKFAST"); Text("점심").tag("LUNCH")
                     Text("저녁").tag("DINNER"); Text("간식").tag("SNACK")
                 }
-                Section("식사 사진") {
-                    Button(recognition == nil ? "사진으로 음식 인식" : "사진 다시 선택") { scanning = true }
-                    if let recognition {
-                        if recognition.regions.isEmpty { Text("사진에 나온 음식을 직접 추가해 주세요") }
-                        ForEach(recognition.regions, id: \.regionNo) { region in
-                            Picker("영역 \(region.regionNo)", selection: Binding(
-                                get: { ranks[region.regionNo] ?? 0 },
-                                set: { ranks[region.regionNo] = $0 }
-                            )) {
-                                Text("선택하지 않음").tag(0)
-                                ForEach(region.candidates, id: \.rank) { candidate in
-                                    Text("\(candidate.foodName) · \(candidate.grams)g").tag(candidate.rank)
+                if original != nil {
+                    Section("기록한 음식") {
+                        ForEach($previousItems) { $row in
+                            VStack(alignment: .leading) {
+                                if row.foodID == nil { TextField("음식 이름", text: $row.name) }
+                                else {
+                                    Text(row.name)
+                                    TextField("섭취량 (g)", text: $row.grams).keyboardType(.numberPad)
+                                }
+                            }
+                        }.onDelete { previousItems.remove(atOffsets: $0) }
+                    }
+                } else {
+                    Section("식사 사진") {
+                        Button(recognition == nil ? "사진으로 음식 인식" : "사진 다시 선택") { scanning = true }.disabled(previousBody != nil)
+                        if let recognition {
+                            if recognition.regions.isEmpty { Text("사진에 나온 음식을 직접 추가해 주세요") }
+                            ForEach(recognition.regions, id: \.regionNo) { region in
+                                Picker("영역 \(region.regionNo)", selection: Binding(
+                                    get: { ranks[region.regionNo] ?? 0 },
+                                    set: { ranks[region.regionNo] = $0 }
+                                )) {
+                                    Text("선택하지 않음").tag(0)
+                                    ForEach(region.candidates, id: \.rank) { candidate in
+                                        Text("\(candidate.foodName) · \(candidate.grams)g").tag(candidate.rank)
+                                    }
                                 }
                             }
                         }
@@ -153,9 +176,9 @@ struct ManualMealForm: View {
                 Section("목록에 없는 음식 (한 줄에 하나)") { TextEditor(text: $names) }
                 if !error.isEmpty { Text(error).foregroundStyle(.red) }
                 Button("저장") { Task { await save() } }
-                    .disabled(!ranks.values.contains(where: { $0 > 0 }) && foods.isEmpty && names.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(previousItems.isEmpty && !ranks.values.contains(where: { $0 > 0 }) && foods.isEmpty && names.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }.disabled(busy)
-            .navigationTitle("직접 입력")
+            .navigationTitle(original == nil ? "식사 추가" : "식사 수정")
             .toolbar { Button("취소") { dismiss() }.disabled(busy) }
         }.interactiveDismissDisabled(busy)
         .sheet(isPresented: $scanning) {
@@ -194,6 +217,12 @@ struct ManualMealForm: View {
                 foodId: candidate.foodId, grams: candidate.foodId == nil ? nil : candidate.grams,
                 foodName: candidate.foodId == nil ? candidate.foodName : nil))
         }
+        guard MealDay.isToday(date), date <= Date() else { error = "오늘 먹은 식사만 기록할 수 있어요"; return }
+        guard let kept = try? previousItems.map({ try $0.request() }) else {
+            error = "음식 이름과 섭취량을 확인해 주세요"
+            return
+        }
+        items.insert(contentsOf: kept, at: 0)
         guard !items.isEmpty else { return }
         do {
             let encoder = JSONEncoder()
@@ -202,6 +231,12 @@ struct ManualMealForm: View {
                 try encoder.encode(MealSaveRequest(clientUuid: id.uuidString, clientRevision: rev,
                     eatenAt: ISO8601DateFormatter().string(from: date), mealType: kind, photoRecognitionId: recognition?.recognitionId,
                     items: items, fromLastMealCard: fromRecommendation))
+            }
+            if let original {
+                let change = MealChangeRequest(eatenAt: ISO8601DateFormatter().string(from: date), mealType: kind, items: items)
+                _ = try await session.protectedRequest("api/v1/meals/\(original.id)", method: "PATCH", body: encoder.encode(change))
+                saved()
+                return
             }
             let signature = try body(0)
             if let previousBody, signature != previousBody { revision += 1 }
@@ -269,5 +304,49 @@ private struct FoodSearch: View {
         } catch {
             if keyword == input { message = "음식을 검색하지 못했어요. 다시 시도해 주세요" }
         }
+    }
+}
+
+private enum MealDay {
+    static var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Asia/Seoul")!
+        return calendar
+    }
+
+    static func isToday(_ date: Date) -> Bool { calendar.isDateInToday(date) }
+
+    static func parse(_ value: String) -> Date? {
+        let format = ISO8601DateFormatter()
+        if let date = format.date(from: value) { return date }
+        format.formatOptions.insert(.withFractionalSeconds)
+        return format.date(from: value)
+    }
+}
+
+private struct ExistingMealRow: Identifiable {
+    let id = UUID()
+    let foodID: Int?
+    let region: Int?
+    let rank: Int?
+    var name: String
+    var grams: String
+
+    init(_ source: MealDetailItemResponse) {
+        foodID = source.foodId
+        region = source.candidateRegionNo
+        rank = source.candidateRank
+        name = source.foodName
+        grams = String(source.grams)
+    }
+
+    func request() throws -> MealItemRequest {
+        if let foodID {
+            guard let amount = Int(grams), (1...5000).contains(amount) else { throw URLError(.cannotParseResponse) }
+            return MealItemRequest(candidateRegionNo: region, candidateRank: rank, foodId: foodID, grams: amount, foodName: nil)
+        }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard (1...50).contains(trimmed.unicodeScalars.count) else { throw URLError(.cannotParseResponse) }
+        return MealItemRequest(candidateRegionNo: region, candidateRank: rank, foodId: nil, grams: nil, foodName: trimmed)
     }
 }
