@@ -128,3 +128,16 @@ struct ApiResponseFoodSearchResponse: Codable {
     let `data`: FoodSearchResponse?
     let `error`: ErrorDetail?
 }
+
+struct MealPhotoRecognitionResponse: Codable {
+    let `recognitionId`: Int
+    let `status`: String
+    let `regions`: [RecognitionRegionResponse]
+    let `photoUrl`: String?
+}
+
+struct ApiResponseMealPhotoRecognitionResponse: Codable {
+    let `success`: Bool?
+    let `data`: MealPhotoRecognitionResponse?
+    let `error`: ErrorDetail?
+}

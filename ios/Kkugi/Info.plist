@@ -20,6 +20,8 @@
 	<string>1</string>
 	<key>KkugiAPIBaseURL</key>
 	<string>$(KKUGI_API_BASE_URL)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>식사 사진을 찍어 음식 기록에 사용합니다.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Fonts/noto_sans_kr_variable.ttf</string>

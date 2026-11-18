@@ -148,6 +148,7 @@ def generate() -> dict[Path, bytes]:
         "CFBundleShortVersionString": "1.0",
         "CFBundleVersion": "1",
         "CFBundleDevelopmentRegion": "ko", "CFBundleDisplayName": "꾸기",
+        "NSCameraUsageDescription": "식사 사진을 찍어 음식 기록에 사용합니다.",
         "KkugiAPIBaseURL": "$(KKUGI_API_BASE_URL)",
         "UIAppFonts": ["Fonts/noto_sans_kr_variable.ttf"],
         "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],

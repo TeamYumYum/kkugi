@@ -93,6 +93,9 @@ private struct ManualMealForm: View {
     @State private var names = ""
     @State private var foods: [Portion] = []
     @State private var searching = false
+    @State private var scanning = false
+    @State private var recognition: MealPhotoRecognitionResponse?
+    @State private var ranks: [Int: Int] = [:]
     @State private var id = UUID()
     @State private var revision = 1
     @State private var previousBody: Data?
@@ -113,6 +116,23 @@ private struct ManualMealForm: View {
                     Text("아침").tag("BREAKFAST"); Text("점심").tag("LUNCH")
                     Text("저녁").tag("DINNER"); Text("간식").tag("SNACK")
                 }
+                Section("식사 사진") {
+                    Button(recognition == nil ? "사진으로 음식 인식" : "사진 다시 선택") { scanning = true }
+                    if let recognition {
+                        if recognition.regions.isEmpty { Text("사진에 나온 음식을 직접 추가해 주세요") }
+                        ForEach(recognition.regions, id: \.regionNo) { region in
+                            Picker("영역 \(region.regionNo)", selection: Binding(
+                                get: { ranks[region.regionNo] ?? 0 },
+                                set: { ranks[region.regionNo] = $0 }
+                            )) {
+                                Text("선택하지 않음").tag(0)
+                                ForEach(region.candidates, id: \.rank) { candidate in
+                                    Text("\(candidate.foodName) · \(candidate.grams)g").tag(candidate.rank)
+                                }
+                            }
+                        }
+                    }
+                }
                 Section("음식 목록") {
                     Button("음식 검색") { searching = true }
                     ForEach($foods) { $portion in
@@ -126,11 +146,18 @@ private struct ManualMealForm: View {
                 Section("목록에 없는 음식 (한 줄에 하나)") { TextEditor(text: $names) }
                 if !error.isEmpty { Text(error).foregroundStyle(.red) }
                 Button("저장") { Task { await save() } }
-                    .disabled(foods.isEmpty && names.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(!ranks.values.contains(where: { $0 > 0 }) && foods.isEmpty && names.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }.disabled(busy)
             .navigationTitle("직접 입력")
             .toolbar { Button("취소") { dismiss() }.disabled(busy) }
         }.interactiveDismissDisabled(busy)
+        .sheet(isPresented: $scanning) {
+            MealPhotoPicker(session: session) { result in
+                recognition = result
+                ranks = Dictionary(uniqueKeysWithValues: result.regions.map { ($0.regionNo, $0.candidates.first?.rank ?? 0) })
+                scanning = false
+            }
+        }
         .sheet(isPresented: $searching) {
             FoodSearch(session: session) { food in
                 foods.append(Portion(food: food, grams: String(food.servingGrams ?? 100)))
@@ -154,13 +181,19 @@ private struct ManualMealForm: View {
             }
             items.append(MealItemRequest(candidateRegionNo: nil, candidateRank: nil, foodId: food.food.id, grams: grams, foodName: nil))
         }
+        for region in recognition?.regions ?? [] {
+            guard let candidate = region.candidates.first(where: { $0.rank == ranks[region.regionNo] }) else { continue }
+            items.append(MealItemRequest(candidateRegionNo: region.regionNo, candidateRank: candidate.rank,
+                foodId: candidate.foodId, grams: candidate.foodId == nil ? nil : candidate.grams,
+                foodName: candidate.foodId == nil ? candidate.foodName : nil))
+        }
         guard !items.isEmpty else { return }
         do {
             let encoder = JSONEncoder()
             encoder.outputFormatting = .sortedKeys
             func body(_ rev: Int) throws -> Data {
                 try encoder.encode(MealSaveRequest(clientUuid: id.uuidString, clientRevision: rev,
-                    eatenAt: ISO8601DateFormatter().string(from: date), mealType: kind, photoRecognitionId: nil,
+                    eatenAt: ISO8601DateFormatter().string(from: date), mealType: kind, photoRecognitionId: recognition?.recognitionId,
                     items: items, fromLastMealCard: false))
             }
             let signature = try body(0)

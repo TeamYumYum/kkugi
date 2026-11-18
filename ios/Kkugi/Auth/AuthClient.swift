@@ -49,7 +49,7 @@ struct AuthClient {
         try await request("api/v1/auth/" + path, method: "POST", body: body, bearer: bearer)
     }
 
-    func request(_ path: String, method: String, body: Data?, bearer: String?, query: [URLQueryItem] = []) async throws -> (Data, Int) {
+    func request(_ path: String, method: String, body: Data?, bearer: String?, query: [URLQueryItem] = [], contentType: String = "application/json") async throws -> (Data, Int) {
         guard baseURL.scheme == "https", baseURL.host != nil else { throw URLError(.badURL) }
         var url = baseURL.appendingPathComponent(path)
         if !query.isEmpty { url.append(queryItems: query) }
@@ -58,7 +58,7 @@ struct AuthClient {
         request.httpBody = body
         request.cachePolicy = .reloadIgnoringLocalCacheData
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
+        if body != nil { request.setValue(contentType, forHTTPHeaderField: "Content-Type") }
         if let bearer { request.setValue("Bearer " + bearer, forHTTPHeaderField: "Authorization") }
         let (data, response) = try await session.data(for: request, delegate: AuthRedirectPolicy())
         guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
