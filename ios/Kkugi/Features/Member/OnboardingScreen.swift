@@ -12,17 +12,30 @@ struct OnboardingScreen: View {
     @State private var error = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: G.gap) {
-            if step < 4 {
-                HStack {
-                    if step > 1 { Button("뒤로") { step -= 1; error = "" } }
-                    Spacer()
-                    GText(text: "\(step) / 3")
-                }
-                ProgressView(value: Double(step), total: 3)
-            }
+        VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: G.gap) {
+                    if step < 4 {
+                        HStack {
+                            if step > 1 {
+                                Button { step -= 1; error = "" } label: {
+                                    Image(systemName: "chevron.left")
+                                        .frame(width: G.dp(48), height: G.dp(48))
+                                }.accessibilityLabel("뒤로")
+                            }
+                            Spacer()
+                            GText(text: "\(step) / 3")
+                        }
+                        .frame(minHeight: G.dp(32))
+                        .padding(.top, G.dp(6))
+                        GeometryReader { geometry in
+                            ZStack(alignment: .leading) {
+                                Capsule().fill(Color(hex: 0xE3E8EE))
+                                Capsule().fill(Color(hex: 0x5AA5F0))
+                                    .frame(width: geometry.size.width * CGFloat(step) / 3)
+                            }
+                        }.frame(height: G.dp(4))
+                    }
                     switch step {
                     case 1:
                         HStack(spacing: G.gap) {
@@ -30,11 +43,24 @@ struct OnboardingScreen: View {
                                 .frame(width: G.dp(64), height: G.dp(64)).accessibilityHidden(true)
                             GText(text: "만나서 반가워요!\n뭐라고 부를까요?", size: 24, weight: 700)
                         }
-                        TextField("닉네임", text: $draft.nickname)
-                        GText(text: "2자 이상 12자 이하로 적어 주세요", color: GColor.muted)
+                        VStack(alignment: .leading, spacing: G.small) {
+                            GText(text: "닉네임", size: 12, weight: 500, color: GColor.muted)
+                            HStack {
+                                TextField("", text: $draft.nickname)
+                                    .accessibilityLabel("닉네임").textFieldStyle(.plain)
+                                GText(text: "\(draft.nickname.trimmingCharacters(in: .whitespacesAndNewlines).unicodeScalars.count)/12", color: GColor.muted)
+                            }
+                            .padding(.horizontal, G.dp(14)).padding(.vertical, G.dp(12))
+                            .background(.white, in: RoundedRectangle(cornerRadius: G.dp(14)))
+                            .overlay { RoundedRectangle(cornerRadius: G.dp(14)).strokeBorder(Color(hex: 0xE9ECEF), lineWidth: G.dp(1.5)) }
+                            GText(text: "2자 이상 12자 이하로 적어 주세요", size: 12, color: GColor.muted)
+                        }
+                        GText(text: "나중에 마이에서 바꿀 수 있어요.", color: GColor.muted)
                     case 2:
                         GText(text: "어떤 목표로\n시작할까요?", size: 24, weight: 700)
-                        choices([("LOSE","체중 감량"),("MAINTAIN","지금 체중 유지"),("GAIN","근력 키우기")], $draft.goal)
+                        goalChoice("LOSE", "체중 감량", "천천히, 일주일에 0.5kg씩")
+                        goalChoice("MAINTAIN", "지금 체중 유지", "먹은 만큼 움직이기")
+                        goalChoice("GAIN", "근력 키우기", "단백질을 넉넉히, 루틴은 점진적으로")
                         GText(text: "주 몇 번 운동할지는 운동 탭에서 정해요", color: GColor.muted)
                     case 3:
                         GText(text: "몸 정보를 알려 주세요", size: 24, weight: 700)
@@ -61,19 +87,51 @@ struct OnboardingScreen: View {
                     if !error.isEmpty { Text(error).foregroundStyle(.red) }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(G.gutter)
             }
             Button { Task { await next() } } label: {
-                Text(busy ? "저장하는 중" : step == 4 ? "홈으로" : step == 3 ? "완료" : "다음").foregroundStyle(.white)
-            }.buttonStyle(GButtonStyle(background: GColor.text, outline: false))
+                GText(text: busy ? "저장하는 중" : step == 4 ? "홈으로" : step == 3 ? "완료" : "다음", size: 15, weight: 700, color: .white)
+            }.buttonStyle(GButtonStyle(background: Color(hex: 0x26292E), outline: false))
+                .padding(.horizontal, G.gutter).padding(.vertical, G.small)
         }
         .disabled(busy)
         .textFieldStyle(.roundedBorder)
-        .padding(G.gutter)
+        .foregroundStyle(GColor.text)
+        .background(Color(hex: 0xF5F7FA))
     }
 
     @MainActor private func loadTarget() async {
         targetFailed = false
         do { kcal = try await dailyTarget() } catch { targetFailed = true }
+    }
+
+    private func goalChoice(_ value: String, _ title: String, _ description: String) -> some View {
+        let selected = draft.goal == value
+        let shape = RoundedRectangle(cornerRadius: G.dp(14), style: .circular)
+        return Button { draft.goal = value } label: {
+            HStack(spacing: G.dp(10)) {
+                VStack(alignment: .leading, spacing: 0) {
+                    GText(text: title, size: 14, weight: 700)
+                    GText(text: description, size: 12, color: GColor.muted)
+                }
+                Spacer()
+                ZStack {
+                    if selected {
+                        Circle().fill(Color(hex: 0x5AA5F0))
+                        Image(systemName: "checkmark").foregroundStyle(.white)
+                    } else {
+                        Circle().strokeBorder(Color(hex: 0xCED4DA), lineWidth: G.dp(2))
+                    }
+                }.frame(width: G.dp(24), height: G.dp(24))
+            }
+            .padding(.horizontal, G.dp(14)).padding(.vertical, G.dp(13))
+            .background(selected ? Color(hex: 0xE7F2FE) : Color(hex: 0xF0F2F5), in: shape)
+            .overlay { if selected { shape.strokeBorder(Color(hex: 0x5AA5F0), lineWidth: G.dp(1.5)) } }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityHint(description)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     private func choices(_ options: [(String, String)], _ selection: Binding<String>) -> some View {

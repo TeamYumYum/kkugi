@@ -31,6 +31,34 @@ final class AppFlowUITests: XCTestCase {
         XCTAssertEqual(field.value as? String, "Kkugi")
     }
 
+    @MainActor func testAnimatedHomeOverlayLayout() throws {
+        let app = XCUIApplication()
+        app.launchEnvironment["KKUGI_UI_FIXTURE"] = "home"
+        app.launchEnvironment["KKUGI_LAYOUT_REFERENCE"] = "1"
+        app.launch()
+        let labels = ["profile": "내 프로필", "streak": "연속 기록", "inbox": "알림", "chat": "꾸기에게 묻기"]
+        let viewport = app.descendants(matching: .any).matching(identifier: "reference-viewport").firstMatch
+        XCTAssertTrue(viewport.waitForExistence(timeout: 10))
+        let frame = viewport.frame
+        XCTAssertEqual(frame.width, 360)
+        XCTAssertEqual(frame.height, 720)
+        let scale = CGFloat(XCUIScreen.main.screenshot().image.cgImage!.width) / app.frame.width
+        XCTAssertEqual(scale, 3)
+        var buttons: [String: [Int]] = [:]
+        for (key, label) in labels {
+            let button = app.buttons[label]
+            XCTAssertTrue(button.waitForExistence(timeout: 5))
+            let rect = button.frame.offsetBy(dx: -frame.minX, dy: -frame.minY)
+            buttons[key] = [rect.minX, rect.minY, rect.maxX, rect.maxY].map { Int(($0 * scale).rounded()) }
+        }
+        let payload: [String: Any] = ["case": "home-overlay", "viewport": [1080, 2160], "buttons": buttons]
+        let data = try JSONSerialization.data(withJSONObject: payload, options: [.sortedKeys])
+        let attachment = XCTAttachment(data: data, uniformTypeIdentifier: "public.json")
+        attachment.name = "home-overlay.json"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+
     @MainActor func testMealAndWorkoutFromHome() {
         let app = launch("home")
         let meal = app.buttons["식사 기록"]

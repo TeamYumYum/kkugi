@@ -11,7 +11,7 @@ struct WorkoutSchedule: View {
     @State private var confirming = false
     @State private var loading = true
     @State private var busy = false
-    @State private var error = ""
+    @State private var errorMessage = ""
 
     private var day: String { WorkoutDay.key(date) }
 
@@ -25,9 +25,9 @@ struct WorkoutSchedule: View {
                     }
                 }
             }
-            if !error.isEmpty { Text(error); Button("다시 조회") { Task { await load(day) } } }
+            if !errorMessage.isEmpty { Text(errorMessage); Button("다시 조회") { Task { await load(day) } } }
             if loading { ProgressView() }
-            else if items.isEmpty && error.isEmpty { Text("이날 예정된 운동이 없어요") }
+            else if items.isEmpty && errorMessage.isEmpty { Text("이날 예정된 운동이 없어요") }
             ForEach(items, id: \.id) { item in
                 Section(routines.first(where: { $0.id == item.routineId })?.name ?? "운동 일정") {
                     if let record = item.completedSessionId {
@@ -60,7 +60,7 @@ struct WorkoutSchedule: View {
 
     @MainActor private func load(_ key: String) async {
         loading = true
-        error = ""
+        errorMessage = ""
         items = []
         defer { if key == day && !Task.isCancelled { loading = false } }
         do {
@@ -69,7 +69,7 @@ struct WorkoutSchedule: View {
             let response = try JSONDecoder().decode(ApiResponseWorkoutScheduleListResponse.self, from: bytes)
             guard response.success == true, let result = response.data else { throw URLError(.badServerResponse) }
             if key == day && !Task.isCancelled { items = result.items }
-        } catch { if key == day && !Task.isCancelled { error = "운동 일정을 불러오지 못했어요" } }
+        } catch { if key == day && !Task.isCancelled { errorMessage = "운동 일정을 불러오지 못했어요" } }
     }
 
     @MainActor private func create(_ routine: Int) async {
@@ -82,7 +82,7 @@ struct WorkoutSchedule: View {
             await load(day)
         } catch {
             await load(day)
-            error = "예약 결과를 확인해 주세요. 다시 예약하기 전에 목록을 확인해 주세요"
+            errorMessage = "예약 결과를 확인해 주세요. 다시 예약하기 전에 목록을 확인해 주세요"
         }
     }
 
@@ -95,7 +95,7 @@ struct WorkoutSchedule: View {
             _ = try await session.protectedRequest("api/v1/workout-schedules/\(id)", method: "PATCH", body: JSONEncoder().encode(body))
             moving = nil
             if day == WorkoutDay.key(destination) { await load(day) } else { date = destination }
-        } catch { error = "일정을 옮기지 못했어요" }
+        } catch { errorMessage = "일정을 옮기지 못했어요" }
     }
 
     @MainActor private func remove(_ id: Int) async {
@@ -106,7 +106,7 @@ struct WorkoutSchedule: View {
             _ = try await session.protectedRequest("api/v1/workout-schedules/\(id)", method: "DELETE")
             deleting = nil
             await load(day)
-        } catch { error = "일정을 삭제하지 못했어요" }
+        } catch { errorMessage = "일정을 삭제하지 못했어요" }
     }
 }
 
