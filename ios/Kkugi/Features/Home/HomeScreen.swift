@@ -21,6 +21,7 @@ struct HomeScreen: View {
                         }.accessibilityLabel("알림")
                         Button("내 프로필", action: profile)
                     }
+                    NavigationLink("식사 기록") { MealDiary(session: session) }
                     GText(text: "식단 스트릭", size: 18, weight: 700)
                     if let growth {
                         GText(text: "\(growth.diet.currentDays)일 연속")

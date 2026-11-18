@@ -49,9 +49,11 @@ struct AuthClient {
         try await request("api/v1/auth/" + path, method: "POST", body: body, bearer: bearer)
     }
 
-    func request(_ path: String, method: String, body: Data?, bearer: String?) async throws -> (Data, Int) {
+    func request(_ path: String, method: String, body: Data?, bearer: String?, query: [URLQueryItem] = []) async throws -> (Data, Int) {
         guard baseURL.scheme == "https", baseURL.host != nil else { throw URLError(.badURL) }
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        var url = baseURL.appendingPathComponent(path)
+        if !query.isEmpty { url.append(queryItems: query) }
+        var request = URLRequest(url: url)
         request.httpMethod = method
         request.httpBody = body
         request.cachePolicy = .reloadIgnoringLocalCacheData
