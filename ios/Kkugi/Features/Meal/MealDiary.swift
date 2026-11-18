@@ -8,8 +8,11 @@ struct MealDiary: View {
     @State private var plan: CoachingPlanResponse?
     @State private var showsCalendar = false
     @State private var failure = false
-    @State private var adding = false
-    @State private var editing: MealDetailResponse?
+    private struct Editor: Identifiable {
+        let id = UUID()
+        let meal: MealDetailResponse?
+    }
+    @State private var editor: Editor?
     @State private var selectedForRemoval: Int?
     @State private var showRemoval = false
     @State private var mutationError = ""
@@ -38,7 +41,7 @@ struct MealDiary: View {
                         GText(text: "합계 \(day.totalNutrition.kcal.formatted())kcal", color: GColor.muted)
                     }
                     if day.meals.isEmpty {
-                        Button { editing = nil; adding = true } label: {
+                        Button { editor = Editor(meal: nil) } label: {
                             HStack {
                                 ArtImage(asset: .idle).scaledToFit().frame(width: G.dp(28), height: G.dp(28))
                                 GText(text: "아직 기록 전이에요")
@@ -56,7 +59,7 @@ struct MealDiary: View {
                             }.accessibilityLabel("식사 상세")
                             LabeledContent("열량", value: "\(meal.totalNutrition.kcal.formatted()) kcal")
                             if MealDay.isToday(date) {
-                                Button("식사 수정") { editing = meal; adding = true }
+                                Button("식사 수정") { editor = Editor(meal: meal) }
                             }
                             Button("식사 삭제", role: .destructive) {
                                 selectedForRemoval = meal.id
@@ -68,7 +71,7 @@ struct MealDiary: View {
             }.padding(.horizontal, G.gutter).padding(.vertical, G.small)
         }.background(Color(hex: 0xF5F7FA))
         .navigationTitle("식사").navigationBarTitleDisplayMode(.inline)
-        .toolbar { Button("식사 추가") { editing = nil; adding = true }.disabled(!MealDay.isToday(date)) }
+        .toolbar { Button("식사 추가") { editor = Editor(meal: nil) }.disabled(!MealDay.isToday(date)) }
         .alert("이 식사 기록을 삭제할까요?", isPresented: $showRemoval) {
             Button("취소", role: .cancel) { selectedForRemoval = nil }
             Button("삭제", role: .destructive) {
@@ -83,9 +86,9 @@ struct MealDiary: View {
                 }
             }
         }
-        .sheet(isPresented: $adding) {
-            ManualMealForm(session: session, date: Date(), original: editing) {
-                adding = false
+        .sheet(item: $editor) { selection in
+            ManualMealForm(session: session, date: Date(), original: selection.meal) {
+                editor = nil
                 Task { await load(dateKey) }
             }
         }
