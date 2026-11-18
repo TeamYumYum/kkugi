@@ -54,8 +54,17 @@ struct AuthClient {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         if let bearer { request.setValue("Bearer " + bearer, forHTTPHeaderField: "Authorization") }
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request, delegate: AuthRedirectPolicy())
         guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         return (data, http.statusCode)
+    }
+}
+
+private final class AuthRedirectPolicy: NSObject, URLSessionTaskDelegate {
+    func urlSession(_ session: URLSession, task: URLSessionTask,
+                    willPerformHTTPRedirection response: HTTPURLResponse,
+                    newRequest request: URLRequest,
+                    completionHandler: @escaping (URLRequest?) -> Void) {
+        completionHandler(nil)
     }
 }

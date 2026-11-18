@@ -3,6 +3,9 @@ import Security
 
 /// Local storage format. Both tokens rotate in the same Keychain write.
 struct StoredSession: Codable, Equatable {
+    let sessionID: UUID
+    let memberID: Int64
+    let onboarded: Bool
     let accessToken: String
     let refreshToken: String
 }
