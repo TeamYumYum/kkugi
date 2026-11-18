@@ -5,3 +5,4 @@ artifacts/
 xcuserdata/
 .DS_Store
 Local.xcconfig
+__pycache__/
