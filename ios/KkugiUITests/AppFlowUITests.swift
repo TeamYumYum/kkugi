@@ -64,7 +64,7 @@ final class AppFlowUITests: XCTestCase {
         let meal = app.buttons["식사 기록"]
         XCTAssertTrue(meal.waitForExistence(timeout: 10))
         meal.tap()
-        XCTAssertTrue(app.staticTexts["기록한 식사가 없어요"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["아직 기록 전이에요"].waitForExistence(timeout: 5))
         capture("meal-day-full.png")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["운동"].tap()

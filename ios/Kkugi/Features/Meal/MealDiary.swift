@@ -4,6 +4,9 @@ struct MealDiary: View {
     let session: AuthSession
     @State private var date = Date()
     @State private var day: DailyMealsResponse?
+    @State private var target: Double?
+    @State private var plan: CoachingPlanResponse?
+    @State private var showsCalendar = false
     @State private var failure = false
     @State private var adding = false
     @State private var editing: MealDetailResponse?
@@ -20,35 +23,51 @@ struct MealDiary: View {
     }
 
     var body: some View {
-        List {
-            DatePicker("날짜", selection: $date, displayedComponents: .date)
-                .environment(\.timeZone, TimeZone(identifier: "Asia/Seoul")!)
-            if !mutationError.isEmpty { Text(mutationError).foregroundStyle(.red) }
-            if failure {
-                Text("식사 기록을 불러오지 못했어요")
-                Button("다시 시도") { Task { await load(dateKey) } }
-            } else if let day {
-                LabeledContent("총 섭취 열량", value: "\(day.totalNutrition.kcal.formatted()) kcal")
-                if day.meals.isEmpty { Text("기록한 식사가 없어요") }
-                ForEach(day.meals, id: \.id) { meal in
-                    Section(["BREAKFAST":"아침", "LUNCH":"점심", "DINNER":"저녁", "SNACK":"간식"][meal.mealType] ?? meal.mealType) {
-                        ForEach(meal.items.indices, id: \.self) { index in
-                            let item = meal.items[index]
-                            Text(item.foodName)
-                        }
-                        LabeledContent("열량", value: "\(meal.totalNutrition.kcal.formatted()) kcal")
-                        if MealDay.isToday(date) {
-                            Button("식사 수정") { editing = meal; adding = true }
-                        }
-                        Button("식사 삭제", role: .destructive) {
-                            selectedForRemoval = meal.id
-                            showRemoval = true
-                        }.disabled(!MealDay.isToday(date))
+        ScrollView {
+            VStack(alignment: .leading, spacing: G.small) {
+                weekPicker
+                if !mutationError.isEmpty { Text(mutationError).foregroundStyle(.red) }
+                if failure {
+                    Text("식사 기록을 불러오지 못했어요")
+                    Button("다시 시도") { Task { await load(dateKey) } }
+                } else if let day {
+                    nutritionCards(day.totalNutrition)
+                    HStack {
+                        GText(text: MealDay.isToday(date) ? "오늘 기록" : "이날 기록", weight: 700)
+                        Spacer()
+                        GText(text: "합계 \(day.totalNutrition.kcal.formatted())kcal", color: GColor.muted)
                     }
-                }
-            } else { ProgressView() }
-        }
-        .navigationTitle("식사 기록")
+                    if day.meals.isEmpty {
+                        Button { editing = nil; adding = true } label: {
+                            HStack {
+                                ArtImage(asset: .idle).scaledToFit().frame(width: G.dp(28), height: G.dp(28))
+                                GText(text: "아직 기록 전이에요")
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }.padding(G.small).overlay { RoundedRectangle(cornerRadius: G.dp(14)).stroke(GColor.outline) }
+                        }.buttonStyle(.plain).accessibilityLabel("아직 기록 전이에요").disabled(!MealDay.isToday(date))
+                    }
+                    ForEach(day.meals, id: \.id) { meal in
+                        Section(["BREAKFAST":"아침", "LUNCH":"점심", "DINNER":"저녁", "SNACK":"간식"][meal.mealType] ?? meal.mealType) {
+                            NavigationLink {
+                                MealDetailView(meal: meal)
+                            } label: {
+                                GText(text: meal.items.map(\.foodName).joined(separator: ", "), weight: 700)
+                            }.accessibilityLabel("식사 상세")
+                            LabeledContent("열량", value: "\(meal.totalNutrition.kcal.formatted()) kcal")
+                            if MealDay.isToday(date) {
+                                Button("식사 수정") { editing = meal; adding = true }
+                            }
+                            Button("식사 삭제", role: .destructive) {
+                                selectedForRemoval = meal.id
+                                showRemoval = true
+                            }.disabled(!MealDay.isToday(date))
+                        }
+                    }
+                } else { ProgressView() }
+            }.padding(.horizontal, G.gutter).padding(.vertical, G.small)
+        }.background(Color(hex: 0xF5F7FA))
+        .navigationTitle("식사").navigationBarTitleDisplayMode(.inline)
         .toolbar { Button("식사 추가") { editing = nil; adding = true }.disabled(!MealDay.isToday(date)) }
         .alert("이 식사 기록을 삭제할까요?", isPresented: $showRemoval) {
             Button("취소", role: .cancel) { selectedForRemoval = nil }
@@ -74,17 +93,131 @@ struct MealDiary: View {
         .refreshable { await load(dateKey) }
     }
 
+    private var weekPicker: some View {
+        let calendar = MealDay.calendar
+        let mondayOffset = (calendar.component(.weekday, from: date) + 5) % 7
+        return VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                ForEach(0..<7) { index in
+                    let value = calendar.date(byAdding: .day, value: index - mondayOffset, to: date) ?? date
+                    let selected = calendar.isDate(value, inSameDayAs: date)
+                    Button { date = value } label: {
+                        VStack(spacing: 0) {
+                            GText(text: String(calendar.component(.day, from: value)), size: 15, weight: selected ? 700 : 500)
+                            GText(text: MealDay.isToday(value) ? "오늘" : ["월","화","수","목","금","토","일"][index], size: 10)
+                        }.frame(maxWidth: .infinity).padding(.vertical, G.small)
+                            .background(selected ? Color(hex: 0xE7EDF3) : .clear, in: RoundedRectangle(cornerRadius: G.dp(12)))
+                    }.buttonStyle(.plain).disabled(calendar.startOfDay(for: value) > Date())
+                }
+            }
+            Button { showsCalendar.toggle() } label: {
+                Image(systemName: showsCalendar ? "chevron.up" : "chevron.down").frame(maxWidth: .infinity)
+            }.accessibilityLabel("날짜 선택")
+            if showsCalendar {
+                DatePicker("날짜", selection: $date, in: ...Date(), displayedComponents: .date)
+                    .datePickerStyle(.graphical).environment(\.timeZone, calendar.timeZone)
+            }
+        }
+    }
+
+    private func nutritionCards(_ total: MealNutritionValueResponse) -> some View {
+        let remaining = (target ?? 0) - total.kcal
+        let past = !MealDay.isToday(date)
+        let amount = target == nil || past ? total.kcal : abs(remaining)
+        let unit = target.map { past ? "/ \($0.formatted())kcal" : remaining < 0 ? "kcal 초과" : "kcal 남음" } ?? "kcal 먹음"
+        let colors = [Color(hex: 0xFA91A8), Color(hex: 0x77B8E9), Color(hex: 0xF5BF68)]
+        let names = ["단백질", "탄수화물", "지방"]
+        let grams = [total.proteinG, total.carbohydrateG, total.fatG]
+        let ratios = [plan?.proteinRatio ?? 0, plan?.carbRatio ?? 0, plan?.fatRatio ?? 0]
+        let background = RoundedRectangle(cornerRadius: G.dp(16))
+        return VStack(spacing: G.small) {
+            VStack(alignment: .leading, spacing: G.dp(6)) {
+                HStack(alignment: .firstTextBaseline, spacing: G.dp(4)) {
+                    GText(text: amount.formatted(.number.precision(.fractionLength(0))), size: 20, weight: 700)
+                    GText(text: unit, size: 12, color: GColor.muted)
+                }
+                GeometryReader { g in
+                    let fraction = (target ?? 0) > 0 ? min(1, max(0, total.kcal / (target ?? 1))) : 0
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color(hex: 0xE9ECEF))
+                        Capsule().fill(Color(hex: 0x2E6DB4)).frame(width: g.size.width * fraction)
+                    }
+                }.frame(height: G.dp(6))
+            }.padding(G.dp(14)).background(.white, in: background)
+            HStack(spacing: G.dp(16)) {
+                ZStack {
+                    ForEach(0..<3) { i in
+                        let diameter = G.dp(CGFloat(68 - i * 18))
+                        let goal = (target ?? plan?.targetKcal ?? 0) * ratios[i] / 100 / (i == 2 ? 9 : 4)
+                        ZStack {
+                            Circle().strokeBorder(colors[i].opacity(0.22), lineWidth: G.dp(6))
+                            Circle().inset(by: G.dp(3)).trim(from: 0, to: goal > 0 ? min(1, grams[i] / goal) : 0)
+                                .stroke(colors[i], lineWidth: G.dp(6)).rotationEffect(.degrees(-90))
+                        }.frame(width: diameter, height: diameter)
+                    }
+                }.accessibilityHidden(true)
+                VStack(spacing: G.small) {
+                    ForEach(0..<3) { i in
+                        HStack {
+                            Circle().fill(colors[i]).frame(width: G.dp(7), height: G.dp(7))
+                            GText(text: names[i], size: 12, color: GColor.muted)
+                            Spacer()
+                            GText(text: "\(grams[i].formatted())g")
+                        }
+                    }
+                }
+            }.padding(G.dp(14)).background(.white, in: background)
+        }
+    }
+
     @MainActor private func load(_ key: String) async {
         failure = false
-        if day?.date != key { day = nil }
+        if day?.date != key { day = nil; target = nil; plan = nil }
         do {
             let bytes = try await session.protectedRequest("api/v1/meals", method: "GET", query: [URLQueryItem(name: "date", value: key)])
             let envelope = try JSONDecoder().decode(ApiResponseDailyMealsResponse.self, from: bytes)
             guard envelope.success == true, let loaded = envelope.data, loaded.date == key else { throw URLError(.badServerResponse) }
             if !Task.isCancelled && dateKey == key { day = loaded }
+            let summaryBytes = try? await session.protectedRequest("api/v1/daily-summaries/" + key, method: "GET")
+            let planBytes = try? await session.protectedRequest("api/v1/coaching-plan/me", method: "GET")
+            let summary = summaryBytes.flatMap { try? JSONDecoder().decode(ApiResponseDailySummaryResponse.self, from: $0) }
+            let coaching = planBytes.flatMap { try? JSONDecoder().decode(ApiResponseCoachingPlanResponse.self, from: $0) }
+            if !Task.isCancelled && dateKey == key {
+                target = summary?.success == true && summary?.data?.date == key && summary?.data?.goalReady == true ? summary?.data?.targetKcal : nil
+                plan = coaching?.success == true ? coaching?.data : nil
+            }
         } catch {
             if !Task.isCancelled && dateKey == key { failure = true }
         }
+    }
+}
+
+private struct MealDetailView: View {
+    let meal: MealDetailResponse
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: G.gap) {
+                GText(text: meal.items.map(\.foodName).joined(separator: ", "), size: 20, weight: 700)
+                GText(text: "\(meal.totalNutrition.kcal.formatted()) kcal", size: 18, weight: 700)
+                HStack {
+                    GText(text: "단백질 \(meal.totalNutrition.proteinG.formatted())g")
+                    Spacer()
+                    GText(text: "탄수화물 \(meal.totalNutrition.carbohydrateG.formatted())g")
+                    Spacer()
+                    GText(text: "지방 \(meal.totalNutrition.fatG.formatted())g")
+                }
+                ForEach(meal.items.indices, id: \.self) { index in
+                    let item = meal.items[index]
+                    HStack {
+                        GText(text: item.foodName, weight: 700)
+                        Spacer()
+                        GText(text: "\(item.grams)g · \(item.nutrition.kcal.formatted())kcal", color: GColor.muted)
+                    }
+                }
+            }.padding(G.gutter).background(.white, in: RoundedRectangle(cornerRadius: G.dp(16)))
+                .padding(G.gutter)
+        }.background(Color(hex: 0xF5F7FA)).navigationTitle("식사 상세").navigationBarTitleDisplayMode(.inline)
     }
 }
 

@@ -2,9 +2,10 @@ import XCTest
 
 @MainActor
 final class ScreenGalleryUITests: XCTestCase {
-    private func home() throws -> XCUIApplication {
+    private func home(populated: Bool = false) throws -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KKUGI_UI_FIXTURE"] = "home"
+        if populated { app.launchEnvironment["KKUGI_GALLERY_DATA"] = "recorded" }
         app.launch()
         try ready(app.buttons["내 프로필"])
         return app
@@ -63,6 +64,19 @@ final class ScreenGalleryUITests: XCTestCase {
         try tap(app, "닫기")
         try tap(app, "사진으로 음식 인식")
         try capture("meal-photo", when: app.navigationBars["사진으로 식사 기록"])
+    }
+
+    func testRecordedMealAndNotifications() throws {
+        let app = try home(populated: true)
+        try tap(app, "알림")
+        try capture("inbox", when: app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "제목 2")).firstMatch)
+        back(app)
+        try tap(app, "식사 기록")
+        try tap(app, "식사 상세")
+        try capture("meal-detail", when: app.navigationBars["식사 상세"])
+        back(app)
+        try tap(app, "식사 수정")
+        try capture("meal-edit", when: app.navigationBars["식사 수정"])
     }
 
     func testWorkoutScreens() throws {
