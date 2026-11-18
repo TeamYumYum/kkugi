@@ -30,6 +30,7 @@ final class MemberFlow: ObservableObject {
     }
 
     func restore() async {
+        try? await session?.synchronizeWidget()
         guard let item = try? await session?.current() else { return }
         route = item.onboarded ? .home : .onboarding
     }

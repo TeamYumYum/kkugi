@@ -69,7 +69,12 @@ def generate() -> dict[Path, bytes]:
     children = []
     products = []
     targets = []
+    shared_path = "Shared/GardenWidgetSnapshot.swift"
+    shared_ref = add(shared_path, isa="PBXFileReference", lastKnownFileType="sourcecode.swift",
+                     path=shared_path, sourceTree="SOURCE_ROOT")
+    children.append(shared_ref)
     for name, directory, kind in [
+        ("KkugiWidget", "KkugiWidget", "app-extension"),
         ("Kkugi", "Kkugi", "application"),
         ("KkugiTests", "KkugiTests", "bundle.unit-test"),
         ("KkugiUITests", "KkugiUITests", "bundle.ui-testing"),
@@ -81,6 +86,8 @@ def generate() -> dict[Path, bytes]:
             ref = add(relative, isa="PBXFileReference", lastKnownFileType="sourcecode.swift", path=relative, sourceTree="SOURCE_ROOT")
             file_refs.append(ref)
             sources.append(add(relative + "-build", isa="PBXBuildFile", fileRef=ref))
+        if name in ("Kkugi", "KkugiWidget"):
+            sources.append(add(name + "-widget-snapshot", isa="PBXBuildFile", fileRef=shared_ref))
         if not sources:
             raise ValueError(f"No Swift sources in {directory}")
         resources = []
@@ -90,8 +97,9 @@ def generate() -> dict[Path, bytes]:
                 file_refs.append(resource_ref)
                 resources.append(add("resources-build-" + folder, isa="PBXBuildFile", fileRef=resource_ref))
         children.append(add(name + "-group", isa="PBXGroup", children=file_refs, name=name, sourceTree="<group>"))
-        extension = "app" if name == "Kkugi" else "xctest"
-        product = add(name + "-product", isa="PBXFileReference", explicitFileType="wrapper.application" if name == "Kkugi" else "wrapper.cfbundle",
+        extension = {"Kkugi": "app", "KkugiWidget": "appex"}.get(name, "xctest")
+        file_type = {"app": "wrapper.application", "appex": "wrapper.app-extension"}.get(extension, "wrapper.cfbundle")
+        product = add(name + "-product", isa="PBXFileReference", explicitFileType=file_type,
                       includeInIndex=0, path=f"{name}.{extension}", sourceTree="BUILT_PRODUCTS_DIR")
         products.append(product)
         phases = []
@@ -108,9 +116,24 @@ def generate() -> dict[Path, bytes]:
             "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks"],
         }
         dependencies = []
+        if name in ("Kkugi", "KkugiWidget"):
+            settings.update({"CODE_SIGN_ENTITLEMENTS": "Shared/Garden.entitlements",
+                             "KKUGI_APP_GROUP_ID": "group.com.kkugi.ios"})
         if name == "Kkugi":
+            embed = add("embed-widget", isa="PBXBuildFile", fileRef=identifier("KkugiWidget-product"),
+                        settings={"ATTRIBUTES": ["RemoveHeadersOnCopy"]})
+            phases.append(add("embed-extensions", isa="PBXCopyFilesBuildPhase", buildActionMask=2147483647,
+                              dstPath="", dstSubfolderSpec=13, files=[embed], name="Embed App Extensions",
+                              runOnlyForDeploymentPostprocessing=0))
+            proxy = add("widget-proxy", isa="PBXContainerItemProxy", containerPortal=identifier("project"), proxyType=1,
+                        remoteGlobalIDString=identifier("KkugiWidget-target"), remoteInfo="KkugiWidget")
+            dependencies.append(add("widget-dependency", isa="PBXTargetDependency", target=identifier("KkugiWidget-target"), targetProxy=proxy))
             settings.update({"INFOPLIST_FILE": "Kkugi/Info.plist", "INFOPLIST_KEY_CFBundleDisplayName": "꾸기",
                              "INFOPLIST_KEY_UILaunchScreen_Generation": "YES", "INFOPLIST_KEY_UIApplicationSceneManifest_Generation": "YES"})
+        elif name == "KkugiWidget":
+            settings.update({"APPLICATION_EXTENSION_API_ONLY": "YES", "SKIP_INSTALL": "YES",
+                             "INFOPLIST_FILE": "KkugiWidget/Info.plist",
+                             "LD_RUNPATH_SEARCH_PATHS": ["$(inherited)", "@executable_path/Frameworks", "@executable_path/../../Frameworks"]})
         else:
             proxy = add(name + "-proxy", isa="PBXContainerItemProxy", containerPortal=identifier("project"), proxyType=1,
                         remoteGlobalIDString=identifier("Kkugi-target"), remoteInfo="Kkugi")
@@ -165,7 +188,9 @@ def generate() -> dict[Path, bytes]:
         "GIDClientID": "$(KKUGI_GOOGLE_IOS_CLIENT_ID)", "GIDServerClientID": "$(KKUGI_GOOGLE_SERVER_CLIENT_ID)",
         "KkugiKakaoAppKey": "$(KKUGI_KAKAO_NATIVE_APP_KEY)",
         "LSApplicationQueriesSchemes": ["kakaokompassauth", "kakaolink"],
+        "KkugiAppGroup": "$(KKUGI_APP_GROUP_ID)",
         "CFBundleURLTypes": [
+            {"CFBundleURLName": "widget", "CFBundleURLSchemes": ["kkugi"]},
             {"CFBundleURLName": "google", "CFBundleURLSchemes": ["$(KKUGI_GOOGLE_REVERSED_CLIENT_ID)"]},
             {"CFBundleURLName": "kakao", "CFBundleURLSchemes": ["kakao$(KKUGI_KAKAO_NATIVE_APP_KEY)"]},
         ],
@@ -178,6 +203,12 @@ def generate() -> dict[Path, bytes]:
         IOS / "Kkugi.xcodeproj/project.pbxproj": ("// !$*UTF8*$!\n" + openstep(pbx) + "\n").encode(),
         IOS / "Kkugi.xcodeproj/xcshareddata/xcschemes/Kkugi.xcscheme": ET.tostring(scheme, encoding="utf-8", xml_declaration=True) + b"\n",
         IOS / "Kkugi/Info.plist": plistlib.dumps(info, sort_keys=True),
+        IOS / "Shared/Garden.entitlements": plistlib.dumps({"com.apple.security.application-groups": ["$(KKUGI_APP_GROUP_ID)"]}),
+        IOS / "KkugiWidget/Info.plist": plistlib.dumps({
+            "CFBundleDisplayName": "꾸기", "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
+            "CFBundleShortVersionString": "$(MARKETING_VERSION)", "KkugiAppGroup": "$(KKUGI_APP_GROUP_ID)",
+            "NSExtension": {"NSExtensionPointIdentifier": "com.apple.widgetkit-extension"},
+        }),
     }
 
 

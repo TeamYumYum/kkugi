@@ -6,12 +6,12 @@ struct KkugiApp: App {
         WindowGroup {
             LoginRoot()
                 .preferredColorScheme(.light)
-                .onOpenURL(perform: SocialSignIn.handle)
         }
     }
 }
 
 struct LoginRoot: View {
+    @State private var homeIdentity = UUID()
     @StateObject private var flow: MemberFlow
     @StateObject private var model: LoginModel
 
@@ -52,11 +52,20 @@ struct LoginRoot: View {
             case .login: login
             case .onboarding: OnboardingScreen(submit: flow.submit, openHome: flow.showHome, dailyTarget: flow.dailyTarget)
             case .home:
-                if let session = flow.session { HomeScreen(session: session, profile: flow.showProfile) }
+                if let session = flow.session { HomeScreen(session: session, profile: flow.showProfile).id(homeIdentity) }
             case .profile: MemberProfileScreen(flow: flow)
             }
         }.task { await flow.restore() }
         .task { await flow.observeExpiry() }
+        .onOpenURL { url in
+            if url.scheme == "kkugi", url.host == "home" {
+                Task {
+                    guard let member = try? await flow.session?.current(), member.onboarded else { return }
+                    homeIdentity = UUID()
+                    flow.showHome()
+                }
+            } else { SocialSignIn.handle(url) }
+        }
     }
 
     private var login: some View {

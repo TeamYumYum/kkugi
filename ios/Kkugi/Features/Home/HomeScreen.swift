@@ -100,6 +100,7 @@ struct HomeScreen: View {
     }
 
     @MainActor private func load() async {
+        let widgetSession = try? await session.current()
         do {
             let response = try await session.homeData("growth/me", ApiResponseGrowthSummaryResponse.self)
             guard response.success == true, let result = response.data else { throw URLError(.badServerResponse) }
@@ -109,6 +110,13 @@ struct HomeScreen: View {
         if let count = try? await session.homeData("members/me/notifications/unread-count", ApiResponseUnreadNotificationCountResponse.self).data?.unreadCount { unread = count }
         hasReport = (try? await session.homeData("weekly-reports/me/latest", ApiResponseWeeklyReportResponse.self).data) != nil
         do { try await loadRecommendation(dateKey) } catch { recommendation = nil }
+        if let widgetSession, let growth, !failed {
+            let day = dateKey
+            let plan = try? await session.homeData("coaching-plan/me", ApiResponseCoachingPlanResponse.self).data
+            let meals = try? await session.homeData("meals", ApiResponseDailyMealsResponse.self, query: [URLQueryItem(name: "date", value: day)]).data
+            try? await session.updateWidget(for: widgetSession.sessionID, day: day, growth: growth,
+                                            target: plan?.targetKcal, intake: meals?.date == day ? meals?.totalNutrition.kcal : nil)
+        }
     }
 
     @MainActor private func loadRecommendation(_ day: String) async throws {

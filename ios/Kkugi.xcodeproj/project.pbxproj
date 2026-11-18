@@ -77,6 +77,145 @@
 			"package" = "097442E0A8F70D9DCBE30D0E";
 			"productName" = "KakaoSDKUser";
 		};
+		"38C15759854FBB71A6E2BA5F" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Shared/GardenWidgetSnapshot.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"7E036C02635881564C98B6E0" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "KkugiWidget/KkugiGardenWidget.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"B58FEC36DE5BDF4319670993" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "7E036C02635881564C98B6E0";
+		};
+		"34BCE646B2EBDA4DCFD6B247" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "38C15759854FBB71A6E2BA5F";
+		};
+		"5DD05DBAA6DB20B0163E7DB8" = {
+			"isa" = "PBXGroup";
+			"children" = (
+				"7E036C02635881564C98B6E0",
+			);
+			"name" = "KkugiWidget";
+			"sourceTree" = "<group>";
+		};
+		"D68A00388BB92FB5266E9731" = {
+			"isa" = "PBXFileReference";
+			"explicitFileType" = "wrapper.app-extension";
+			"includeInIndex" = "0";
+			"path" = "KkugiWidget.appex";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"4F22AFACCAA041A51E7579CF" = {
+			"isa" = "PBXSourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+				"B58FEC36DE5BDF4319670993",
+				"34BCE646B2EBDA4DCFD6B247",
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"69AE59CFC2707A13D017ED18" = {
+			"isa" = "PBXFrameworksBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"292957E6BF5E879EBF65B3FD" = {
+			"isa" = "PBXResourcesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"files" = (
+
+			);
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"58E0CB07C01741EFA1FD30D0" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.kkugi.ios.KkugiWidget";
+				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
+				"TARGETED_DEVICE_FAMILY" = "1";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"MARKETING_VERSION" = "0.1.0";
+				"CURRENT_PROJECT_VERSION" = "1";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"CODE_SIGN_ENTITLEMENTS" = "Shared/Garden.entitlements";
+				"KKUGI_APP_GROUP_ID" = "group.com.kkugi.ios";
+				"APPLICATION_EXTENSION_API_ONLY" = "YES";
+				"SKIP_INSTALL" = "YES";
+				"INFOPLIST_FILE" = "KkugiWidget/Info.plist";
+			};
+		};
+		"33E36A7A610C6A8863337552" = {
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+			"buildSettings" = {
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "com.kkugi.ios.KkugiWidget";
+				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
+				"TARGETED_DEVICE_FAMILY" = "1";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"MARKETING_VERSION" = "0.1.0";
+				"CURRENT_PROJECT_VERSION" = "1";
+				"LD_RUNPATH_SEARCH_PATHS" = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"CODE_SIGN_ENTITLEMENTS" = "Shared/Garden.entitlements";
+				"KKUGI_APP_GROUP_ID" = "group.com.kkugi.ios";
+				"APPLICATION_EXTENSION_API_ONLY" = "YES";
+				"SKIP_INSTALL" = "YES";
+				"INFOPLIST_FILE" = "KkugiWidget/Info.plist";
+			};
+		};
+		"1AB950943DDED03637446290" = {
+			"isa" = "XCConfigurationList";
+			"buildConfigurations" = (
+				"58E0CB07C01741EFA1FD30D0",
+				"33E36A7A610C6A8863337552",
+			);
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+		};
+		"A1F67EDD66CAABCD67D789C4" = {
+			"isa" = "PBXNativeTarget";
+			"buildConfigurationList" = "1AB950943DDED03637446290";
+			"packageProductDependencies" = (
+
+			);
+			"buildPhases" = (
+				"4F22AFACCAA041A51E7579CF",
+				"69AE59CFC2707A13D017ED18",
+				"292957E6BF5E879EBF65B3FD",
+			);
+			"buildRules" = (
+
+			);
+			"dependencies" = (
+
+			);
+			"name" = "KkugiWidget";
+			"productName" = "KkugiWidget";
+			"productReference" = "D68A00388BB92FB5266E9731";
+			"productType" = "com.apple.product-type.app-extension";
+		};
 		"2154FEA51A8CF231E5E449D0" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -367,6 +506,10 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "42CF3EC07C7A0A5C847C0343";
 		};
+		"4CB0EB02959A1D4B988AF70C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "38C15759854FBB71A6E2BA5F";
+		};
 		"E4E1FB9E57A8588BB1F3142B" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "folder";
@@ -484,6 +627,7 @@
 				"EB3E486485B0F81FF3900C08",
 				"1363D7B43223EE642F524D55",
 				"45971865F27A107CDD05218A",
+				"4CB0EB02959A1D4B988AF70C",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -506,6 +650,38 @@
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
+		"310BC1A83962BC738E0B4980" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "D68A00388BB92FB5266E9731";
+			"settings" = {
+				"ATTRIBUTES" = (
+					"RemoveHeadersOnCopy",
+				);
+			};
+		};
+		"AFC32963E7959E7A34264826" = {
+			"isa" = "PBXCopyFilesBuildPhase";
+			"buildActionMask" = "2147483647";
+			"dstPath" = "";
+			"dstSubfolderSpec" = "13";
+			"files" = (
+				"310BC1A83962BC738E0B4980",
+			);
+			"name" = "Embed App Extensions";
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"01E77404E10F254C43E64C55" = {
+			"isa" = "PBXContainerItemProxy";
+			"containerPortal" = "244210E48437B6556980A702";
+			"proxyType" = "1";
+			"remoteGlobalIDString" = "A1F67EDD66CAABCD67D789C4";
+			"remoteInfo" = "KkugiWidget";
+		};
+		"A4C2D386AB0259F33DCDC427" = {
+			"isa" = "PBXTargetDependency";
+			"target" = "A1F67EDD66CAABCD67D789C4";
+			"targetProxy" = "01E77404E10F254C43E64C55";
+		};
 		"5DF38E2589E010EA6212EEC9" = {
 			"isa" = "XCBuildConfiguration";
 			"name" = "Debug";
@@ -523,6 +699,8 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				"CODE_SIGN_ENTITLEMENTS" = "Shared/Garden.entitlements";
+				"KKUGI_APP_GROUP_ID" = "group.com.kkugi.ios";
 				"INFOPLIST_FILE" = "Kkugi/Info.plist";
 				"INFOPLIST_KEY_CFBundleDisplayName" = "꾸기";
 				"INFOPLIST_KEY_UILaunchScreen_Generation" = "YES";
@@ -546,6 +724,8 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				"CODE_SIGN_ENTITLEMENTS" = "Shared/Garden.entitlements";
+				"KKUGI_APP_GROUP_ID" = "group.com.kkugi.ios";
 				"INFOPLIST_FILE" = "Kkugi/Info.plist";
 				"INFOPLIST_KEY_CFBundleDisplayName" = "꾸기";
 				"INFOPLIST_KEY_UILaunchScreen_Generation" = "YES";
@@ -572,12 +752,13 @@
 				"F0F77B5814666E08C15BD4A8",
 				"BEADD5B07D91123190E4C8A4",
 				"687107F105BD47ADE46D00D4",
+				"AFC32963E7959E7A34264826",
 			);
 			"buildRules" = (
 
 			);
 			"dependencies" = (
-
+				"A4C2D386AB0259F33DCDC427",
 			);
 			"name" = "Kkugi";
 			"productName" = "Kkugi";
@@ -674,6 +855,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "AD421012C87DB8FCD35A3183";
 		};
+		"C024154D96DB672EF2997E89" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "KkugiTests/WidgetSnapshotTests.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"13AA8AE3CB2EBB9F5C91375F" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "C024154D96DB672EF2997E89";
+		};
 		"799AC9328567FF536BB4494B" = {
 			"isa" = "PBXGroup";
 			"children" = (
@@ -686,6 +877,7 @@
 				"973D7ED1EDF1EA16FCC16883",
 				"54DA4F48250A36E5E146652F",
 				"AD421012C87DB8FCD35A3183",
+				"C024154D96DB672EF2997E89",
 			);
 			"name" = "KkugiTests";
 			"sourceTree" = "<group>";
@@ -710,6 +902,7 @@
 				"1A97354FA8408764FF03FDA8",
 				"38177E90048577E9519EF374",
 				"C70FB120C3789A2B787C021E",
+				"13AA8AE3CB2EBB9F5C91375F",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
@@ -961,6 +1154,7 @@
 		"0A3E27B8CA818264D75C8D81" = {
 			"isa" = "PBXGroup";
 			"children" = (
+				"D68A00388BB92FB5266E9731",
 				"2546C79578D1F84742912E8A",
 				"D4689B9A1D7C1903E423F318",
 				"49C593DDCEB7A217E9D6741C",
@@ -971,6 +1165,8 @@
 		"C69913C7EE4DFDD011BE172F" = {
 			"isa" = "PBXGroup";
 			"children" = (
+				"38C15759854FBB71A6E2BA5F",
+				"5DD05DBAA6DB20B0163E7DB8",
 				"D9C6F140290EE1DFE18A7821",
 				"799AC9328567FF536BB4494B",
 				"995BA81CC7F90C41A529C7E2",
@@ -1002,6 +1198,7 @@
 			"projectDirPath" = "";
 			"projectRoot" = "";
 			"targets" = (
+				"A1F67EDD66CAABCD67D789C4",
 				"386D03C9F4C43AA6A7AB8521",
 				"19ECA988BE58989AEDA1419F",
 				"6431E27D678281E6BD8E2A92",

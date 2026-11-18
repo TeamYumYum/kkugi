@@ -20,6 +20,14 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
+			<string>widget</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>kkugi</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
 			<string>google</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
@@ -43,6 +51,8 @@
 	<string>$(KKUGI_GOOGLE_SERVER_CLIENT_ID)</string>
 	<key>KkugiAPIBaseURL</key>
 	<string>$(KKUGI_API_BASE_URL)</string>
+	<key>KkugiAppGroup</key>
+	<string>$(KKUGI_APP_GROUP_ID)</string>
 	<key>KkugiKakaoAppKey</key>
 	<string>$(KKUGI_KAKAO_NATIVE_APP_KEY)</string>
 	<key>LSApplicationQueriesSchemes</key>
