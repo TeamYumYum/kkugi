@@ -112,10 +112,10 @@ struct HomeScreen: View {
         do { try await loadRecommendation(dateKey) } catch { recommendation = nil }
         if let widgetSession, let growth, !failed {
             let day = dateKey
-            let plan = try? await session.homeData("coaching-plan/me", ApiResponseCoachingPlanResponse.self).data
-            let meals = try? await session.homeData("meals", ApiResponseDailyMealsResponse.self, query: [URLQueryItem(name: "date", value: day)]).data
+            let summary = try? await session.homeData("daily-summaries/" + day, ApiResponseDailySummaryResponse.self).data
+            let current = summary?.date == day ? summary : nil
             try? await session.updateWidget(for: widgetSession.sessionID, day: day, growth: growth,
-                                            target: plan?.targetKcal, intake: meals?.date == day ? meals?.totalNutrition.kcal : nil)
+                                            summary: current)
         }
     }
 

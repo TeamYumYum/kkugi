@@ -173,3 +173,18 @@ struct ApiResponseLastMealRecommendationResponse: Decodable {
     let `data`: LastMealRecommendationResponse?
     let `error`: ErrorDetail?
 }
+
+struct DailySummaryResponse: Decodable {
+    let `date`: String
+    let `goalReady`: Bool
+    let `targetKcal`: Double?
+    let `intakeKcal`: Int
+    let `remainingKcal`: Double?
+    let `asOf`: String
+}
+
+struct ApiResponseDailySummaryResponse: Decodable {
+    let `success`: Bool?
+    let `data`: DailySummaryResponse?
+    let `error`: ErrorDetail?
+}

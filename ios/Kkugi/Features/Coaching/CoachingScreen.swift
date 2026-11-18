@@ -3,6 +3,9 @@ import SwiftUI
 struct CoachingScreen: View {
     let session: AuthSession
     @State private var plan: CoachingPlanResponse?
+    @State private var editingTarget = ""
+    @State private var choiceMessage = ""
+    @State private var saving = false
     @State private var failed = false
 
     var body: some View {
@@ -15,9 +18,53 @@ struct CoachingScreen: View {
                     LabeledContent("탄수화물", value: "\(plan.carbRatio.formatted())%")
                     LabeledContent("단백질", value: "\(plan.proteinRatio.formatted())%")
                     LabeledContent("지방", value: "\(plan.fatRatio.formatted())%")
+                    if let low = plan.manualRange?.minKcal, let high = plan.manualRange?.maxKcal {
+                        TextField("새 목표 (\(low)~\(high) kcal)", text: $editingTarget).keyboardType(.numberPad)
+                        Button("내일부터 적용") { Task { await changeTarget(low, high) } }
+                    }
+                    if plan.recalcPending {
+                        Text("변경한 프로필로 목표를 다시 계산할까요?")
+                        Button("다시 계산") { Task { await recalculate(true) } }
+                        Button("현재 목표 유지") { Task { await recalculate(false) } }
+                    }
+                    if !choiceMessage.isEmpty { Text(choiceMessage) }
                 }
             } else if !failed { ProgressView() }
-        }.navigationTitle("코칭").task { await load() }.refreshable { await load() }
+        }.disabled(saving).navigationTitle("코칭").task { await load() }.refreshable { await load() }
+    }
+
+    @MainActor private func changeTarget(_ low: Int, _ high: Int) async {
+        guard !saving else { return }
+        guard let value = Int(editingTarget), value >= low && value <= high else {
+            choiceMessage = "\(low)~\(high) kcal 사이 정수를 입력해 주세요"
+            return
+        }
+        saving = true
+        defer { saving = false }
+        do {
+            let bytes = try await session.protectedRequest("api/v1/coaching-plan/me/target", method: "PUT",
+                body: JSONEncoder().encode(TargetChangeRequest(targetKcal: value)))
+            let response = try JSONDecoder().decode(ApiResponseCoachingPlanResponse.self, from: bytes)
+            guard response.success == true, let result = response.data else { throw URLError(.badServerResponse) }
+            plan = result
+            editingTarget = ""
+            choiceMessage = "새 목표는 내일부터 적용돼요"
+        } catch { choiceMessage = "목표를 저장하지 못했어요" }
+    }
+
+    @MainActor private func recalculate(_ choice: Bool) async {
+        guard !saving else { return }
+        saving = true
+        defer { saving = false }
+        do {
+            let bytes = try await session.protectedRequest("api/v1/coaching-plan/me/recalc-choice", method: "POST",
+                body: JSONEncoder().encode(RecalcChoiceRequest(recalculate: choice)))
+            guard try JSONDecoder().decode(ApiResponseVoid.self, from: bytes).success == true else {
+                throw URLError(.badServerResponse)
+            }
+            await load()
+            choiceMessage = choice ? "오늘 목표를 다시 계산했어요" : "현재 목표를 유지했어요"
+        } catch { choiceMessage = "목표 변경을 처리하지 못했어요" }
     }
 
     @MainActor private func load() async {

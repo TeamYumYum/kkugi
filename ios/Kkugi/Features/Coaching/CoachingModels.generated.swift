@@ -137,3 +137,11 @@ struct PersonalChatEvent: Codable {
     let `message`: String?
     let `lastSeq`: Int?
 }
+
+struct RecalcChoiceRequest: Codable {
+    let `recalculate`: Bool
+}
+
+struct TargetChangeRequest: Codable {
+    let `targetKcal`: Int
+}

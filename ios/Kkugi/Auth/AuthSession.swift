@@ -34,7 +34,7 @@ actor AuthSession {
         if GardenWidgetStore.write(snapshot) { WidgetCenter.shared.reloadTimelines(ofKind: "KkugiGarden") }
     }
 
-    func updateWidget(for sessionID: UUID, day: String, growth: GrowthSummaryResponse, target: Double?, intake: Double?) throws {
+    func updateWidget(for sessionID: UUID, day: String, growth: GrowthSummaryResponse, summary: DailySummaryResponse?) throws {
         guard vault.service == "com.kkugi.ios.auth", let member = try vault.read(),
               member.sessionID == sessionID, member.onboarded else { return }
         var snapshot = GardenWidgetStore.read()
@@ -43,8 +43,10 @@ actor AuthSession {
         }
         snapshot.dietDays = growth.diet.currentDays
         snapshot.workoutWeeks = growth.workout.currentWeeks
-        if let target { snapshot.targetKcal = target }
-        if let intake { snapshot.intakeKcal = intake }
+        if let summary {
+            snapshot.targetKcal = summary.goalReady ? summary.targetKcal : nil
+            snapshot.intakeKcal = Double(summary.intakeKcal)
+        }
         if GardenWidgetStore.write(snapshot) { WidgetCenter.shared.reloadTimelines(ofKind: "KkugiGarden") }
     }
 
