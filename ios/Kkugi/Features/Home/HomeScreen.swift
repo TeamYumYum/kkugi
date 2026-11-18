@@ -68,13 +68,11 @@ struct HomeScreen: View {
                         if !expanded {
                             VStack(spacing: aligned(7)) {
                                 NavigationLink { CoachingChat(session: session) } label: {
-                                    roundIcon("bubble.left.and.bubble.right")
-                                        .frame(width: aligned(46)).contentShape(Rectangle())
+                                    railButton("꾸기에게 묻기", icon: "bubble.left.and.bubble.right")
                                 }.accessibilityLabel("꾸기에게 묻기")
                                 if hasReport {
                                     NavigationLink { LatestWeeklyReport(session: session) } label: {
-                                        roundIcon("chart.bar.doc.horizontal")
-                                            .frame(width: aligned(46)).contentShape(Rectangle())
+                                        railButton("리포트", icon: "chart.bar.doc.horizontal")
                                     }.accessibilityLabel("주간 리포트")
                                 }
                             }
@@ -112,6 +110,18 @@ struct HomeScreen: View {
         Image(systemName: name)
             .frame(width: aligned(38), height: aligned(38))
             .background(.regularMaterial, in: Circle())
+    }
+
+    private func railButton(_ title: String, icon: String) -> some View {
+        VStack(spacing: aligned(3)) {
+            roundIcon(icon)
+            GText(text: title, size: 10, weight: 800, alignment: .center)
+                .lineLimit(2)
+                .padding(.horizontal, aligned(3)).padding(.vertical, aligned(1))
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: aligned(9)))
+        }
+        .frame(width: aligned(46))
+        .contentShape(Rectangle())
     }
 
     private func streakChip(_ text: String, icon: String) -> some View {

@@ -33,6 +33,9 @@ private final class FixtureProtocol: URLProtocol {
         guard url.host == "ui.fixture.invalid",
               request.value(forHTTPHeaderField: "Authorization") == "Bearer fixture-access" else { return nil }
         switch url.path {
+        case "/api/v1/members/me/profile":
+            return #"{"nickname":"꾸기회원","healthGoal":"MAINTAIN","gender":"FEMALE","birthDate":"2000-01-01","heightCm":167,"startWeightKg":60,"activityLevel":"MODERATE","avatar":"FRONT","onboardedAt":"2026-11-18T00:00:00+09:00"}"#
+        case "/api/v1/workout-schedules": return #"{"items":[]}"#
         case "/api/v1/growth/me":
             return #"{"started":true,"startedOn":"2026-01-01","today":"2026-01-08","diet":{"currentDays":2,"longestDays":3,"thisWeek":[]},"workout":{"currentWeeks":1,"longestWeeks":2},"badges":[{"code":"FIRST","name":"첫 기록","description":"첫 기록을 남겼어요","category":"DIET","conditionKind":"COUNT","threshold":1,"earnedAt":"2026-01-01"}],"path":{"days":[],"weeklyGoals":[]}}"#
         case "/api/v1/weekly-workout-goal/me":

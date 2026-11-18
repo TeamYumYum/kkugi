@@ -930,11 +930,22 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "4E72C2514B25EF8784AFFD05";
 		};
+		"FFAA2A45A1F39BD24A965218" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "KkugiUITests/ScreenGalleryUITests.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"D5865D4CC7D85EAF49B9D9BE" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "FFAA2A45A1F39BD24A965218";
+		};
 		"995BA81CC7F90C41A529C7E2" = {
 			"isa" = "PBXGroup";
 			"children" = (
 				"7FE5C9037CD188CA6BEED409",
 				"4E72C2514B25EF8784AFFD05",
+				"FFAA2A45A1F39BD24A965218",
 			);
 			"name" = "KkugiUITests";
 			"sourceTree" = "<group>";
@@ -952,6 +963,7 @@
 			"files" = (
 				"1FCD77D58D9EE42A8D4BB231",
 				"75A495D4C3B2404B8262E582",
+				"D5865D4CC7D85EAF49B9D9BE",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
