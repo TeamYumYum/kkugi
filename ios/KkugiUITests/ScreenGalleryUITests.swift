@@ -38,7 +38,7 @@ final class ScreenGalleryUITests: XCTestCase {
         let app = try home()
         try capture("home", when: app.buttons["연속 기록"])
         try tap(app, "알림")
-        try capture("inbox", when: app.staticTexts["아직 알림이 없어요"])
+        try capture("inbox-empty", when: app.staticTexts["아직 받은 알림이 없어요"])
         back(app)
         try tap(app, "꾸기에게 묻기")
         try capture("chat", when: app.navigationBars["꾸기에게 묻기"])

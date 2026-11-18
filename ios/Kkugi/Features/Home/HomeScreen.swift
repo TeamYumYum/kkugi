@@ -197,7 +197,19 @@ struct NotificationInbox: View {
         List {
             if loading { ProgressView() }
             if !message.isEmpty { Text(message); Button("다시 시도") { Task { await load(pageIndex) } } }
-            if !loading && message.isEmpty && items.isEmpty { Text("아직 알림이 없어요") }
+            if !loading && message.isEmpty && items.isEmpty {
+                VStack(spacing: G.gap) {
+                    ArtImage(asset: .idle).scaledToFit()
+                        .frame(width: G.dp(40), height: G.dp(40))
+                        .accessibilityHidden(true)
+                    GText(text: "아직 받은 알림이 없어요", size: 18, weight: 700, alignment: .center)
+                    GText(text: "끼니 추천이나 주간 리포트가 오면 여기에 모여요.", color: GColor.muted, alignment: .center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, G.gutter * 2).padding(.vertical, G.gutter)
+                .listRowInsets(EdgeInsets()).listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            }
             ForEach(items, id: \.id) { item in
                 Button {
                     Task {
@@ -222,7 +234,10 @@ struct NotificationInbox: View {
                     Button("다음") { Task { await load(pageIndex + 1) } }.disabled(!hasNext)
                 }.buttonStyle(.borderless).disabled(loading)
             }
-        }.navigationTitle("알림").task { await load(pageIndex) }.refreshable { await load(pageIndex) }
+        }.listStyle(.plain).scrollContentBackground(.hidden)
+            .background(Color(hex: 0xF5F7FA))
+            .navigationTitle("알림").navigationBarTitleDisplayMode(.inline)
+            .task { await load(pageIndex) }.refreshable { await load(pageIndex) }
     }
 
     @MainActor private func load(_ requested: Int) async {

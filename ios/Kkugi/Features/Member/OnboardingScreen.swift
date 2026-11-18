@@ -10,6 +10,18 @@ struct OnboardingScreen: View {
     @State private var step = 1
     @State private var busy = false
     @State private var error = ""
+    private enum BodyField: String, Identifiable, CaseIterable {
+        case birthday = "생년월일", height = "키", weight = "몸무게", activity = "평소 활동량"
+        var id: Self { self }
+    }
+    @State private var editing: BodyField?
+    private let activities = [
+        ("SEDENTARY", "거의 앉아 있어요", "사무직, 운동은 거의 안 해요"),
+        ("LIGHT", "가볍게 움직여요", "주 1~3회 가벼운 운동"),
+        ("MODERATE", "보통이에요", "주 3~5회 중강도 운동"),
+        ("ACTIVE", "활동적이에요", "주 6~7회 고강도 운동"),
+        ("VERY_ACTIVE", "매우 활동적이에요", "하루 2회 운동이나 육체 노동")
+    ]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -64,18 +76,7 @@ struct OnboardingScreen: View {
                         GText(text: "주 몇 번 운동할지는 운동 탭에서 정해요", color: GColor.muted)
                     case 3:
                         GText(text: "몸 정보를 알려 주세요", size: 24, weight: 700)
-                        choices([("MALE","남성"),("FEMALE","여성")], $draft.gender)
-                        TextField("생년월일 (YYYYMMDD)", text: $draft.birthday).keyboardType(.numberPad)
-                        TextField("키 (cm)", text: $draft.height).keyboardType(.decimalPad)
-                        TextField("몸무게 (kg)", text: $draft.weight).keyboardType(.decimalPad)
-                        GText(text: "평소 활동량", weight: 700)
-                        VStack(spacing: G.small) {
-                            choice("SEDENTARY", "거의 앉아 있어요", "사무직, 운동은 거의 안 해요", $draft.activity)
-                            choice("LIGHT", "가볍게 움직여요", "주 1~3회 가벼운 운동", $draft.activity)
-                            choice("MODERATE", "보통이에요", "주 3~5회 중강도 운동", $draft.activity)
-                            choice("ACTIVE", "활동적이에요", "주 6~7회 고강도 운동", $draft.activity)
-                            choice("VERY_ACTIVE", "매우 활동적이에요", "하루 2회 운동이나 육체 노동", $draft.activity)
-                        }
+                        bodyCard
                         GText(text: "목표 칼로리를 계산하는 데만 써요", color: GColor.muted)
                     default:
                         ZStack {
@@ -117,6 +118,25 @@ struct OnboardingScreen: View {
         .textFieldStyle(.roundedBorder)
         .foregroundStyle(GColor.text)
         .background(Color(hex: 0xF5F7FA))
+        .sheet(item: $editing) { field in
+            VStack(alignment: .leading, spacing: G.gap) {
+                GText(text: field.rawValue, size: 18, weight: 700)
+                switch field {
+                case .activity:
+                    ScrollView {
+                        ForEach(activities.indices, id: \.self) { index in
+                            let item = activities[index]
+                            choice(item.0, item.1, item.2, Binding(get: { draft.activity }, set: { draft.activity = $0; editing = nil }))
+                        }
+                    }
+                case .birthday: TextField("생년월일 (YYYYMMDD)", text: $draft.birthday).keyboardType(.numberPad)
+                case .height: TextField("키 (cm)", text: $draft.height).keyboardType(.decimalPad)
+                case .weight: TextField("몸무게 (kg)", text: $draft.weight).keyboardType(.decimalPad)
+                }
+                if field != .activity { Button("확인") { editing = nil } }
+            }.padding(G.gutter).textFieldStyle(.roundedBorder)
+                .presentationDetents(field == .activity ? [.large] : [.medium])
+        }
     }
 
     @MainActor private func loadTarget() async {
@@ -153,13 +173,39 @@ struct OnboardingScreen: View {
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
-    private func choices(_ options: [(String, String)], _ selection: Binding<String>) -> some View {
-        ForEach(options.indices, id: \.self) { index in
-            let option = options[index]
-            Button { selection.wrappedValue = option.0 } label: {
-                HStack { GText(text: option.1); Spacer(); Image(systemName: selection.wrappedValue == option.0 ? "checkmark.circle.fill" : "circle") }
-                    .padding(G.small)
-            }.accessibilityAddTraits(selection.wrappedValue == option.0 ? .isSelected : [])
+    private var bodyCard: some View {
+        VStack(alignment: .leading, spacing: G.gap) {
+            GText(text: "성별", size: 12, weight: 700)
+            HStack(spacing: G.small) {
+                ForEach(["MALE", "FEMALE"], id: \.self) { value in
+                    Button { draft.gender = value } label: {
+                        GText(text: value == "MALE" ? "남성" : "여성", size: 12, weight: 700)
+                            .padding(.horizontal, G.dp(12)).padding(.vertical, G.dp(7))
+                            .background(Color(hex: value == draft.gender ? 0xE7F2FE : 0xF0F2F5), in: Capsule())
+                    }.accessibilityAddTraits(value == draft.gender ? .isSelected : [])
+                }
+            }
+            ForEach(BodyField.allCases) { field in
+                Button { editing = field } label: {
+                    HStack {
+                        GText(text: field.rawValue, size: 12, weight: 700)
+                        Spacer()
+                        GText(text: bodyValue(field), color: GColor.muted)
+                        Image(systemName: "chevron.right").foregroundStyle(GColor.muted)
+                    }.frame(minHeight: G.dp(44)).contentShape(Rectangle())
+                }
+            }
+        }.buttonStyle(.plain).padding(G.dp(14))
+            .background(.white, in: RoundedRectangle(cornerRadius: G.dp(16)))
+            .shadow(color: .black.opacity(0.05), radius: G.dp(1.5), y: G.dp(1))
+    }
+
+    private func bodyValue(_ field: BodyField) -> String {
+        switch field {
+        case .birthday: return draft.birthday.isEmpty ? "입력해 주세요" : draft.birthday
+        case .height: return draft.height.isEmpty ? "입력해 주세요" : draft.height + "cm"
+        case .weight: return draft.weight.isEmpty ? "입력해 주세요" : draft.weight + "kg"
+        case .activity: return activities.first { $0.0 == draft.activity }?.1 ?? "골라 주세요"
         }
     }
 
