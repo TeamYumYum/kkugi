@@ -12,6 +12,7 @@ struct LoginScreen: View {
         VStack(spacing: 0) {
             VStack(spacing: 0) {
                 GText(text: LoginText.name, size: 30, weight: 800, color: GColor.loginInk)
+                    .offset(x: -1 / displayScale)
                 GText(text: LoginText.tagline, color: GColor.loginInkSoft, trackingAdjustment: -0.30)
             }
             .frame(maxWidth: .infinity)
@@ -53,15 +54,18 @@ struct LoginScreen: View {
 
     private var panel: some View {
         VStack(spacing: pixelAligned(G.small)) {
-            GText(text: LoginText.headline, size: 18, weight: 700, color: GColor.loginInk, alignment: .center)
+            GText(text: LoginText.headline, size: 18, weight: 700, color: GColor.loginInk, alignment: .center, trackingAdjustment: -0.10)
             if let recent = state.recentTitle {
                 GText(text: recent, color: GColor.muted)
             }
             socialButton(.kakao)
+                .offset(y: -1 / displayScale)
             socialButton(.google)
+                .offset(y: -1 / displayScale)
             GText(text: LoginText.terms, size: 11, color: GColor.muted, alignment: .center, trackingAdjustment: -0.10)
+                .offset(x: 1 / displayScale, y: -1 / displayScale)
             Button { reviewPresented = true } label: {
-                GText(text: state.title(for: .review), size: 11, color: GColor.muted, underline: true)
+                GText(text: state.title(for: .review), size: 11, color: GColor.muted, underline: true, trackingAdjustment: -0.12)
                     .padding(.horizontal, G.gap)
                     .padding(.vertical, pixelAligned(G.small))
             }
@@ -94,7 +98,7 @@ struct LoginScreen: View {
                 }
                 .frame(width: G.dp(18), height: G.dp(18))
                 .accessibilityHidden(true)
-                GText(text: state.title(for: provider), size: 15, weight: 700, color: foreground)
+                GText(text: state.title(for: provider), size: 15, weight: 700, color: foreground, trackingAdjustment: 0.08)
                     .lineLimit(1)
             }
             .padding(.horizontal, G.dp(24))
