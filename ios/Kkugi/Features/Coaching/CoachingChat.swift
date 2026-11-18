@@ -85,37 +85,77 @@ struct CoachingChat: View {
     @StateObject private var model = CoachingConversation()
 
     var body: some View {
-        VStack {
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: G.gap) {
-                        ForEach(model.turns) { turn in
-                            VStack(alignment: .leading, spacing: G.small) {
-                                GText(text: turn.question, weight: 700)
-                                if !turn.text.isEmpty { Text(turn.text).textSelection(.enabled) }
-                                ForEach(turn.citations, id: \.evidenceId) { citation in
-                                    DisclosureGroup(citation.title) {
-                                        Text(citation.quote)
-                                        if let url = URL(string: citation.sourceUrl), url.scheme == "https" {
-                                            Link("출처 열기", destination: url)
+        VStack(spacing: G.small) {
+            if model.turns.isEmpty {
+                GeometryReader { bounds in
+                    ScrollView {
+                        VStack(spacing: G.small) {
+                            ArtImage(asset: .wave).scaledToFit().frame(width: G.dp(104), height: G.dp(104))
+                                .accessibilityHidden(true)
+                            GText(text: "안녕하세요, 꾸기예요", size: 22, weight: 700)
+                            GText(text: "식단과 운동 기록을 함께 살펴볼게요", color: GColor.muted)
+                            LazyVGrid(columns: [GridItem(.flexible(), spacing: G.small), GridItem(.flexible())], spacing: G.small) {
+                                ForEach(suggestions.indices, id: \.self) { i in
+                                    let suggestion = suggestions[i]
+                                    Button {
+                                        model.question = suggestion.1
+                                        model.send(using: session)
+                                    } label: {
+                                        VStack(alignment: .leading, spacing: G.dp(4)) {
+                                            GText(text: suggestion.0, size: 11, color: Color(hex: 0x2E6DB4))
+                                            GText(text: suggestion.1, weight: 700)
+                                        }.frame(maxWidth: .infinity, minHeight: G.dp(56), alignment: .topLeading)
+                                            .padding(G.gap).background(.white, in: RoundedRectangle(cornerRadius: G.dp(16)))
+                                    }.buttonStyle(.plain).accessibilityLabel(suggestion.1)
+                                }
+                            }.padding(.top, G.dp(16))
+                            GText(text: "이 화면을 닫으면 대화가 사라져요.", size: 11, color: GColor.muted)
+                        }.padding(.vertical, G.gap).frame(minHeight: bounds.size.height)
+                    }
+                }
+            } else {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: G.gap) {
+                            ForEach(model.turns) { turn in
+                                VStack(alignment: .leading, spacing: G.small) {
+                                    GText(text: turn.question, weight: 700)
+                                    if !turn.text.isEmpty { Text(turn.text).textSelection(.enabled) }
+                                    ForEach(turn.citations, id: \.evidenceId) { citation in
+                                        DisclosureGroup(citation.title) {
+                                            Text(citation.quote)
+                                            if let url = URL(string: citation.sourceUrl), url.scheme == "https" {
+                                                Link("출처 열기", destination: url)
+                                            }
                                         }
                                     }
-                                }
-                                if !turn.failure.isEmpty { Text(turn.failure) }
-                                if model.active == turn.id && !turn.receivedAnswer { ProgressView() }
-                            }.id(turn.id)
-                        }
-                    }.frame(maxWidth: .infinity, alignment: .leading)
-                }.onChange(of: model.turns.count) { _, _ in
-                    if let id = model.turns.last?.id { proxy.scrollTo(id, anchor: .bottom) }
+                                    if !turn.failure.isEmpty { Text(turn.failure) }
+                                    if model.active == turn.id && !turn.receivedAnswer { ProgressView() }
+                                }.id(turn.id)
+                            }
+                        }.frame(maxWidth: .infinity, alignment: .leading)
+                    }.onChange(of: model.turns.count) { _, _ in
+                        if let id = model.turns.last?.id { proxy.scrollTo(id, anchor: .bottom) }
+                    }
                 }
             }
-            TextField("질문을 입력해 주세요", text: $model.question, axis: .vertical)
-                .lineLimit(1...5).textFieldStyle(.roundedBorder)
-            if model.active == nil {
-                Button("질문 보내기") { model.send(using: session) }
-                    .disabled(!(1...1000).contains(model.question.trimmingCharacters(in: .whitespacesAndNewlines).unicodeScalars.count))
-            } else { Button("답변 중단") { model.cancel() } }
-        }.padding(G.gutter).navigationTitle("꾸기에게 묻기").onDisappear { model.cancel() }
+            HStack {
+                TextField("무엇이든 물어보세요", text: $model.question, axis: .vertical)
+                    .lineLimit(1...5).textFieldStyle(.plain)
+                if model.active == nil {
+                    Button { model.send(using: session) } label: {
+                        Image(systemName: "paperplane").frame(width: G.dp(32), height: G.dp(32)).background(Color(hex: 0xF0F2F5), in: Circle())
+                    }.accessibilityLabel("질문 보내기")
+                        .disabled(!(1...1000).contains(model.question.trimmingCharacters(in: .whitespacesAndNewlines).unicodeScalars.count))
+                } else { Button("답변 중단") { model.cancel() } }
+            }.padding(.leading, G.dp(16)).padding(.trailing, G.dp(6)).padding(.vertical, G.dp(5))
+                .background(.white, in: Capsule()).overlay { Capsule().strokeBorder(GColor.outline) }
+        }.padding(.horizontal, G.gutter).padding(.bottom, G.small).background(Color(hex: 0xF5F7FA))
+            .navigationTitle("꾸기에게 묻기").navigationBarTitleDisplayMode(.inline).onDisappear { model.cancel() }
     }
+
+    private let suggestions = [
+        ("오늘 기록", "오늘 단백질 충분히 먹었어요?"), ("오늘 기록", "오늘 남은 칼로리 알려 줘요"),
+        ("지난주", "지난주 식단은 어땠어요?"), ("영양 상식", "운동 뒤에는 뭘 먹으면 좋아요?")
+    ]
 }
