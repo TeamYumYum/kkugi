@@ -13,7 +13,7 @@ struct LoginScreen: View {
             VStack(spacing: 0) {
                 VStack(spacing: 0) {
                     GText(text: LoginText.name, size: 30, weight: 800, color: GColor.loginInk)
-                    GText(text: LoginText.tagline, color: GColor.loginInkSoft)
+                    GText(text: LoginText.tagline, color: GColor.loginInkSoft, trackingAdjustment: -0.30)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, G.dp(48))
@@ -61,7 +61,7 @@ struct LoginScreen: View {
             }
             socialButton(.kakao)
             socialButton(.google)
-            GText(text: LoginText.terms, size: 11, color: GColor.muted, alignment: .center)
+            GText(text: LoginText.terms, size: 11, color: GColor.muted, alignment: .center, trackingAdjustment: -0.10)
             Button { reviewPresented = true } label: {
                 GText(text: state.title(for: .review), size: 11, color: GColor.muted, underline: true)
                     .padding(.horizontal, G.gap)

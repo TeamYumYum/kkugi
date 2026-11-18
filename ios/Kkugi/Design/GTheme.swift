@@ -59,6 +59,7 @@ struct GText: View {
     var color: Color = GColor.text
     var alignment: TextAlignment = .leading
     var underline = false
+    var trackingAdjustment: CGFloat = 0
     @ScaledMetric(relativeTo: .body) private var fontScale: CGFloat = 1
 
     var body: some View {
@@ -67,7 +68,7 @@ struct GText: View {
         let extraLeading = max(0, pointSize * G.lineHeight - font.lineHeight)
         Text(text)
             .font(Font(font))
-            .tracking(pointSize * G.letterSpacing)
+            .tracking(pointSize * G.letterSpacing + trackingAdjustment * fontScale)
             .lineSpacing(extraLeading)
             .padding(.vertical, extraLeading / 2)
             .foregroundStyle(color)
