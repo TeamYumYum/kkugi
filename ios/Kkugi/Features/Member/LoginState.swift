@@ -42,7 +42,10 @@ enum LoginText {
 final class LoginModel: ObservableObject {
     @Published private(set) var state: LoginState
 
-    init(initialState: LoginState = LoginState()) {
+    private let review: ((String, String) async throws -> Void)?
+
+    init(initialState: LoginState = LoginState(), review: ((String, String) async throws -> Void)? = nil) {
+        self.review = review
         state = initialState
     }
 
@@ -56,7 +59,14 @@ final class LoginModel: ObservableObject {
     func signInForReview(_ identifier: String, _ password: String) {
         guard !identifier.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               !password.isEmpty, !state.isBusy else { return }
-        state.error = "지금은 테스트 계정으로 로그인할 수 없어요"
+        guard let review else { state.error = "지금은 테스트 계정으로 로그인할 수 없어요"; return }
+        state.error = nil
+        state.signingIn = .review
+        Task {
+            defer { state.signingIn = nil }
+            do { try await review(identifier, password) }
+            catch { state.error = "로그인하지 못했어요. 계정 정보를 확인해 주세요" }
+        }
     }
 
     func dismissError() { state.error = nil }

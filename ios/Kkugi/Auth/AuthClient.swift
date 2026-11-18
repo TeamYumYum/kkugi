@@ -46,9 +46,13 @@ struct AuthClient {
     }
 
     private func post(_ path: String, body: Data? = nil, bearer: String? = nil) async throws -> (Data, Int) {
+        try await request("api/v1/auth/" + path, method: "POST", body: body, bearer: bearer)
+    }
+
+    func request(_ path: String, method: String, body: Data?, bearer: String?) async throws -> (Data, Int) {
         guard baseURL.scheme == "https", baseURL.host != nil else { throw URLError(.badURL) }
-        var request = URLRequest(url: baseURL.appendingPathComponent("api/v1/auth/" + path))
-        request.httpMethod = "POST"
+        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        request.httpMethod = method
         request.httpBody = body
         request.cachePolicy = .reloadIgnoringLocalCacheData
         request.setValue("application/json", forHTTPHeaderField: "Accept")

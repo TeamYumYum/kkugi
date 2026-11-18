@@ -13,6 +13,24 @@ actor AuthSession {
 
     func current() throws -> StoredSession? { try vault.read() }
 
+    func protectedRequest(_ path: String, method: String, body: Data? = nil) async throws -> Data {
+        guard let original = try vault.read() else { throw URLError(.userAuthenticationRequired) }
+        var response = try await api.request(path, method: method, body: body, bearer: original.accessToken)
+        if response.1 == 401 {
+            let renewed = try await refreshed(after: original)
+            response = try await api.request(path, method: method, body: body, bearer: renewed.accessToken)
+        }
+        guard try vault.read()?.sessionID == original.sessionID else { throw CancellationError() }
+        guard (200..<300).contains(response.1) else { throw AuthClient.RequestFailure(status: response.1, code: nil) }
+        return response.0
+    }
+
+    func markOnboarded(for id: UUID) throws {
+        guard let item = try vault.read(), item.sessionID == id else { throw CancellationError() }
+        try vault.save(StoredSession(sessionID: id, memberID: item.memberID, onboarded: true,
+                                     accessToken: item.accessToken, refreshToken: item.refreshToken))
+    }
+
     func review(loginID: String, password: String) async throws -> LoginResponse {
         let attempt = beginOperation()
         let result = try await api.review(loginID: loginID, password: password)
