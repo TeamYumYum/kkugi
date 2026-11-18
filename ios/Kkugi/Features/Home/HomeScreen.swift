@@ -21,6 +21,8 @@ struct HomeScreen: View {
                         }.accessibilityLabel("알림")
                         Button("내 프로필", action: profile)
                     }
+                    NavigationLink("코칭") { CoachingScreen(session: session) }
+                    NavigationLink("성장") { GrowthScreen(session: session) }
                     NavigationLink("운동") { WorkoutScreen(session: session) }
                     NavigationLink("식사 기록") { MealDiary(session: session) }
                     GText(text: "식단 스트릭", size: 18, weight: 700)

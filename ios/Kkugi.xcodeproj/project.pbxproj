@@ -121,6 +121,36 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "D7EA249BE85F62A5DA513048";
 		};
+		"71BA004ADB8EEED046F8A6AD" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Features/Coaching/CoachingModels.generated.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"96C08BB73709C703DA75F637" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "71BA004ADB8EEED046F8A6AD";
+		};
+		"DC38FE9E74D8A316E811BCB6" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Features/Coaching/CoachingScreen.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"8EC904232D41E283A51C5DD7" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "DC38FE9E74D8A316E811BCB6";
+		};
+		"E1152103FF722D6ED47120BF" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Features/Growth/GrowthScreen.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"E316C66C02D2A35A8BF46C0C" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "E1152103FF722D6ED47120BF";
+		};
 		"4CC2C9B251FB59E84580C748" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -281,6 +311,9 @@
 				"C6551262BBC005C9453150AF",
 				"A1D5BEE0A4FEA9C1AB396EA9",
 				"D7EA249BE85F62A5DA513048",
+				"71BA004ADB8EEED046F8A6AD",
+				"DC38FE9E74D8A316E811BCB6",
+				"E1152103FF722D6ED47120BF",
 				"4CC2C9B251FB59E84580C748",
 				"FC5DBB3E7F62363B0C702AF4",
 				"0A109C71E7FE73A45663F10F",
@@ -318,6 +351,9 @@
 				"18F718E44BF6E3B7D54BED3F",
 				"C53A8936BE09782F1101AD57",
 				"5DCC14E0EC227C6B0C23B40F",
+				"96C08BB73709C703DA75F637",
+				"8EC904232D41E283A51C5DD7",
+				"E316C66C02D2A35A8BF46C0C",
 				"617A868C763953C01BA667ED",
 				"432BA76D16B1BCA468275D01",
 				"02AE4E5B82EAB96748C324AE",
