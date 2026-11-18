@@ -56,6 +56,7 @@ struct LoginRoot: View {
             case .profile: MemberProfileScreen(flow: flow)
             }
         }.task { await flow.restore() }
+        .task { await flow.observeExpiry() }
     }
 
     private var login: some View {

@@ -4,12 +4,23 @@ actor AuthSession {
     private let api: AuthClient
     private let vault: SessionVault
     private var generation = UUID()
+    private var expiryObservers: [UUID: AsyncStream<Void>.Continuation] = [:]
     private var refreshTask: Task<StoredSession, Error>?
 
     init(api: AuthClient, vault: SessionVault) {
         self.api = api
         self.vault = vault
     }
+
+    func expirations() -> AsyncStream<Void> {
+        let observer = UUID()
+        let (stream, continuation) = AsyncStream<Void>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        expiryObservers[observer] = continuation
+        continuation.onTermination = { [weak self] _ in Task { await self?.removeObserver(observer) } }
+        return stream
+    }
+
+    private func removeObserver(_ id: UUID) { expiryObservers[id] = nil }
 
     func current() throws -> StoredSession? { try vault.read() }
 
@@ -94,7 +105,10 @@ actor AuthSession {
                 try vault.save(updated)
                 return updated
             } catch let error as AuthClient.RequestFailure {
-                if generation == attempt && error.status == 401 { try vault.clear() }
+                if generation == attempt && error.status == 401 {
+                    try vault.clear()
+                    for observer in expiryObservers.values { observer.yield(()) }
+                }
                 throw error
             }
         }

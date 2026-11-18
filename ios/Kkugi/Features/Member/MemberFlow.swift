@@ -16,6 +16,19 @@ final class MemberFlow: ObservableObject {
         }
     }
 
+    func observeExpiry() async {
+        guard let session else { return }
+        for await _ in await session.expirations() {
+            guard !Task.isCancelled else { return }
+            do {
+                if try await session.current() == nil {
+                    profile = nil
+                    route = .login
+                }
+            } catch { continue }
+        }
+    }
+
     func restore() async {
         guard let item = try? await session?.current() else { return }
         route = item.onboarded ? .home : .onboarding

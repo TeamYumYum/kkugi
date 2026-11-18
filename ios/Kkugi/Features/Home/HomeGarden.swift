@@ -14,7 +14,7 @@ struct HomeGarden: View {
             let frontY = feet + 14 * scale - 82 * front
             ZStack(alignment: .topLeading) {
                 Color(hex: 0xF5E8D7)
-                ArtImage(asset: .homeBack)
+                ArtImage(asset: .gardenBack)
                     .frame(width: 2060 * scale, height: 872 * scale)
                     .offset(y: backY)
                 Ellipse().fill(.black.opacity(0.12))
@@ -26,7 +26,7 @@ struct HomeGarden: View {
                 Rectangle().fill(Color(hex: 0xD0D07E))
                     .frame(width: width, height: max(0, height - frontY - 246 * front + 1))
                     .offset(y: frontY + 246 * front - 1)
-                ArtImage(asset: .homeFront)
+                ArtImage(asset: .gardenFront)
                     .frame(width: 2300 * front, height: 246 * front)
                     .offset(y: frontY)
             }.frame(width: width, height: height, alignment: .topLeading).clipped()
