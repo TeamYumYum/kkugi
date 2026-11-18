@@ -486,6 +486,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "542CD8CDA03D3B91455D9CC8";
 		};
+		"FA8457F221519298413A1831" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Features/Workout/WorkoutJournal.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"2F4E9A18884661E70CFD2BE8" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "FA8457F221519298413A1831";
+		};
 		"62EB2F61DE401C1A4FCF71EE" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -495,6 +505,16 @@
 		"1363D7B43223EE642F524D55" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "62EB2F61DE401C1A4FCF71EE";
+		};
+		"AEB5AC80057AF44F48B404A9" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Features/Workout/WorkoutRecorder.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"168EFE3B393BD0CE5DC638D6" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "AEB5AC80057AF44F48B404A9";
 		};
 		"42CF3EC07C7A0A5C847C0343" = {
 			"isa" = "PBXFileReference";
@@ -570,7 +590,9 @@
 				"0A16ED979A48C57DB93F9A05",
 				"6BC96ABA288AB53DDDE47E5D",
 				"542CD8CDA03D3B91455D9CC8",
+				"FA8457F221519298413A1831",
 				"62EB2F61DE401C1A4FCF71EE",
+				"AEB5AC80057AF44F48B404A9",
 				"42CF3EC07C7A0A5C847C0343",
 				"E4E1FB9E57A8588BB1F3142B",
 				"308B5155969503DFA8E472EB",
@@ -625,7 +647,9 @@
 				"819C96CB77785FE29C043307",
 				"30B2B492BF70C96956E954FB",
 				"EB3E486485B0F81FF3900C08",
+				"2F4E9A18884661E70CFD2BE8",
 				"1363D7B43223EE642F524D55",
+				"168EFE3B393BD0CE5DC638D6",
 				"45971865F27A107CDD05218A",
 				"4CB0EB02959A1D4B988AF70C",
 			);
@@ -865,6 +889,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "C024154D96DB672EF2997E89";
 		};
+		"355DEC03C58D02592CF27C8E" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "KkugiTests/WorkoutJournalTests.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"865C7901B060C6549CDC58F4" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "355DEC03C58D02592CF27C8E";
+		};
 		"799AC9328567FF536BB4494B" = {
 			"isa" = "PBXGroup";
 			"children" = (
@@ -878,6 +912,7 @@
 				"54DA4F48250A36E5E146652F",
 				"AD421012C87DB8FCD35A3183",
 				"C024154D96DB672EF2997E89",
+				"355DEC03C58D02592CF27C8E",
 			);
 			"name" = "KkugiTests";
 			"sourceTree" = "<group>";
@@ -903,6 +938,7 @@
 				"38177E90048577E9519EF374",
 				"C70FB120C3789A2B787C021E",
 				"13AA8AE3CB2EBB9F5C91375F",
+				"865C7901B060C6549CDC58F4",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};

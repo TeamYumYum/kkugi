@@ -137,7 +137,7 @@ struct RoutineEditor: View {
     }
 }
 
-private struct ExerciseCatalog: View {
+struct ExerciseCatalog: View {
     let session: AuthSession
     let select: (ExerciseResponse) -> Void
     @State private var keyword = ""

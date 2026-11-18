@@ -161,3 +161,73 @@ struct ApiResponseRoutineResponse: Codable {
     let `data`: RoutineResponse?
     let `error`: ErrorDetail?
 }
+
+struct WorkoutSessionValuesRequest: Codable {
+    let `weightKg`: Double?
+    let `reps`: Int?
+    let `durationSeconds`: Int?
+}
+
+struct WorkoutSessionSetRequest: Codable {
+    let `setNo`: Int
+    let `originStartSetNo`: Int?
+    let `target`: WorkoutSessionValuesRequest
+    let `actual`: WorkoutSessionValuesRequest?
+    let `status`: String
+    let `completedAt`: String?
+}
+
+struct WorkoutSessionExerciseRequest: Codable {
+    let `sortOrder`: Int
+    let `originStartOrder`: Int?
+    let `exerciseId`: Int
+    let `exerciseName`: String
+    let `recordType`: String
+    let `weightType`: String
+    let `restSeconds`: Int
+    let `skipped`: Bool?
+    let `sets`: [WorkoutSessionSetRequest]
+}
+
+struct WorkoutSessionUploadRequest: Codable {
+    let `clientUuid`: String
+    let `routineId`: Int?
+    let `scheduleId`: Int?
+    let `scheduledDate`: String?
+    let `routineName`: String?
+    let `startedAt`: String
+    let `endedAt`: String
+    let `startExercises`: [WorkoutSessionExerciseRequest]
+    let `performedExercises`: [WorkoutSessionExerciseRequest]
+}
+
+struct NewRecordResponse: Codable {
+    let `exerciseId`: Int
+    let `exerciseName`: String
+    let `reps`: Int
+    let `weightKg`: Double
+}
+
+struct NewBadgeResponse: Codable {
+    let `code`: String
+    let `name`: String
+    let `description`: String
+    let `category`: String
+    let `conditionKind`: String
+    let `threshold`: Int
+    let `earnedAt`: String
+}
+
+struct WorkoutSessionUploadResponse: Codable {
+    let `id`: Int
+    let `clientUuid`: String
+    let `totalVolumeKg`: Int
+    let `newRecords`: [NewRecordResponse]
+    let `newBadges`: [NewBadgeResponse]
+}
+
+struct ApiResponseWorkoutSessionUploadResponse: Codable {
+    let `success`: Bool?
+    let `data`: WorkoutSessionUploadResponse?
+    let `error`: ErrorDetail?
+}

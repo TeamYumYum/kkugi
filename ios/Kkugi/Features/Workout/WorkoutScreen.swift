@@ -13,6 +13,7 @@ struct WorkoutScreen: View {
 
     var body: some View {
         List {
+            NavigationLink("운동 수행") { WorkoutRecorder(session: session) }
             NavigationLink("날짜별 운동 기록") { WorkoutHistory(session: session) }
             if loading { ProgressView() }
             if !message.isEmpty { Text(message); Button("다시 불러오기") { Task { await load() } } }

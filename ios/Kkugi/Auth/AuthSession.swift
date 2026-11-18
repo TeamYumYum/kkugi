@@ -48,8 +48,9 @@ actor AuthSession {
         if GardenWidgetStore.write(snapshot) { WidgetCenter.shared.reloadTimelines(ofKind: "KkugiGarden") }
     }
 
-    func protectedRequest(_ path: String, method: String, body: Data? = nil, query: [URLQueryItem] = [], contentType: String = "application/json") async throws -> Data {
+    func protectedRequest(_ path: String, method: String, body: Data? = nil, query: [URLQueryItem] = [], contentType: String = "application/json", memberID: Int64? = nil) async throws -> Data {
         guard let original = try vault.read() else { throw URLError(.userAuthenticationRequired) }
+        if let memberID, original.memberID != memberID { throw CancellationError() }
         var response = try await api.request(path, method: method, body: body, bearer: original.accessToken, query: query, contentType: contentType)
         if response.1 == 401 {
             let renewed = try await refreshed(after: original)
