@@ -149,7 +149,7 @@ struct MealDiary: View {
             HStack(spacing: G.dp(16)) {
                 ZStack {
                     ForEach(0..<3) { i in
-                        let goal = energy * ratios[i] / 100.0 / caloriesPerGram[i]
+                        let goal = (energy * ratios[i] / 100.0 / caloriesPerGram[i]).rounded()
                         macroRing(i, grams: grams[i], goal: goal, color: colors[i])
                     }
                 }.accessibilityHidden(true)
@@ -243,6 +243,7 @@ struct ManualMealForm: View {
     @State private var scanning = false
     @State private var searchAfterScan = false
     @State private var confirming = false
+    @State private var searchAfterConfirmation = false
     @State private var recognition: MealPhotoRecognitionResponse?
     @State private var ranks: [Int: Int] = [:]
     @State private var id = UUID()
@@ -325,8 +326,14 @@ struct ManualMealForm: View {
             .gListCanvas().navigationTitle(original == nil ? "식사 추가" : "식사 수정")
             .toolbar { Button("취소") { dismiss() }.disabled(busy) }
         }.interactiveDismissDisabled(busy)
-        .sheet(isPresented: $confirming) {
-            MealConfirmation(labels: confirmationLabels, error: error, busy: busy) {
+        .sheet(isPresented: $confirming, onDismiss: {
+            if searchAfterConfirmation { searchAfterConfirmation = false; searching = true }
+        }) {
+            MealConfirmation(foods: confirmationFoods, source: recognition == nil ? "직접 고른 음식" : "사진에서 찾은 음식",
+                             kind: kind, date: date, error: error, busy: busy, find: {
+                searchAfterConfirmation = true
+                confirming = false
+            }) {
                 Task { await save() }
             }
         }
@@ -347,11 +354,21 @@ struct ManualMealForm: View {
         }
     }
 
-    private var confirmationLabels: [String] {
+    private var confirmationFoods: [MealConfirmation.Food] {
         let recognized = (recognition?.regions ?? []).compactMap { region in
-            region.candidates.first { $0.rank == ranks[region.regionNo] }.map { "\($0.foodName) · \($0.grams)g" }
+            region.candidates.first { $0.rank == ranks[region.regionNo] }.map { candidate in
+                MealConfirmation.Food(name: candidate.foodName, grams: candidate.grams, kcal: candidate.nutrition.kcal,
+                    carb: candidate.nutrition.carbohydrateG, protein: candidate.nutrition.proteinG, fat: candidate.nutrition.fatG)
+            }
         }
-        return foods.map { "\($0.food.name) · \($0.grams)g" } + recognized + names.split(whereSeparator: \.isNewline).map(String.init)
+        let portions = foods.map { portion in
+            let grams = Int(portion.grams) ?? 0
+            let ratio = Double(grams) / 100
+            let nutrition = portion.food.nutritionPer100g
+            return MealConfirmation.Food(name: portion.food.name, grams: grams, kcal: nutrition.kcal * ratio,
+                carb: nutrition.carbohydrateG * ratio, protein: nutrition.proteinG * ratio, fat: nutrition.fatG * ratio)
+        }
+        return portions + recognized + names.split(whereSeparator: \.isNewline).map { MealConfirmation.Food(name: String($0)) }
     }
 
     @MainActor private func save() async {
@@ -419,9 +436,21 @@ extension ManualMealForm {
 #endif
 
 struct MealConfirmation: View {
-    let labels: [String]
+    struct Food {
+        let name: String
+        var grams: Int? = nil
+        var kcal: Double? = nil
+        var carb: Double? = nil
+        var protein: Double? = nil
+        var fat: Double? = nil
+    }
+    let foods: [Food]
+    let source: String
+    let kind: String
+    let date: Date
     let error: String
     let busy: Bool
+    let find: () -> Void
     let save: () -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -430,20 +459,61 @@ struct MealConfirmation: View {
             HStack {
                 Button { dismiss() } label: { Image(systemName: "chevron.left") }.accessibilityLabel("뒤로")
                 Spacer()
-                GText(text: "식사 확인", size: 16, weight: 700)
-                Spacer()
+                let meal = ["BREAKFAST":"아침","LUNCH":"점심","DINNER":"저녁","SNACK":"간식"][kind] ?? kind
+                GText(text: meal + " · " + mealTime, weight: 600)
             }
             ScrollView {
                 VStack(alignment: .leading, spacing: G.gap) {
-                    GText(text: "기록할 음식", size: 18, weight: 700)
-                    ForEach(labels.indices, id: \.self) { index in GText(text: labels[index]) }
-                }.frame(maxWidth: .infinity, alignment: .leading).padding(G.gap)
-                    .background(.white, in: RoundedRectangle(cornerRadius: G.dp(16)))
+                    GText(text: source, size: 11, weight: 600, color: GColor.muted)
+                    GText(text: headline, size: 22, weight: 700)
+                    VStack(alignment: .leading, spacing: G.gap) {
+                        HStack {
+                            GText(text: "합계", weight: 700)
+                            Spacer()
+                            GText(text: "\(Int(foods.compactMap(\.kcal).reduce(0,+).rounded()))kcal", size: 16, weight: 700)
+                        }
+                        ForEach(foods.indices, id: \.self) { index in
+                            let food = foods[index]
+                            Divider()
+                            HStack {
+                                GText(text: food.name, weight: 700)
+                                Spacer()
+                                if let grams = food.grams { GText(text: "\(grams)g") }
+                                if let kcal = food.kcal { GText(text: "\(Int(kcal.rounded()))kcal") }
+                            }
+                            HStack(spacing: G.gap) {
+                                macro("탄", food.carb)
+                                macro("단", food.protein)
+                                macro("지", food.fat)
+                            }
+                        }
+                    }.padding(G.dp(14)).background(.white, in: RoundedRectangle(cornerRadius: G.dp(16)))
+                    Button("다른 음식 찾기", action: find)
+                }.frame(maxWidth: .infinity, alignment: .leading)
             }
             if !error.isEmpty { GText(text: error) }
-            Button(action: save) { GText(text: busy ? "저장하는 중" : "식사 기록하기", size: 15, weight: 700, color: .white) }
+            Button(action: save) { GText(text: busy ? "저장하는 중" : "저장하기", size: 15, weight: 700, color: .white) }
                 .buttonStyle(GButtonStyle(background: GColor.text, outline: false))
         }.disabled(busy).interactiveDismissDisabled(busy).padding(G.gutter).background(Color(hex: 0xF5F7FA))
+    }
+
+    private var mealTime: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.timeZone = MealDay.calendar.timeZone
+        formatter.dateFormat = "a h:mm"
+        return formatter.string(from: date)
+    }
+
+    private var headline: String {
+        guard let name = foods.first?.name, let last = name.unicodeScalars.last else { return "음식이 맞나요?" }
+        let code = last.value
+        let hasFinal = (0xAC00...0xD7A3).contains(code) && (code - 0xAC00) % 28 != 0
+        return name + (hasFinal ? "이" : "가") + " 맞나요?"
+    }
+
+    @ViewBuilder private func macro(_ label: String, _ value: Double?) -> some View {
+        if let value { GText(text: label + " " + value.formatted(.number.precision(.fractionLength(0...1))) + "g", size: 11, color: GColor.muted) }
     }
 }
 

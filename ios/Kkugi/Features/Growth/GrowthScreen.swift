@@ -31,13 +31,7 @@ struct GrowthScreen: View {
                     }
                 }
                 NavigationLink("배지 모음") {
-                    List(summary.badges, id: \.code) { badge in
-                        VStack(alignment: .leading) {
-                            Label(badge.name, systemImage: badge.earnedAt == nil ? "lock" : "medal")
-                            Text(badge.description)
-                            if let date = badge.earnedAt { Text(String(date.prefix(10)) + " 획득") }
-                        }
-                    }.gListCanvas().navigationTitle("배지 모음")
+                    BadgeCollection(badges: summary.badges)
                 }
             } else if !failure { ProgressView() }
         }.gListCanvas().navigationTitle("성장").task { await load() }.refreshable { await load() }
@@ -55,5 +49,49 @@ struct GrowthScreen: View {
             summary = result
             failure = false
         } catch { failure = true }
+    }
+}
+
+private struct BadgeCollection: View {
+    let badges: [GrowthBadgeResponse]
+    private let order = ["FIRST_RECORD", "STREAK_DAYS", "STREAK_WEEKS", "VOLUME_KG", "PROTEIN_G"]
+    private let titles = ["FIRST_RECORD":"첫 기록", "STREAK_DAYS":"식단 스트릭", "STREAK_WEEKS":"운동 스트릭",
+                          "VOLUME_KG":"운동 볼륨", "PROTEIN_G":"단백질"]
+
+    var body: some View {
+        let groups = Dictionary(grouping: badges, by: \.conditionKind)
+        let kinds = order.filter { groups[$0] != nil } + groups.keys.filter { !order.contains($0) }.sorted()
+        let earned = badges.filter { $0.earnedAt != nil }.count
+        ScrollView {
+            VStack(alignment: .leading, spacing: G.gap) {
+                GText(text: earned == 0 ? "배지" : "배지 \(earned)개 받았어요", size: 18, weight: 700)
+                if badges.isEmpty { GText(text: "아직 받을 수 있는 배지가 없어요.") }
+                ForEach(kinds, id: \.self) { kind in
+                    if let items = groups[kind] {
+                        HStack {
+                            GText(text: titles[kind] ?? "기록 배지", size: 18, weight: 700)
+                            Spacer()
+                            GText(text: "\(items.filter { $0.earnedAt != nil }.count) / \(items.count)", size: 11, color: GColor.muted)
+                        }
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: G.small), count: 4), spacing: G.gap) {
+                            ForEach(items, id: \.code) { badge in
+                                VStack(spacing: G.dp(4)) {
+                                    let icon = badge.earnedAt == nil ? "lock.fill" : kind.hasPrefix("STREAK_") ? "flame.fill" : "trophy.fill"
+                                    Image(systemName: icon).foregroundStyle(badge.earnedAt == nil ? GColor.muted : Color.orange)
+                                        .frame(width: G.dp(42), height: G.dp(42)).background(.white, in: Circle())
+                                    GText(text: badge.name, size: 12, weight: 600, alignment: .center)
+                                    GText(text: badge.earnedAt.map { String($0.prefix(10)) } ?? "아직 못 받았어요", size: 11, color: GColor.muted)
+                                    if !badge.description.isEmpty { GText(text: badge.description, size: 11, color: GColor.muted, alignment: .center) }
+                                }
+                            }
+                        }
+                    }
+                }
+                GText(text: "배지는 이렇게 받아요", size: 18, weight: 700)
+                GText(text: "첫 식사나 첫 운동을 기록하면 배지를 받아요. 식단이나 운동 스트릭이 마일스톤에 이르면 배지를 받아요. 누적 운동 볼륨이나 단백질이 정한 단계에 이르면 배지를 받아요. 한 번 받은 배지는 스트릭이 끊겨도 사라지지 않아요.")
+                    .padding(G.gap).background(.white, in: RoundedRectangle(cornerRadius: G.dp(12)))
+            }.padding(.horizontal, G.gutter).padding(.vertical, G.gap)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }.gListCanvas().navigationTitle("배지 모음")
     }
 }

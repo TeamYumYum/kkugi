@@ -38,6 +38,13 @@ private final class FixtureProtocol: URLProtocol {
             return #"{"nickname":"꾸기회원","healthGoal":"MAINTAIN","gender":"FEMALE","birthDate":"2000-01-01","heightCm":167,"startWeightKg":60,"activityLevel":"MODERATE","avatar":"FRONT","onboardedAt":"2026-11-18T00:00:00+09:00"}"#
         case "/api/v1/workout-schedules": return #"{"items":[]}"#
         case "/api/v1/growth/me":
+            if populated {
+                let badges = [3, 7, 30, 100].map { days in
+                    let earned = days == 3 ? "\"2026-10-17\"" : days == 7 ? "\"2026-10-21\"" : "null"
+                    return #"{"code":"DIET_STREAK_\#(days)_DAYS","name":"식단 \#(days)일","description":"식단 목표를 \#(days)일 연속 달성했어요","category":"DIET","conditionKind":"STREAK_DAYS","threshold":\#(days),"earnedAt":\#(earned)}"#
+                }.joined(separator: ",")
+                return #"{"started":true,"startedOn":"2026-09-28","today":"2026-10-21","diet":{"currentDays":7,"longestDays":7,"thisWeek":[]},"workout":{"currentWeeks":2,"longestWeeks":2},"badges":[\#(badges)],"path":{"days":[{"date":"2026-10-19","dietAchieved":true},{"date":"2026-10-20","dietAchieved":true},{"date":"2026-10-21","dietAchieved":null}],"weeklyGoals":[]}}"#
+            }
             return #"{"started":true,"startedOn":"2026-01-01","today":"2026-01-08","diet":{"currentDays":2,"longestDays":3,"thisWeek":[]},"workout":{"currentWeeks":1,"longestWeeks":2},"badges":[{"code":"FIRST","name":"첫 기록","description":"첫 기록을 남겼어요","category":"DIET","conditionKind":"COUNT","threshold":1,"earnedAt":"2026-01-01"}],"path":{"days":[],"weeklyGoals":[]}}"#
         case "/api/v1/weekly-workout-goal/me":
             return #"{"configured":true,"thisWeek":{"weekStartDate":"2026-01-05","targetCount":3,"firstWeek":false},"progress":{"countedCount":1,"achieved":false}}"#

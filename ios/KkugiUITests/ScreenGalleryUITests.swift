@@ -100,7 +100,7 @@ final class ScreenGalleryUITests: XCTestCase {
     }
 
     func testCoachingAndGrowthDetails() throws {
-        let app = try home()
+        let app = try home(populated: true)
         try tap(app, "내 프로필")
         try tap(app, "목표 칼로리")
         try capture("target-calorie", when: app.staticTexts["하루 섭취 목표"])
