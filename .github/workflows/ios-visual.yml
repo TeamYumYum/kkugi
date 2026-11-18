@@ -12,6 +12,11 @@ concurrency:
 
 jobs:
   render:
+    name: render (${{ matrix.suite }})
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [core, gallery]
     runs-on: macos-15
     timeout-minutes: 20
     env:
@@ -25,12 +30,12 @@ jobs:
       - name: Verify comparison tools
         run: python3 -m unittest discover -s ios/verification/tests -v
       - name: Build and render actual SwiftUI views
-        run: python3 ios/verification/run_macos.py
+        run: python3 ios/verification/run_macos.py --suite ${{ matrix.suite }}
       - name: Preserve evidence and failure logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: ios-visual-${{ github.run_id }}
+          name: ios-visual-${{ github.run_id }}-${{ matrix.suite }}
           path: ios/artifacts/
           if-no-files-found: error
           retention-days: 3

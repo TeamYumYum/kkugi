@@ -1,6 +1,7 @@
 """Run pinned Xcode/Simulator tests and export named PNG evidence. macOS only."""
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import platform
@@ -14,6 +15,31 @@ ROOT = Path(__file__).resolve().parents[2]
 RUNTIME = "com.apple.CoreSimulator.SimRuntime.iOS-18-5"
 DEVICE_NAME = "iPhone 16"
 CASES = ["login-initial", "login-recent-kakao", "login-kakao-busy", "login-google-busy", "login-error"]
+GALLERY_TEST = "KkugiUITests/ScreenGalleryUITests"
+GALLERY_SCREENS = """
+home inbox-empty chat profile profile-edit body-edit withdrawal meal-add food-search meal-photo inbox meal-detail
+meal-edit schedule workout-history exercise-records workout-recorder routine-detail routine-editor exercise-search
+target-calorie weight diet-streak workout-streak badges weekly-report workout-detail routine-list routine-recommend
+ai-survey-full ai-survey ai-result exercise-pick
+""".split()
+
+
+def suite_configuration(suite: str) -> tuple[list[str], set[str]]:
+    gallery = {f"{case}-full.png" for case in GALLERY_SCREENS}
+    core = {f"{case}-{scale}x.{suffix}" for case in CASES for scale in (1, 3) for suffix in ("png", "json")}
+    core.update({"login-initial-full.png", "login-initial-full.json", "home-overlay.json"})
+    core.update(f"{case}-full.png" for case in ("review-login", "onboarding-nickname", "onboarding-goal",
+                                                "meal-day", "workout", "coaching", "growth"))
+    core.update(f"onboarding-{step}-3x.png" for step in ("nickname", "goal", "body", "meet"))
+    core.update(f"{case}-3x.png" for case in ("meal-recognizing", "meal-recognition-failed", "meal-photo-confirm",
+                                               "meal-confirm", "workout-finish"))
+    if suite == "core":
+        return [f"-skip-testing:{GALLERY_TEST}"], core
+    if suite == "gallery":
+        return [f"-only-testing:{GALLERY_TEST}"], gallery
+    if suite == "all":
+        return [], core | gallery
+    raise ValueError("Unknown XCTest suite")
 
 
 def command(args: list[str], log: Path | None = None) -> str:
@@ -69,6 +95,10 @@ def collect_evidence(export: Path, captures: Path, expected: set[str]) -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--suite", choices=("all", "core", "gallery"), default="all")
+    suite = parser.parse_args().suite
+    selection, expected = suite_configuration(suite)
     if sys.platform != "darwin":
         raise SystemExit("Xcode rendering requires macOS; static checks are not a substitute")
     artifacts = ROOT / "ios/artifacts"
@@ -85,7 +115,7 @@ def main() -> None:
         raise SystemExit("Expected exactly one available iPhone 16 on iOS 18.5; refusing runtime fallback")
     device = candidates[0]
     environment = {"xcode": version, "host": platform.platform(), "runtime": RUNTIME, "device": device,
-                   "commit": os.environ.get("GITHUB_SHA", "unrecorded"), "androidParity": "not-yet-compared"}
+                   "commit": os.environ.get("GITHUB_SHA", "unrecorded"), "suite": suite, "androidParity": "not-yet-compared"}
     (artifacts / "environment.json").write_text(json.dumps(environment, indent=2) + "\n")
     command([sys.executable, "ios/scripts/project.py", "--check"])
     command(["plutil", "-lint", "ios/Kkugi.xcodeproj/project.pbxproj", "ios/Kkugi/Info.plist"])
@@ -97,7 +127,7 @@ def main() -> None:
     try:
         command(["xcodebuild", "-project", "ios/Kkugi.xcodeproj", "-scheme", "Kkugi", "-destination", f"platform=iOS Simulator,id={device['udid']}",
                  "-derivedDataPath", "ios/DerivedData", "-resultBundlePath", str(result), "-parallel-testing-enabled", "NO",
-                 "-maximum-concurrent-test-simulator-destinations", "1", "test", "CODE_SIGN_IDENTITY=-"], artifacts / "xcodebuild.log")
+                 "-maximum-concurrent-test-simulator-destinations", "1", *selection, "test", "CODE_SIGN_IDENTITY=-"], artifacts / "xcodebuild.log")
     except subprocess.CalledProcessError as error:
         test_error = error
     finally:
@@ -109,12 +139,12 @@ def main() -> None:
                 print(command(["plutil", "-p", str(source)]))
     export = artifacts / "attachments"
     command(["xcrun", "xcresulttool", "export", "attachments", "--path", str(result), "--output-path", str(export)])
-    expected = {f"{case}-{scale}x.{suffix}" for case in CASES for scale in [1, 3] for suffix in ["png", "json"]}
-    expected.update({"login-initial-full.png", "login-initial-full.json"})
     collect_evidence(export, artifacts / "captures", expected)
     if test_error is not None:
         raise test_error
-    summary = {"buildAndTests": "passed", "pngCaptures": 11, "metadataFiles": 11, "pixelParity": "not-yet-compared"}
+    summary = {"suite": suite, "commit": environment["commit"], "buildAndTests": "passed",
+               "pngCaptures": sum(name.endswith(".png") for name in expected),
+               "metadataFiles": sum(name.endswith(".json") for name in expected), "pixelParity": "not-yet-compared"}
     (artifacts / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary))
 

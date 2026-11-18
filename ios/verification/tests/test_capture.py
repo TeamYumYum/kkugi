@@ -4,9 +4,36 @@ import tempfile
 import unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from run_macos import collect_evidence, evidence_name
+from run_macos import GALLERY_TEST, collect_evidence, evidence_name, suite_configuration
 
 class CaptureTests(unittest.TestCase):
+    def test_partition_preserves_tests_and_separate_evidence(self):
+        core_flags, core = suite_configuration("core")
+        gallery_flags, gallery = suite_configuration("gallery")
+        self.assertEqual(core_flags, ["-skip-testing:" + GALLERY_TEST])
+        self.assertEqual(gallery_flags, ["-only-testing:" + GALLERY_TEST])
+        self.assertEqual(suite_configuration("all"), ([], core | gallery))
+        self.assertFalse(core & gallery)
+        required_ui = """
+            home inbox-empty chat profile profile-edit body-edit withdrawal meal-add food-search meal-photo
+            inbox meal-detail meal-edit schedule workout-history exercise-records workout-recorder routine-detail
+            routine-editor exercise-search target-calorie weight diet-streak workout-streak badges weekly-report
+            workout-detail routine-list routine-recommend ai-survey-full ai-survey ai-result exercise-pick
+        """.split()
+        self.assertEqual(gallery, {f"{name}-full.png" for name in required_ui})
+        expected_core = {"home-overlay.json", "login-initial-full.json"}
+        expected_core.update(f"{name}-full.png" for name in
+                             "login-initial review-login onboarding-nickname onboarding-goal meal-day workout coaching growth".split())
+        expected_core.update(f"{name}-3x.png" for name in """
+            onboarding-nickname onboarding-goal onboarding-body onboarding-meet meal-recognizing
+            meal-recognition-failed meal-photo-confirm meal-confirm workout-finish
+        """.split())
+        expected_core.update(f"login-{state}-{scale}x.{ext}"
+                             for state in ("initial", "recent-kakao", "kakao-busy", "google-busy", "error")
+                             for scale in (1, 3) for ext in ("png", "json"))
+        self.assertEqual(core, expected_core)
+        with self.assertRaises(ValueError):
+            suite_configuration("unknown")
     def test_exact_and_xcode_suffix_names(self):
         expected = {"login-initial-1x.png"}
         uuid = "12345678-1234-1234-1234-123456789abc"
