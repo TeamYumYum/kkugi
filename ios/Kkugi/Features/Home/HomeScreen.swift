@@ -56,8 +56,8 @@ struct HomeScreen: View {
 }
 
 private extension AuthSession {
-    func homeData<T: Decodable>(_ path: String, _ type: T.Type) async throws -> T {
-        let bytes = try await protectedRequest("api/v1/" + path, method: "GET")
+    func homeData<T: Decodable>(_ path: String, _ type: T.Type, query: [URLQueryItem] = []) async throws -> T {
+        let bytes = try await protectedRequest("api/v1/" + path, method: "GET", query: query)
         return try JSONDecoder().decode(type, from: bytes)
     }
 }
@@ -65,20 +65,22 @@ private extension AuthSession {
 private struct NotificationInbox: View {
     let session: AuthSession
     @State private var items: [MemberNotificationResponse] = []
-    @State private var loading = true
+    @State private var pageIndex = 0
+    @State private var hasNext = false
+    @State private var loading = false
     @State private var message = ""
 
     var body: some View {
         List {
             if loading { ProgressView() }
-            if !message.isEmpty { Text(message); Button("다시 시도") { Task { await load() } } }
+            if !message.isEmpty { Text(message); Button("다시 시도") { Task { await load(pageIndex) } } }
             if !loading && message.isEmpty && items.isEmpty { Text("아직 알림이 없어요") }
             ForEach(items, id: \.id) { item in
                 Button {
                     Task {
                         do {
                             _ = try await session.protectedRequest("api/v1/members/me/notifications/\(item.id)/read", method: "POST")
-                            await load()
+                            await load(pageIndex)
                         } catch { message = "읽음으로 표시하지 못했어요" }
                     }
                 } label: {
@@ -88,14 +90,30 @@ private struct NotificationInbox: View {
                     }
                 }
             }
-        }.navigationTitle("알림").task { await load() }.refreshable { await load() }
+            if pageIndex > 0 || hasNext {
+                HStack {
+                    Button("이전") { Task { await load(pageIndex - 1) } }.disabled(pageIndex == 0)
+                    Spacer()
+                    Text("\(pageIndex + 1)페이지")
+                    Spacer()
+                    Button("다음") { Task { await load(pageIndex + 1) } }.disabled(!hasNext)
+                }.buttonStyle(.borderless).disabled(loading)
+            }
+        }.navigationTitle("알림").task { await load(pageIndex) }.refreshable { await load(pageIndex) }
     }
 
-    @MainActor private func load() async {
+    @MainActor private func load(_ requested: Int) async {
+        guard !loading, requested >= 0 else { return }
+        loading = true
         defer { loading = false }
         do {
-            let page = try await session.homeData("members/me/notifications", ApiResponseMemberNotificationPageResponse.self)
+            let page = try await session.homeData(
+                "members/me/notifications", ApiResponseMemberNotificationPageResponse.self,
+                query: [URLQueryItem(name: "page", value: String(requested)), URLQueryItem(name: "size", value: "20")]
+            )
             guard page.success == true, let data = page.data else { throw URLError(.badServerResponse) }
+            pageIndex = data.page
+            hasNext = (data.page + 1) * data.size < data.totalElements
             items = data.items
             message = ""
         } catch { message = "알림을 불러오지 못했어요" }

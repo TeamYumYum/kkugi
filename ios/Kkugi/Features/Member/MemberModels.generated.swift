@@ -11,6 +11,15 @@ struct OnboardingRequest: Codable {
     let activityLevel: String
 }
 
+struct ProfileUpdateRequest: Codable {
+    let nickname: String
+    let healthGoal: String
+    let gender: String
+    let birthDate: String
+    let heightCm: Decimal
+    let activityLevel: String
+}
+
 struct MemberProfileResponse: Codable {
     let nickname: String
     let healthGoal: String
