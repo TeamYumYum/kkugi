@@ -113,7 +113,7 @@ private struct LoginGarden: View {
                     .accessibilityHidden(true)
                 ArtImage(asset: .wave)
                     .scaledToFit()
-                    .frame(width: G.dp(220), height: G.dp(220))
+                    .frame(width: G.dp(220), height: min(G.dp(220), max(0, geometry.size.height - G.dp(36))))
                     .padding(.bottom, G.dp(36))
                     .accessibilityLabel("손 흔드는 꾸기")
                 ArtImage(asset: .gardenFront)

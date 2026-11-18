@@ -4,11 +4,12 @@ final class LoginUITests: XCTestCase {
     @MainActor
     func testInitialFullScreenEvidence() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["--capture-layout"]
         app.launch()
         XCTAssertTrue(app.buttons["카카오로 시작하기"].waitForExistence(timeout: 10))
         let content = app.otherElements["login-content"]
         XCTAssertTrue(content.exists)
-        let bounds = content.frame
+        let bounds = NSCoder.cgRect(for: try XCTUnwrap(content.value as? String))
         let screen = XCUIScreen.main.screenshot()
         let image = screen.image
         let full = app.frame

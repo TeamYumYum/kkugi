@@ -25,16 +25,20 @@ struct LoginRoot: View {
 
     var body: some View {
         GeometryReader { geometry in
-        LoginScreen(
-            state: model.state,
-            onSocialLogin: model.signIn,
-            onReviewLogin: model.signInForReview,
-            onDismissError: model.dismissError
-        )
-        .frame(width: geometry.size.width, height: geometry.size.height)
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("login-content")
-        .accessibilityFrame(geometry.frame(in: .global))
+            let bounds = geometry.frame(in: .global)
+            LoginScreen(
+                state: model.state,
+                onSocialLogin: model.signIn,
+                onReviewLogin: model.signInForReview,
+                onDismissError: model.dismissError
+            )
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("login-content")
+            #if DEBUG
+            .accessibilityValue(ProcessInfo.processInfo.arguments.contains("--capture-layout")
+                ? NSStringFromCGRect(bounds) : "")
+            #endif
         }
         .background(GColor.loginSky.ignoresSafeArea())
     }
