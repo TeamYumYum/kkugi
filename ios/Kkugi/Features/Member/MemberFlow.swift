@@ -45,6 +45,14 @@ final class MemberFlow: ObservableObject {
 
     func showProfile() { route = .profile }
 
+    func dailyTarget() async throws -> Double {
+        guard let session else { throw URLError(.userAuthenticationRequired) }
+        let data = try await session.protectedRequest("api/v1/coaching-plan/me", method: "GET")
+        let response = try JSONDecoder().decode(ApiResponseCoachingPlanResponse.self, from: data)
+        guard response.success == true, let plan = response.data else { throw URLError(.badServerResponse) }
+        return plan.targetKcal
+    }
+
     func loadProfile() async throws {
         guard let session else { throw URLError(.userAuthenticationRequired) }
         let data = try await session.protectedRequest("api/v1/members/me/profile", method: "GET")

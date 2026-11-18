@@ -40,7 +40,7 @@ struct LoginRoot: View {
         Group {
             switch flow.route {
             case .login: login
-            case .onboarding: OnboardingScreen(submit: flow.submit, openHome: flow.showHome)
+            case .onboarding: OnboardingScreen(submit: flow.submit, openHome: flow.showHome, dailyTarget: flow.dailyTarget)
             case .home:
                 if let session = flow.session { HomeScreen(session: session, profile: flow.showProfile) }
             case .profile: MemberProfileScreen(flow: flow)

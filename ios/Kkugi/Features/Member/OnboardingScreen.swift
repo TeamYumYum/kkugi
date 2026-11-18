@@ -3,6 +3,9 @@ import SwiftUI
 struct OnboardingScreen: View {
     let submit: (OnboardingDraft) async throws -> Void
     let openHome: () -> Void
+    var dailyTarget: () async throws -> Double
+    @State private var kcal: Double?
+    @State private var targetFailed = false
     @State private var draft = OnboardingDraft()
     @State private var step = 1
     @State private var busy = false
@@ -22,7 +25,11 @@ struct OnboardingScreen: View {
                 VStack(alignment: .leading, spacing: G.gap) {
                     switch step {
                     case 1:
-                        GText(text: "만나서 반가워요!\n뭐라고 부를까요?", size: 24, weight: 700)
+                        HStack(spacing: G.gap) {
+                            ArtImage(asset: .idle).scaledToFit()
+                                .frame(width: G.dp(64), height: G.dp(64)).accessibilityHidden(true)
+                            GText(text: "만나서 반가워요!\n뭐라고 부를까요?", size: 24, weight: 700)
+                        }
                         TextField("닉네임", text: $draft.nickname)
                         GText(text: "2자 이상 12자 이하로 적어 주세요", color: GColor.muted)
                     case 2:
@@ -37,8 +44,19 @@ struct OnboardingScreen: View {
                         TextField("몸무게 (kg)", text: $draft.weight).keyboardType(.decimalPad)
                         GText(text: "평소 활동량", weight: 700)
                         choices([("SEDENTARY","거의 앉아 있어요"),("LIGHT","가볍게 움직여요"),("MODERATE","보통이에요"),("ACTIVE","활동적이에요"),("VERY_ACTIVE","매우 활동적이에요")], $draft.activity)
+                        GText(text: "목표 칼로리를 계산하는 데만 써요", color: GColor.muted)
                     default:
+                        ArtImage(asset: .heart).scaledToFit()
+                            .frame(maxWidth: .infinity).frame(height: G.dp(240))
+                            .accessibilityHidden(true)
                         GText(text: "\(draft.normalizedNickname ?? draft.nickname)님, 꾸기를 만났어요!", size: 24, weight: 700)
+                        VStack(alignment: .leading, spacing: G.small) {
+                            GText(text: "하루 목표", color: GColor.muted)
+                            if let kcal { GText(text: "\(kcal.formatted())kcal", size: 24, weight: 700) }
+                            else if targetFailed {
+                                Button("하루 목표 다시 불러오기") { Task { await loadTarget() } }
+                            } else { Text("계산 중") }
+                        }.task { await loadTarget() }
                     }
                     if !error.isEmpty { Text(error).foregroundStyle(.red) }
                 }
@@ -51,6 +69,11 @@ struct OnboardingScreen: View {
         .disabled(busy)
         .textFieldStyle(.roundedBorder)
         .padding(G.gutter)
+    }
+
+    @MainActor private func loadTarget() async {
+        targetFailed = false
+        do { kcal = try await dailyTarget() } catch { targetFailed = true }
     }
 
     private func choices(_ options: [(String, String)], _ selection: Binding<String>) -> some View {

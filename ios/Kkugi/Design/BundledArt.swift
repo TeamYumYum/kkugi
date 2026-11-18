@@ -4,6 +4,8 @@ import UIKit
 
 enum BundledArt {
     enum Asset: String, CaseIterable {
+        case idle = "kkugi_g_character_f_idle"
+        case heart = "kkugi_g_character_heart"
         case gardenBack = "member_login_garden_back"
         case gardenFront = "member_login_garden_front"
         case wave = "kkugi_g_character_wave"
