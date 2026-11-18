@@ -7,6 +7,8 @@ final class MemberFlow: ObservableObject {
     @Published var profile: MemberProfileResponse?
     let session: AuthSession?
 
+    init(session: AuthSession) { self.session = session }
+
     init(baseURL: URL?) {
         session = baseURL.map {
             AuthSession(api: AuthClient(baseURL: $0, session: URLSession(configuration: .ephemeral)),
