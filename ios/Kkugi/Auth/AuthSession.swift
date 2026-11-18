@@ -1,5 +1,4 @@
 import Foundation
-import WidgetKit
 
 actor AuthSession {
     private let api: AuthClient
@@ -24,31 +23,6 @@ actor AuthSession {
     private func removeObserver(_ id: UUID) { expiryObservers[id] = nil }
 
     func current() throws -> StoredSession? { try vault.read() }
-
-    func synchronizeWidget() throws {
-        guard vault.service == "com.kkugi.ios.auth" else { return }
-        let member = try vault.read()
-        let previous = GardenWidgetStore.read()
-        guard member?.memberID != previous.memberID || (member?.onboarded ?? false) != previous.onboarded else { return }
-        let snapshot = GardenWidgetSnapshot(memberID: member?.memberID, onboarded: member?.onboarded ?? false)
-        if GardenWidgetStore.write(snapshot) { WidgetCenter.shared.reloadTimelines(ofKind: "KkugiGarden") }
-    }
-
-    func updateWidget(for sessionID: UUID, day: String, growth: GrowthSummaryResponse, summary: DailySummaryResponse?) throws {
-        guard vault.service == "com.kkugi.ios.auth", let member = try vault.read(),
-              member.sessionID == sessionID, member.onboarded else { return }
-        var snapshot = GardenWidgetStore.read()
-        if snapshot.memberID != member.memberID || snapshot.day != day {
-            snapshot = GardenWidgetSnapshot(memberID: member.memberID, onboarded: true, day: day)
-        }
-        snapshot.dietDays = growth.diet.currentDays
-        snapshot.workoutWeeks = growth.workout.currentWeeks
-        if let summary {
-            snapshot.targetKcal = summary.goalReady ? summary.targetKcal : nil
-            snapshot.intakeKcal = Double(summary.intakeKcal)
-        }
-        if GardenWidgetStore.write(snapshot) { WidgetCenter.shared.reloadTimelines(ofKind: "KkugiGarden") }
-    }
 
     func protectedRequest(_ path: String, method: String, body: Data? = nil, query: [URLQueryItem] = [], contentType: String = "application/json", memberID: Int64? = nil) async throws -> Data {
         guard let original = try vault.read() else { throw URLError(.userAuthenticationRequired) }
@@ -89,7 +63,6 @@ actor AuthSession {
         guard let item = try vault.read(), item.sessionID == id else { throw CancellationError() }
         try vault.save(StoredSession(sessionID: id, memberID: item.memberID, onboarded: true,
                                      accessToken: item.accessToken, refreshToken: item.refreshToken))
-        try synchronizeWidget()
     }
 
     func review(loginID: String, password: String) async throws -> LoginResponse {
@@ -107,7 +80,6 @@ actor AuthSession {
     private func accept(_ result: LoginResponse, attempt: UUID) throws -> LoginResponse {
         guard generation == attempt else { throw CancellationError() }
         try vault.save(StoredSession(sessionID: UUID(), memberID: result.memberId, onboarded: result.onboarded, accessToken: result.accessToken, refreshToken: result.refreshToken))
-        try synchronizeWidget()
         return result
     }
 
@@ -136,7 +108,6 @@ actor AuthSession {
             } catch let error as AuthClient.RequestFailure {
                 if generation == attempt && error.status == 401 {
                     try vault.clear()
-                    try synchronizeWidget()
                     for observer in expiryObservers.values { observer.yield(()) }
                 }
                 throw error
@@ -154,7 +125,6 @@ actor AuthSession {
         guard try vault.read()?.sessionID == member.sessionID else { throw CancellationError() }
         _ = beginOperation()
         try vault.clear()
-        try synchronizeWidget()
     }
 
     func logout() async throws {
@@ -163,6 +133,5 @@ actor AuthSession {
         try await api.logout(accessToken: session.accessToken)
         guard generation == attempt else { throw CancellationError() }
         try vault.clear()
-        try synchronizeWidget()
     }
 }

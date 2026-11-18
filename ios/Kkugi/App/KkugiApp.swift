@@ -15,7 +15,6 @@ struct KkugiApp: App {
 struct LoginRoot: View {
     @EnvironmentObject private var push: PushRegistration
     @State private var inboxShown = false
-    @State private var homeIdentity = UUID()
     @StateObject private var flow: MemberFlow
     @StateObject private var model: LoginModel
 
@@ -56,7 +55,7 @@ struct LoginRoot: View {
             case .login: login
             case .onboarding: OnboardingScreen(submit: flow.submit, openHome: flow.showHome, dailyTarget: flow.dailyTarget)
             case .home:
-                if let session = flow.session { HomeScreen(session: session, profile: flow.showProfile).id(homeIdentity) }
+                if let session = flow.session { HomeScreen(session: session, profile: flow.showProfile) }
             case .profile: MemberProfileScreen(flow: flow)
             }
         }.task { await flow.restore() }
@@ -69,15 +68,7 @@ struct LoginRoot: View {
         .sheet(isPresented: $inboxShown) {
             if let session = flow.session { NavigationStack { NotificationInbox(session: session) } }
         }
-        .onOpenURL { url in
-            if url.scheme == "kkugi", url.host == "home" {
-                Task {
-                    guard let member = try? await flow.session?.current(), member.onboarded else { return }
-                    homeIdentity = UUID()
-                    flow.showHome()
-                }
-            } else { SocialSignIn.handle(url) }
-        }
+        .onOpenURL { url in SocialSignIn.handle(url) }
     }
 
     private func openPendingNotification() {

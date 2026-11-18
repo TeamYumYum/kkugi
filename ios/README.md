@@ -14,7 +14,7 @@
 | `KKUGI_GOOGLE_SERVER_CLIENT_ID` | Spring이 Google ID 토큰에서 검사하는 서버 클라이언트 ID |
 | `KKUGI_KAKAO_NATIVE_APP_KEY` | 카카오 개발자 콘솔에서 같은 iOS 번들 ID로 등록한 앱의 네이티브 앱 키 |
 
-푸시를 사용하는 빌드에는 Firebase iOS 앱의 `KKUGI_FIREBASE_APP_ID`, `KKUGI_FIREBASE_SENDER_ID`, `KKUGI_FIREBASE_PROJECT_ID`, `KKUGI_FIREBASE_API_KEY`를 지정한다. 실제 기기 프로비저닝에는 앱의 Push Notifications 권한과 앱·위젯 양쪽의 동일한 App Group이 필요하다. 그룹 식별자는 `KKUGI_APP_GROUP_ID`로 지정할 수 있다. APNs 인증 키는 Firebase 콘솔에 등록한다.
+푸시를 사용하는 빌드에는 Firebase iOS 앱의 `KKUGI_FIREBASE_APP_ID`, `KKUGI_FIREBASE_SENDER_ID`, `KKUGI_FIREBASE_PROJECT_ID`, `KKUGI_FIREBASE_API_KEY`를 지정한다. 실제 기기 프로비저닝에는 앱의 Push Notifications 권한이 필요하다. APNs 인증 키는 Firebase 콘솔에 등록한다.
 
 심사용 계정은 로그인 창에서 입력한다. Google과 카카오 SDK가 받은 토큰은 Spring의 로그인 응답을 받은 뒤 꾸기 세션으로 교환한다. 세션은 Keychain에 저장한다.
 

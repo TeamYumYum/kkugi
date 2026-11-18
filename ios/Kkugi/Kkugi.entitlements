@@ -4,9 +4,5 @@
 <dict>
 	<key>aps-environment</key>
 	<string>$(KKUGI_APS_ENVIRONMENT)</string>
-	<key>com.apple.security.application-groups</key>
-	<array>
-		<string>$(KKUGI_APP_GROUP_ID)</string>
-	</array>
 </dict>
 </plist>

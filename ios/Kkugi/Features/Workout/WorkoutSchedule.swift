@@ -13,12 +13,12 @@ struct WorkoutSchedule: View {
     @State private var busy = false
     @State private var error = ""
 
-    private var day: String { GardenWidgetSnapshot.koreaDay(date) }
+    private var day: String { WorkoutDay.key(date) }
 
     var body: some View {
         List {
             DatePicker("예정일", selection: $date, displayedComponents: .date)
-            if day >= GardenWidgetSnapshot.koreaDay(Date()) && !routines.isEmpty {
+            if day >= WorkoutDay.key(Date()) && !routines.isEmpty {
                 Menu("루틴 예약") {
                     ForEach(routines, id: \.id) { routine in
                         Button(routine.name) { Task { await create(routine.id) } }
@@ -91,10 +91,10 @@ struct WorkoutSchedule: View {
         busy = true
         defer { busy = false }
         do {
-            let body = WorkoutScheduleMoveRequest(scheduledDate: GardenWidgetSnapshot.koreaDay(destination))
+            let body = WorkoutScheduleMoveRequest(scheduledDate: WorkoutDay.key(destination))
             _ = try await session.protectedRequest("api/v1/workout-schedules/\(id)", method: "PATCH", body: JSONEncoder().encode(body))
             moving = nil
-            if day == GardenWidgetSnapshot.koreaDay(destination) { await load(day) } else { date = destination }
+            if day == WorkoutDay.key(destination) { await load(day) } else { date = destination }
         } catch { error = "일정을 옮기지 못했어요" }
     }
 
@@ -115,5 +115,15 @@ private extension Calendar {
         var result = Self(identifier: .gregorian)
         result.timeZone = TimeZone(identifier: "Asia/Seoul")!
         return result
+    }
+}
+
+private enum WorkoutDay {
+    static func key(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "Asia/Seoul")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: date)
     }
 }
