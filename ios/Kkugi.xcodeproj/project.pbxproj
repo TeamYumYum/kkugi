@@ -61,6 +61,26 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "A8C63F22F20C9C73BB238E27";
 		};
+		"A88E7F3B0B170698470947CD" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Auth/AuthClient.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"62F9BAEAEA74A1A59B0CD0C9" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "A88E7F3B0B170698470947CD";
+		};
+		"72B3A1485E0756AAE958C89F" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Auth/AuthModels.generated.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"73BE6ABBDF455DC0EC940DCF" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "72B3A1485E0756AAE958C89F";
+		};
 		"C6551262BBC005C9453150AF" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -145,6 +165,8 @@
 			"isa" = "PBXGroup";
 			"children" = (
 				"A8C63F22F20C9C73BB238E27",
+				"A88E7F3B0B170698470947CD",
+				"72B3A1485E0756AAE958C89F",
 				"C6551262BBC005C9453150AF",
 				"A1D5BEE0A4FEA9C1AB396EA9",
 				"D7EA249BE85F62A5DA513048",
@@ -169,6 +191,8 @@
 			"buildActionMask" = "2147483647";
 			"files" = (
 				"234084B13221C13B676DB9C8",
+				"62F9BAEAEA74A1A59B0CD0C9",
+				"73BE6ABBDF455DC0EC940DCF",
 				"18F718E44BF6E3B7D54BED3F",
 				"C53A8936BE09782F1101AD57",
 				"5DCC14E0EC227C6B0C23B40F",
@@ -279,6 +303,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "E9294DE487E3AE4CA8ACC86F";
 		};
+		"1D1A6E8598D46AF1E0368606" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "KkugiTests/AuthClientTests.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"AB2E398B9F39C18237025C67" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "1D1A6E8598D46AF1E0368606";
+		};
 		"F84D4E3C4E86C6B8EFD770F0" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -313,6 +347,7 @@
 			"isa" = "PBXGroup";
 			"children" = (
 				"E9294DE487E3AE4CA8ACC86F",
+				"1D1A6E8598D46AF1E0368606",
 				"F84D4E3C4E86C6B8EFD770F0",
 				"B35A332294BDEE2C7C188D16",
 				"AD421012C87DB8FCD35A3183",
@@ -332,6 +367,7 @@
 			"buildActionMask" = "2147483647";
 			"files" = (
 				"41E27EC633D8D0BF0C3E522B",
+				"AB2E398B9F39C18237025C67",
 				"E3AB40D618F53263734BA6D6",
 				"065698702E4516088F318FF8",
 				"C70FB120C3789A2B787C021E",
