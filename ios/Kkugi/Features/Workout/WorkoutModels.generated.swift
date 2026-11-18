@@ -295,3 +295,91 @@ struct ApiResponseWorkoutRecentSetListResponse: Codable {
     let `data`: WorkoutRecentSetListResponse?
     let `error`: ErrorDetail?
 }
+
+struct RecommendedExerciseResponse: Codable {
+    let `slot`: Int
+    let `exerciseId`: Int
+    let `nameKo`: String
+    let `bodyPart`: String
+    let `recordType`: String
+}
+
+struct RecommendedRoutineResponse: Codable {
+    let `key`: String
+    let `name`: String
+    let `timesPerWeek`: Int
+    let `exercises`: [RecommendedExerciseResponse]
+}
+
+struct RoutineRecommendationResponse: Codable {
+    let `style`: String
+    let `healthGoal`: String
+    let `routines`: [RecommendedRoutineResponse]
+}
+
+struct ApiResponseRoutineRecommendationResponse: Codable {
+    let `success`: Bool?
+    let `data`: RoutineRecommendationResponse?
+    let `error`: ErrorDetail?
+}
+
+struct RecommendedExerciseSaveRequest: Codable {
+    let `slot`: Int
+    let `exerciseId`: Int
+}
+
+struct RecommendedRoutineSaveRequest: Codable {
+    let `key`: String
+    let `exercises`: [RecommendedExerciseSaveRequest]
+}
+
+struct RoutineRecommendationSaveRequest: Codable {
+    let `routines`: [RecommendedRoutineSaveRequest]
+}
+
+struct AiRoutineRecommendationRequest: Codable {
+    let `timesPerWeek`: Int
+    let `style`: String
+    let `goal`: String
+    let `goalNote`: String?
+    let `focusBodyParts`: [String]?
+    let `excludedBodyParts`: [String]?
+    let `discomfortAreas`: [String]?
+    let `discomfortNote`: String?
+    let `sessionLength`: String
+    let `experience`: String
+    let `freeText`: String?
+    let `weightKg`: Double?
+}
+
+struct AiRoutineRecommendationResponse: Codable {
+    let `recommendationId`: Int
+    let `needsMedicalNotice`: Bool
+    let `comment`: String?
+    let `remainingCount`: Int
+    let `routines`: [RecommendedRoutineResponse]
+}
+
+struct ApiResponseAiRoutineRecommendationResponse: Codable {
+    let `success`: Bool?
+    let `data`: AiRoutineRecommendationResponse?
+    let `error`: ErrorDetail?
+}
+
+struct AiRoutineRecommendationUsedItem: Codable {
+    let `recommendationId`: Int
+    let `createdAt`: String
+}
+
+struct AiRoutineRecommendationUsageResponse: Codable {
+    let `usedCount`: Int
+    let `remainingCount`: Int
+    let `resetsAt`: String
+    let `recommendations`: [AiRoutineRecommendationUsedItem]
+}
+
+struct ApiResponseAiRoutineRecommendationUsageResponse: Codable {
+    let `success`: Bool?
+    let `data`: AiRoutineRecommendationUsageResponse?
+    let `error`: ErrorDetail?
+}

@@ -110,4 +110,15 @@ final class ScreenGalleryUITests: XCTestCase {
             back(app)
         }
     }
+
+    func testRoutineRecommendations() throws {
+        let app = try home()
+        try tap(app, "운동")
+        try tap(app, "루틴 추천")
+        try capture("routine-recommend", when: app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "전신 A")).firstMatch)
+        try tap(app, "AI로 추천받기")
+        try capture("ai-survey-full", when: app.navigationBars["AI 추천"])
+        try tap(app, "받은 추천 · 2026-11-18")
+        try capture("ai-result", when: app.navigationBars["AI 추천 루틴"])
+    }
 }

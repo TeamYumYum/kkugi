@@ -28,6 +28,9 @@ struct WorkoutScreen: View {
                 }.disabled(saving)
             }
             Section("내 루틴") {
+                NavigationLink("루틴 추천") {
+                    RoutineRecommendations(session: session, weeklyCount: goal?.thisWeek?.targetCount ?? count) { await load() }
+                }
                 Button("루틴 만들기") { editing = nil; editorOpen = true }
                 if routines.isEmpty && !loading && message.isEmpty { Text("등록한 루틴이 없어요") }
                 ForEach(routines, id: \.id) { routine in

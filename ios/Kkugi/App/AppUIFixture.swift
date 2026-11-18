@@ -48,6 +48,16 @@ private final class FixtureProtocol: URLProtocol {
             }
             return #"{"items":[],"page":0,"size":20,"totalElements":0}"#
         case "/api/v1/routines": return #"{"items":[{"id":1,"name":"아침 루틴","exercises":[]}]}"#
+        case "/api/v1/routine-recommendations":
+            let split = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "style" }?.value == "SPLIT"
+            let style = split ? "SPLIT" : "FULL_BODY"
+            let title = split ? "상체 A" : "전신 A"
+            return #"{"style":"\#(style)","healthGoal":"MAINTAIN","routines":[{"key":"\#(style)_1","name":"\#(title)","timesPerWeek":3,"exercises":[{"slot":1,"exerciseId":1,"nameKo":"스쿼트","bodyPart":"LOWER_BODY","recordType":"WEIGHT_REPS"}]}]}"#
+        case "/api/v1/routine-recommendations/ai":
+            if request.httpMethod == "GET" { return #"{"usedCount":1,"remainingCount":2,"resetsAt":"2026-11-23T00:00:00+09:00","recommendations":[{"recommendationId":7,"createdAt":"2026-11-18T12:00:00+09:00"}]}"# }
+            fallthrough
+        case "/api/v1/routine-recommendations/ai/7":
+            return #"{"recommendationId":7,"needsMedicalNotice":true,"comment":"무릎 부담을 줄였어요.","remainingCount":2,"routines":[{"key":"AI_1","name":"상체 A","timesPerWeek":3,"exercises":[{"slot":1,"exerciseId":2,"nameKo":"벤치프레스","bodyPart":"CHEST","recordType":"WEIGHT_REPS"}]}]}"#
         case "/api/v1/workout-sessions", "/api/v1/weight-records": return #"{"items":[]}"#
         case "/api/v1/coaching-plan/me":
             return #"{"targetKcal":1800,"carbRatio":50,"proteinRatio":25,"fatRatio":25,"startedOn":"2026-01-01","recalcPending":false}"#

@@ -76,6 +76,7 @@ struct AuthClient {
         var url = baseURL.appendingPathComponent(path)
         if !query.isEmpty { url.append(queryItems: query) }
         var request = URLRequest(url: url)
+        if method == "POST", path == "api/v1/routine-recommendations/ai" { request.timeoutInterval = 70 }
         request.httpMethod = method
         request.httpBody = body
         request.cachePolicy = .reloadIgnoringLocalCacheData
