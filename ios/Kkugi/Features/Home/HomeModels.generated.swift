@@ -118,3 +118,58 @@ struct ApiResponseUnreadNotificationCountResponse: Decodable {
     let `data`: UnreadNotificationCountResponse?
     let `error`: ErrorDetail?
 }
+
+struct LastMealFood: Decodable {
+    let `foodId`: Int
+    let `foodName`: String
+    let `grams`: Int
+    let `count`: Int?
+    let `nutrition`: NutritionResponse
+    let `nutritionPer100g`: FoodNutritionResponse
+}
+
+struct LastMealBasis: Decodable {
+    let `targetKcal`: Double
+    let `intakeKcal`: Int
+    let `deficientNutrients`: [String]
+}
+
+struct LastMealShortfall: Decodable {
+    let `nutrient`: String
+    let `grams`: Double
+}
+
+struct LastMealPage: Decodable {
+    let `food`: LastMealFood
+    let `reason`: String
+    let `basis`: LastMealBasis
+    let `createdAt`: String
+    let `foods`: [LastMealFood]
+    let `lightDinner`: Bool
+    let `shortfalls`: [LastMealShortfall]
+    let `insufficient`: Bool
+}
+
+struct LastMealRecommendationResponse: Decodable {
+    let `status`: String
+    let `hidden`: Bool
+    let `food`: LastMealFood?
+    let `reason`: String?
+    let `basis`: LastMealBasis?
+    let `asOf`: String
+    let `pages`: [LastMealPage]
+    let `refreshRemaining`: Int
+    let `refreshing`: Bool
+    let `lastRefreshResult`: String?
+    let `refreshBlockedReason`: String?
+    let `foods`: [LastMealFood]
+    let `lightDinner`: Bool
+    let `shortfalls`: [LastMealShortfall]
+    let `insufficient`: Bool
+}
+
+struct ApiResponseLastMealRecommendationResponse: Decodable {
+    let `success`: Bool?
+    let `data`: LastMealRecommendationResponse?
+    let `error`: ErrorDetail?
+}

@@ -84,9 +84,10 @@ struct MealDiary: View {
     }
 }
 
-private struct ManualMealForm: View {
+struct ManualMealForm: View {
     let session: AuthSession
     let saved: () -> Void
+    let fromRecommendation: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var date: Date
     @State private var kind = "LUNCH"
@@ -102,9 +103,15 @@ private struct ManualMealForm: View {
     @State private var busy = false
     @State private var error = ""
 
-    init(session: AuthSession, date: Date, saved: @escaping () -> Void) {
+    init(session: AuthSession, date: Date, recommendation: [LastMealFood] = [], saved: @escaping () -> Void) {
         self.session = session
         self.saved = saved
+        fromRecommendation = !recommendation.isEmpty
+        _foods = State(initialValue: recommendation.map { item in
+            Portion(food: FoodResponse(id: item.foodId, name: item.foodName, nutritionPer100g: item.nutritionPer100g,
+                                      servingGrams: item.grams, owned: false), grams: String(item.grams))
+        })
+        _kind = State(initialValue: recommendation.isEmpty ? "LUNCH" : "DINNER")
         _date = State(initialValue: date)
     }
 
@@ -194,7 +201,7 @@ private struct ManualMealForm: View {
             func body(_ rev: Int) throws -> Data {
                 try encoder.encode(MealSaveRequest(clientUuid: id.uuidString, clientRevision: rev,
                     eatenAt: ISO8601DateFormatter().string(from: date), mealType: kind, photoRecognitionId: recognition?.recognitionId,
-                    items: items, fromLastMealCard: false))
+                    items: items, fromLastMealCard: fromRecommendation))
             }
             let signature = try body(0)
             if let previousBody, signature != previousBody { revision += 1 }
