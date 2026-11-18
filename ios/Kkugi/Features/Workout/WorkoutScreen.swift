@@ -27,36 +27,41 @@ struct WorkoutScreen: View {
                     Button("목표 저장") { Task { await saveGoal() } }
                 }.disabled(saving)
             }
-            Section("내 루틴") {
-                NavigationLink("루틴 추천") {
-                    RoutineRecommendations(session: session, weeklyCount: goal?.thisWeek?.targetCount ?? count) { await load() }
-                }
-                Button("루틴 만들기") { editing = nil; editorOpen = true }
-                if routines.isEmpty && !loading && message.isEmpty { Text("등록한 루틴이 없어요") }
-                ForEach(routines, id: \.id) { routine in
-                    NavigationLink(routine.name) {
-                        List {
-                            Button("루틴 수정") { editing = routine; editorOpen = true }
-                            ForEach(routine.exercises, id: \.routineExerciseId) { exercise in
-                                Section("운동 \(exercise.sortOrder) · 휴식 \(exercise.restSeconds)초") {
-                                    ForEach(exercise.targets, id: \.setNo) { target in
-                                        HStack {
-                                            Text("\(target.setNo)세트")
-                                            Spacer()
-                                            if let kg = target.targetWeightKg { Text("\(kg.formatted()) kg") }
-                                            if let reps = target.targetReps { Text("\(reps)회") }
-                                            if let seconds = target.targetDurationSeconds { Text("\(seconds)초") }
-                                        }
-                                    }
-                                }
-                            }
-                        }.navigationTitle(routine.name)
-                    }
-                }
-            }
+            NavigationLink("루틴 목록") { List { routineSection }.navigationTitle("루틴 목록") }
+            routineSection
         }.navigationTitle("운동").task { await load() }
         .sheet(isPresented: $editorOpen, onDismiss: { Task { await load() } }) {
             RoutineEditor(session: session, routine: editing) { editorOpen = false }
+        }
+    }
+
+    private var routineSection: some View {
+        Section("내 루틴") {
+            NavigationLink("루틴 추천") {
+                RoutineRecommendations(session: session, weeklyCount: goal?.thisWeek?.targetCount ?? count) { await load() }
+            }
+            Button("루틴 만들기") { editing = nil; editorOpen = true }
+            if routines.isEmpty && !loading && message.isEmpty { Text("등록한 루틴이 없어요") }
+            ForEach(routines, id: \.id) { routine in
+                NavigationLink(routine.name) {
+                    List {
+                        Button("루틴 수정") { editing = routine; editorOpen = true }
+                        ForEach(routine.exercises, id: \.routineExerciseId) { exercise in
+                            Section("운동 \(exercise.sortOrder) · 휴식 \(exercise.restSeconds)초") {
+                                ForEach(exercise.targets, id: \.setNo) { target in
+                                    HStack {
+                                        Text("\(target.setNo)세트")
+                                        Spacer()
+                                        if let kg = target.targetWeightKg { Text("\(kg.formatted()) kg") }
+                                        if let reps = target.targetReps { Text("\(reps)회") }
+                                        if let seconds = target.targetDurationSeconds { Text("\(seconds)초") }
+                                    }
+                                }
+                            }
+                        }
+                    }.navigationTitle(routine.name)
+                }
+            }
         }
     }
 

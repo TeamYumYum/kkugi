@@ -58,7 +58,16 @@ private final class FixtureProtocol: URLProtocol {
             fallthrough
         case "/api/v1/routine-recommendations/ai/7":
             return #"{"recommendationId":7,"needsMedicalNotice":true,"comment":"무릎 부담을 줄였어요.","remainingCount":2,"routines":[{"key":"AI_1","name":"상체 A","timesPerWeek":3,"exercises":[{"slot":1,"exerciseId":2,"nameKo":"벤치프레스","bodyPart":"CHEST","recordType":"WEIGHT_REPS"}]}]}"#
-        case "/api/v1/workout-sessions", "/api/v1/weight-records": return #"{"items":[]}"#
+        case "/api/v1/workout-sessions":
+            if populated {
+                return #"{"items":[{"id":7,"clientUuid":"00000000-0000-4000-8000-000000000007","routineName":"기록한 루틴","startedAt":"2026-11-18T09:00:00+09:00","endedAt":"2026-11-18T09:10:00+09:00","exerciseCount":1,"newRecordExercises":[]}]}"#
+            }
+            return #"{"items":[]}"#
+        case "/api/v1/weight-records": return #"{"items":[]}"#
+        case "/api/v1/workout-sessions/7":
+            return #"{"id":7,"clientUuid":"00000000-0000-4000-8000-000000000007","routineName":"기록한 루틴","startedAt":"2026-11-18T09:00:00+09:00","endedAt":"2026-11-18T09:10:00+09:00","startExercises":[],"performedExercises":[{"sortOrder":1,"exerciseId":1,"exerciseName":"스쿼트","recordType":"WEIGHT_REPS","weightType":"EXTERNAL","restSeconds":60,"skipped":false,"sets":[{"setNo":1,"target":{"weightKg":20,"reps":10},"actual":{"weightKg":20,"reps":10},"status":"COMPLETED"}]}],"totalVolumeKg":200}"#
+        case "/api/v1/exercises":
+            return #"{"items":[{"id":1,"nameKo":"스쿼트","nameEn":"Squat","bodyPart":"LOWER_BODY","equipment":"BARBELL","recordType":"WEIGHT_REPS","weightType":"EXTERNAL"}],"page":0,"size":20,"totalElements":1}"#
         case "/api/v1/coaching-plan/me":
             return #"{"targetKcal":1800,"carbRatio":50,"proteinRatio":25,"fatRatio":25,"startedOn":"2026-01-01","recalcPending":false}"#
         case "/api/v1/meals":

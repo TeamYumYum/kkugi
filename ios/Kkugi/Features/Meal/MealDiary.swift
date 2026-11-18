@@ -234,6 +234,8 @@ struct ManualMealForm: View {
     @State private var foods: [Portion] = []
     @State private var searching = false
     @State private var scanning = false
+    @State private var searchAfterScan = false
+    @State private var confirming = false
     @State private var recognition: MealPhotoRecognitionResponse?
     @State private var ranks: [Int: Int] = [:]
     @State private var id = UUID()
@@ -308,18 +310,27 @@ struct ManualMealForm: View {
                 }
                 Section("목록에 없는 음식 (한 줄에 하나)") { TextEditor(text: $names) }
                 if !error.isEmpty { Text(error).foregroundStyle(.red) }
-                Button("저장") { Task { await save() } }
+                Button(original == nil ? "식사 확인" : "저장") {
+                    if original == nil { confirming = true } else { Task { await save() } }
+                }
                     .disabled(previousItems.isEmpty && !ranks.values.contains(where: { $0 > 0 }) && foods.isEmpty && names.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }.disabled(busy)
             .navigationTitle(original == nil ? "식사 추가" : "식사 수정")
             .toolbar { Button("취소") { dismiss() }.disabled(busy) }
         }.interactiveDismissDisabled(busy)
-        .sheet(isPresented: $scanning) {
-            MealPhotoPicker(session: session) { result in
+        .sheet(isPresented: $confirming) {
+            MealConfirmation(labels: confirmationLabels, error: error, busy: busy) {
+                Task { await save() }
+            }
+        }
+        .sheet(isPresented: $scanning, onDismiss: {
+            if searchAfterScan { searchAfterScan = false; searching = true }
+        }) {
+            MealPhotoPicker(session: session, use: { result in
                 recognition = result
                 ranks = Dictionary(uniqueKeysWithValues: result.regions.map { ($0.regionNo, $0.candidates.first?.rank ?? 0) })
                 scanning = false
-            }
+            }, manualSearch: { searchAfterScan = true; scanning = false })
         }
         .sheet(isPresented: $searching) {
             FoodSearch(session: session) { food in
@@ -327,6 +338,13 @@ struct ManualMealForm: View {
                 searching = false
             }
         }
+    }
+
+    private var confirmationLabels: [String] {
+        let recognized = (recognition?.regions ?? []).compactMap { region in
+            region.candidates.first { $0.rank == ranks[region.regionNo] }.map { "\($0.foodName) · \($0.grams)g" }
+        }
+        return foods.map { "\($0.food.name) · \($0.grams)g" } + recognized + names.split(whereSeparator: \.isNewline).map(String.init)
     }
 
     @MainActor private func save() async {
@@ -377,6 +395,48 @@ struct ManualMealForm: View {
             _ = try await session.protectedRequest("api/v1/meals", method: "POST", body: body(revision))
             saved()
         } catch { self.error = "식사를 저장하지 못했어요. 다시 시도해 주세요" }
+    }
+}
+
+#if DEBUG
+extension ManualMealForm {
+    static func reference(session: AuthSession, recognition: MealPhotoRecognitionResponse) -> Self {
+        var view = Self(session: session, date: Date(), saved: {})
+        view._recognition = State(initialValue: recognition)
+        view._ranks = State(initialValue: Dictionary(uniqueKeysWithValues: recognition.regions.map {
+            ($0.regionNo, $0.candidates.first?.rank ?? 0)
+        }))
+        return view
+    }
+}
+#endif
+
+struct MealConfirmation: View {
+    let labels: [String]
+    let error: String
+    let busy: Bool
+    let save: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: G.gap) {
+            HStack {
+                Button { dismiss() } label: { Image(systemName: "chevron.left") }.accessibilityLabel("뒤로")
+                Spacer()
+                GText(text: "식사 확인", size: 16, weight: 700)
+                Spacer()
+            }
+            ScrollView {
+                VStack(alignment: .leading, spacing: G.gap) {
+                    GText(text: "기록할 음식", size: 18, weight: 700)
+                    ForEach(labels.indices, id: \.self) { index in GText(text: labels[index]) }
+                }.frame(maxWidth: .infinity, alignment: .leading).padding(G.gap)
+                    .background(.white, in: RoundedRectangle(cornerRadius: G.dp(16)))
+            }
+            if !error.isEmpty { GText(text: error) }
+            Button(action: save) { GText(text: busy ? "저장하는 중" : "식사 기록하기", size: 15, weight: 700, color: .white) }
+                .buttonStyle(GButtonStyle(background: GColor.text, outline: false))
+        }.disabled(busy).interactiveDismissDisabled(busy).padding(G.gutter).background(Color(hex: 0xF5F7FA))
     }
 }
 

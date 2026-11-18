@@ -4,17 +4,31 @@ import SwiftUI
 struct MealPhotoPicker: View {
     let session: AuthSession
     let use: (MealPhotoRecognitionResponse) -> Void
+    var manualSearch: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @State private var selected: PhotosPickerItem?
     @State private var photo: Data?
     @State private var requestID = UUID()
     @State private var camera = false
     @State private var busy = false
+    @State private var recognitionTask: Task<Void, Never>?
     @State private var message = ""
 
     var body: some View {
         NavigationStack {
-            Form {
+            Group {
+                if busy {
+                    VStack(alignment: .leading, spacing: G.gap) {
+                        if let photo, let image = UIImage(data: photo) {
+                            Image(uiImage: image).resizable().scaledToFit().frame(maxHeight: G.dp(240))
+                        }
+                        GText(text: "꾸기가 음식을\n살펴보는 중이에요", size: 24, weight: 700)
+                        ProgressView()
+                        Spacer()
+                    }.frame(maxWidth: .infinity, alignment: .leading).padding(G.gutter)
+                        .background(Color(hex: 0xF5F7FA))
+                } else {
+                Form {
                 PhotosPicker("사진 보관함에서 선택", selection: $selected, matching: .images)
                 if UIImagePickerController.isSourceTypeAvailable(.camera) {
                     Button("식사 사진 촬영") { camera = true }
@@ -22,13 +36,17 @@ struct MealPhotoPicker: View {
                 if let photo, let image = UIImage(data: photo) {
                     Image(uiImage: image).resizable().scaledToFit().frame(maxHeight: 250)
                         .accessibilityLabel("선택한 식사 사진")
-                    Button("이 사진을 전송해 음식 인식") { Task { await recognize(photo) } }
+                    Button("이 사진을 전송해 음식 인식") { recognitionTask = Task { await recognize(photo) } }
                 }
-                if busy { ProgressView() }
-                if !message.isEmpty { Text(message) }
-            }.disabled(busy)
+                if !message.isEmpty {
+                    Text(message)
+                    if let manualSearch { Button("음식 검색") { manualSearch() } }
+                }
+                }
+                }
+            }
             .navigationTitle("사진으로 식사 기록")
-            .toolbar { Button("닫기") { dismiss() }.disabled(busy) }
+            .toolbar { Button("닫기") { recognitionTask?.cancel(); dismiss() } }
             .task(id: selected) {
                 guard let selected else { return }
                 photo = nil
@@ -45,7 +63,7 @@ struct MealPhotoPicker: View {
                     if let image { selected = nil; prepare(image) }
                 }.ignoresSafeArea()
             }
-        }.interactiveDismissDisabled(busy)
+        }.onDisappear { recognitionTask?.cancel() }
     }
 
     private func prepare(_ image: UIImage) {
@@ -73,10 +91,22 @@ struct MealPhotoPicker: View {
                                                          contentType: "multipart/form-data; boundary=" + boundary)
             let response = try JSONDecoder().decode(ApiResponseMealPhotoRecognitionResponse.self, from: bytes)
             guard response.success == true, let result = response.data else { throw URLError(.badServerResponse) }
-            use(result)
-        } catch { message = "사진을 인식하지 못했어요. 같은 사진으로 다시 시도할 수 있어요" }
+            if !Task.isCancelled { use(result) }
+        } catch { if !Task.isCancelled { message = "사진을 인식하지 못했어요. 같은 사진으로 다시 시도할 수 있어요" } }
     }
 }
+
+#if DEBUG
+extension MealPhotoPicker {
+    static func reference(session: AuthSession, photo: Data, recognizing: Bool) -> Self {
+        var view = Self(session: session, use: { _ in }, manualSearch: {})
+        view._photo = State(initialValue: photo)
+        view._busy = State(initialValue: recognizing)
+        view._message = State(initialValue: recognizing ? "" : "사진을 인식하지 못했어요. 같은 사진으로 다시 시도할 수 있어요")
+        return view
+    }
+}
+#endif
 
 private struct MealCamera: UIViewControllerRepresentable {
     let finish: (UIImage?) -> Void

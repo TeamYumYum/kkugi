@@ -9,6 +9,7 @@ struct WorkoutRecorder: View {
     @State private var values = SetDraft()
     @State private var catalog = false
     @State private var busy = false
+    @State private var finished: WorkoutFinishSummary?
     @State private var message = ""
     @Environment(\.scenePhase) private var phase
     private let store = WorkoutJournalStore.shared
@@ -47,6 +48,7 @@ struct WorkoutRecorder: View {
                     Task {
                         await change { try await store.finish(member: $0, id: active.id) }
                         if journal.active == nil {
+                            finished = WorkoutFinishSummary(active: active, endedAt: Date())
                             selected = nil
                             selectedRow = nil
                             await sync()
@@ -83,6 +85,9 @@ struct WorkoutRecorder: View {
                 values = SetDraft()
                 catalog = false
             }
+        }
+        .sheet(item: $finished) { summary in
+            WorkoutFinishView(summary: summary) { finished = nil }
         }
     }
 
@@ -129,5 +134,43 @@ struct WorkoutRecorder: View {
             journal = try await store.read(owner)
             message = journal.queue.isEmpty ? "운동 기록을 전송했어요" : "전송 대기 기록을 확인해 주세요"
         } catch { message = "기기에 기록을 보관했어요. 연결 후 다시 전송해 주세요" }
+    }
+}
+
+struct WorkoutFinishSummary: Identifiable {
+    let id: UUID
+    let minutes: Int
+    let sets: Int
+    let kg: Double
+
+    init(active: ActiveWorkout, endedAt: Date) {
+        id = active.id
+        minutes = max(0, Int(endedAt.timeIntervalSince(active.startedAt) / 60))
+        let completed = active.exercises.flatMap(\.sets).compactMap(\.actual)
+        sets = completed.count
+        kg = completed.reduce(0) { $0 + ($1.weightKg ?? 0) * Double($1.reps ?? 0) }
+    }
+}
+
+struct WorkoutFinishView: View {
+    let summary: WorkoutFinishSummary
+    let close: () -> Void
+    var body: some View {
+        VStack(spacing: G.gap) {
+            GText(text: "운동 완료", size: 20, weight: 700)
+            ArtImage(asset: .heart).scaledToFit().frame(height: G.dp(120)).accessibilityHidden(true)
+            HStack {
+                GText(text: "운동 시간"); Spacer(); GText(text: "\(summary.minutes)분", weight: 700)
+            }
+            HStack {
+                GText(text: "완료한 세트"); Spacer(); GText(text: "\(summary.sets)세트", weight: 700)
+            }
+            HStack {
+                GText(text: "총 운동량"); Spacer(); GText(text: "\(summary.kg.formatted())kg", weight: 700)
+            }
+            Spacer()
+            Button(action: close) { GText(text: "완료", size: 15, weight: 700, color: .white) }
+                .buttonStyle(GButtonStyle(background: GColor.text, outline: false))
+        }.padding(G.gutter).background(Color(hex: 0xF5F7FA))
     }
 }

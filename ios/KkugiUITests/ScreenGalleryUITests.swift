@@ -12,7 +12,7 @@ final class ScreenGalleryUITests: XCTestCase {
     }
 
     private func ready(_ element: XCUIElement) throws {
-        guard element.waitForExistence(timeout: 8) else {
+        guard element.exists || element.waitForExistence(timeout: 8) else {
             throw NSError(domain: "Gallery", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing element: \(element)"])
         }
     }
@@ -48,6 +48,8 @@ final class ScreenGalleryUITests: XCTestCase {
         try capture("profile", when: app.buttons["프로필 수정"])
         try tap(app, "프로필 수정")
         try capture("profile-edit", when: app.navigationBars["프로필 수정"])
+        try tap(app, "몸 정보")
+        try capture("body-edit", when: app.textFields["키 (cm)"])
         try tap(app, "취소")
         try tap(app, "회원 탈퇴")
         try capture("withdrawal", when: app.alerts.firstMatch)
@@ -115,13 +117,30 @@ final class ScreenGalleryUITests: XCTestCase {
     }
 
     func testRoutineRecommendations() throws {
-        let app = try home()
+        let app = try home(populated: true)
         try tap(app, "운동")
+        try tap(app, "날짜별 운동 기록")
+        try tap(app, "기록한 루틴")
+        try capture("workout-detail", when: app.navigationBars["기록한 루틴"])
+        back(app)
+        back(app)
+        try tap(app, "루틴 목록")
+        try capture("routine-list", when: app.buttons["아침 루틴"])
         try tap(app, "루틴 추천")
         try capture("routine-recommend", when: app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "전신 A")).firstMatch)
         try tap(app, "AI로 추천받기")
         try capture("ai-survey-full", when: app.navigationBars["AI 추천"])
+        try tap(app, "집중할 부위")
+        try capture("ai-survey", when: app.switches["하체"])
         try tap(app, "받은 추천 · 2026-11-18")
         try capture("ai-result", when: app.navigationBars["AI 추천 루틴"])
+    }
+
+    func testExercisePicker() throws {
+        let app = try home()
+        try tap(app, "운동")
+        try tap(app, "종목별 기록")
+        try tap(app, "종목 선택")
+        try capture("exercise-pick", when: app.buttons["스쿼트"])
     }
 }

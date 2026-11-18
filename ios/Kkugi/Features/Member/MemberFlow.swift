@@ -162,6 +162,7 @@ private struct ProfileEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var draft: OnboardingDraft
     @State private var saving = false
+    @State private var bodyFields = false
     @State private var message = ""
     let save: (ProfileUpdateRequest) async throws -> Void
 
@@ -176,7 +177,13 @@ private struct ProfileEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                TextField("닉네임", text: $draft.nickname)
+                Picker("수정 항목", selection: $bodyFields) {
+                    Text("프로필").tag(false)
+                    Text("몸 정보").tag(true)
+                }.pickerStyle(.segmented)
+                if !bodyFields {
+                    TextField("닉네임", text: $draft.nickname)
+                } else {
                 TextField("생년월일 (YYYYMMDD)", text: $draft.birthday).keyboardType(.numberPad)
                 TextField("키 (cm)", text: $draft.height).keyboardType(.decimalPad)
                 Picker("건강 목표", selection: $draft.goal) {
@@ -194,6 +201,7 @@ private struct ProfileEditor: View {
                     Text("보통이에요").tag("MODERATE")
                     Text("활동적이에요").tag("ACTIVE")
                     Text("매우 활동적이에요").tag("VERY_ACTIVE")
+                }
                 }
                 if !message.isEmpty { Text(message) }
             }
