@@ -13,7 +13,7 @@ enum BundledArt {
     }
 
     static func load(_ asset: Asset) -> UIImage? {
-        guard let url = Bundle.main.url(forResource: asset.rawValue, withExtension: asset.fileExtension, subdirectory: "Resources/Images"),
+        guard let url = Bundle.main.url(forResource: asset.rawValue, withExtension: asset.fileExtension, subdirectory: "Images"),
               let source = CGImageSourceCreateWithURL(url as CFURL, nil),
               let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
         else { return nil }

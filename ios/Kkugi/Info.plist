@@ -20,7 +20,7 @@
 	<string>1</string>
 	<key>UIAppFonts</key>
 	<array>
-		<string>Resources/Fonts/noto_sans_kr_variable.ttf</string>
+		<string>Fonts/noto_sans_kr_variable.ttf</string>
 	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>

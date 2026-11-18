@@ -101,15 +101,35 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "FF643246AD176A9B507A1CC8";
 		};
-		"41D311A605520FC7B8B9A980" = {
+		"E4E1FB9E57A8588BB1F3142B" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "folder";
-			"path" = "Kkugi/Resources";
+			"path" = "Kkugi/Resources/Images";
 			"sourceTree" = "SOURCE_ROOT";
 		};
-		"115C5B8BBDDB43623C1505E2" = {
+		"72FD2EAACC09A9485FF4D14B" = {
 			"isa" = "PBXBuildFile";
-			"fileRef" = "41D311A605520FC7B8B9A980";
+			"fileRef" = "E4E1FB9E57A8588BB1F3142B";
+		};
+		"308B5155969503DFA8E472EB" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "folder";
+			"path" = "Kkugi/Resources/Fonts";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"28F38D63A90ACCB6FB58C0B1" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "308B5155969503DFA8E472EB";
+		};
+		"F278D6A754248738921563FA" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "folder";
+			"path" = "Kkugi/Resources/ThirdParty";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"4327FB3158D6ED2BE1AC4CE2" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "F278D6A754248738921563FA";
 		};
 		"D9C6F140290EE1DFE18A7821" = {
 			"isa" = "PBXGroup";
@@ -119,7 +139,9 @@
 				"D7EA249BE85F62A5DA513048",
 				"C37897BAC8A69E1C8A347DE2",
 				"FF643246AD176A9B507A1CC8",
-				"41D311A605520FC7B8B9A980",
+				"E4E1FB9E57A8588BB1F3142B",
+				"308B5155969503DFA8E472EB",
+				"F278D6A754248738921563FA",
 			);
 			"name" = "Kkugi";
 			"sourceTree" = "<group>";
@@ -155,7 +177,9 @@
 			"isa" = "PBXResourcesBuildPhase";
 			"buildActionMask" = "2147483647";
 			"files" = (
-				"115C5B8BBDDB43623C1505E2",
+				"72FD2EAACC09A9485FF4D14B",
+				"28F38D63A90ACCB6FB58C0B1",
+				"4327FB3158D6ED2BE1AC4CE2",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};

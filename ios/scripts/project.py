@@ -75,9 +75,10 @@ def generate() -> dict[Path, bytes]:
             raise ValueError(f"No Swift sources in {directory}")
         resources = []
         if name == "Kkugi":
-            resource_ref = add("resources", isa="PBXFileReference", lastKnownFileType="folder", path="Kkugi/Resources", sourceTree="SOURCE_ROOT")
-            file_refs.append(resource_ref)
-            resources.append(add("resources-build", isa="PBXBuildFile", fileRef=resource_ref))
+            for folder in ["Images", "Fonts", "ThirdParty"]:
+                resource_ref = add("resources-" + folder, isa="PBXFileReference", lastKnownFileType="folder", path="Kkugi/Resources/" + folder, sourceTree="SOURCE_ROOT")
+                file_refs.append(resource_ref)
+                resources.append(add("resources-build-" + folder, isa="PBXBuildFile", fileRef=resource_ref))
         children.append(add(name + "-group", isa="PBXGroup", children=file_refs, name=name, sourceTree="<group>"))
         extension = "app" if name == "Kkugi" else "xctest"
         product = add(name + "-product", isa="PBXFileReference", explicitFileType="wrapper.application" if name == "Kkugi" else "wrapper.cfbundle",
@@ -147,7 +148,7 @@ def generate() -> dict[Path, bytes]:
         "CFBundleShortVersionString": "1.0",
         "CFBundleVersion": "1",
         "CFBundleDevelopmentRegion": "ko", "CFBundleDisplayName": "꾸기",
-        "UIAppFonts": ["Resources/Fonts/noto_sans_kr_variable.ttf"],
+        "UIAppFonts": ["Fonts/noto_sans_kr_variable.ttf"],
         "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
         "UIUserInterfaceStyle": "Light", "UIApplicationSupportsIndirectInputEvents": True,
     }
