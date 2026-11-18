@@ -93,10 +93,13 @@ def main() -> None:
         command(["xcrun", "simctl", "boot", device["udid"]])
     command(["xcrun", "simctl", "bootstatus", device["udid"], "-b"])
     command(["xcrun", "simctl", "status_bar", device["udid"], "override", "--time", "9:41", "--batteryState", "charged", "--batteryLevel", "100"])
+    test_error = None
     try:
         command(["xcodebuild", "-project", "ios/Kkugi.xcodeproj", "-scheme", "Kkugi", "-destination", f"platform=iOS Simulator,id={device['udid']}",
                  "-derivedDataPath", "ios/DerivedData", "-resultBundlePath", str(result), "-parallel-testing-enabled", "NO",
                  "-maximum-concurrent-test-simulator-destinations", "1", "test", "CODE_SIGNING_ALLOWED=NO"], artifacts / "xcodebuild.log")
+    except subprocess.CalledProcessError as error:
+        test_error = error
     finally:
         products = ROOT / "ios/DerivedData/Build/Products/Debug-iphonesimulator"
         for name, relative in [("app-info.plist", "Kkugi.app/Info.plist"), ("tests-info.plist", "Kkugi.app/PlugIns/KkugiTests.xctest/Info.plist")]:
@@ -109,6 +112,8 @@ def main() -> None:
     expected = {f"{case}-{scale}x.{suffix}" for case in CASES for scale in [1, 3] for suffix in ["png", "json"]}
     expected.update({"login-initial-full.png", "login-initial-full.json"})
     collect_evidence(export, artifacts / "captures", expected)
+    if test_error is not None:
+        raise test_error
     summary = {"buildAndTests": "passed", "pngCaptures": 11, "metadataFiles": 11, "pixelParity": "not-yet-compared"}
     (artifacts / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     print(json.dumps(summary))
