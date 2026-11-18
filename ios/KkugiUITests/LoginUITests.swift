@@ -14,7 +14,6 @@ final class LoginUITests: XCTestCase {
         let full = app.frame
         XCTAssertGreaterThan(bounds.width, 0)
         XCTAssertGreaterThan(bounds.height, 0)
-        XCTAssertTrue(full.contains(bounds))
         let png = XCTAttachment(data: screen.pngRepresentation, uniformTypeIdentifier: "public.png")
         png.name = "login-initial-full.png"
         png.lifetime = .keepAlways
@@ -34,6 +33,7 @@ final class LoginUITests: XCTestCase {
         details.name = "login-initial-full.json"
         details.lifetime = .keepAlways
         add(details)
+        XCTAssertTrue(full.contains(bounds), "Content bounds \(bounds) exceed screen \(full)")
     }
 
     override func setUpWithError() throws {
