@@ -127,6 +127,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "CFB85BECB5EDA65052004346";
 		};
+		"9BA01E6F5591E824A1DCA6BF" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Auth/ServerEventParser.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"4036C87F3FD6EA77F627566F" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "9BA01E6F5591E824A1DCA6BF";
+		};
 		"C6551262BBC005C9453150AF" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -166,6 +176,16 @@
 		"5DCC14E0EC227C6B0C23B40F" = {
 			"isa" = "PBXBuildFile";
 			"fileRef" = "D7EA249BE85F62A5DA513048";
+		};
+		"4EF4A26F0BBA796414E34982" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Features/Coaching/CoachingChat.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"4BB0427F24EF196EC56267AC" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "4EF4A26F0BBA796414E34982";
 		};
 		"71BA004ADB8EEED046F8A6AD" = {
 			"isa" = "PBXFileReference";
@@ -385,10 +405,12 @@
 				"A88E7F3B0B170698470947CD",
 				"72B3A1485E0756AAE958C89F",
 				"CFB85BECB5EDA65052004346",
+				"9BA01E6F5591E824A1DCA6BF",
 				"C6551262BBC005C9453150AF",
 				"9BC7ED7DEF6D05DBF886A95C",
 				"A1D5BEE0A4FEA9C1AB396EA9",
 				"D7EA249BE85F62A5DA513048",
+				"4EF4A26F0BBA796414E34982",
 				"71BA004ADB8EEED046F8A6AD",
 				"DC38FE9E74D8A316E811BCB6",
 				"E1152103FF722D6ED47120BF",
@@ -438,10 +460,12 @@
 				"62F9BAEAEA74A1A59B0CD0C9",
 				"73BE6ABBDF455DC0EC940DCF",
 				"AA1230C82406DCEC34A28571",
+				"4036C87F3FD6EA77F627566F",
 				"18F718E44BF6E3B7D54BED3F",
 				"512C19336766FB97132930CD",
 				"C53A8936BE09782F1101AD57",
 				"5DCC14E0EC227C6B0C23B40F",
+				"4BB0427F24EF196EC56267AC",
 				"96C08BB73709C703DA75F637",
 				"8EC904232D41E283A51C5DD7",
 				"E316C66C02D2A35A8BF46C0C",
@@ -630,6 +654,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "973D7ED1EDF1EA16FCC16883";
 		};
+		"54DA4F48250A36E5E146652F" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "KkugiTests/ServerEventParserTests.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"38177E90048577E9519EF374" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "54DA4F48250A36E5E146652F";
+		};
 		"AD421012C87DB8FCD35A3183" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -650,6 +684,7 @@
 				"F94700920FCF2841BDD8517B",
 				"040581A4F9054770A2416D79",
 				"973D7ED1EDF1EA16FCC16883",
+				"54DA4F48250A36E5E146652F",
 				"AD421012C87DB8FCD35A3183",
 			);
 			"name" = "KkugiTests";
@@ -673,6 +708,7 @@
 				"0BE2C55E89C7EDFA9BCC1DD7",
 				"D148FFAF926CD66D25FF71C9",
 				"1A97354FA8408764FF03FDA8",
+				"38177E90048577E9519EF374",
 				"C70FB120C3789A2B787C021E",
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";

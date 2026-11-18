@@ -55,6 +55,12 @@ struct HomeScreen: View {
                             }.padding(G.gap).background(.regularMaterial, in: RoundedRectangle(cornerRadius: G.gap))
                         }
                         Spacer()
+                        if !expanded {
+                            NavigationLink { CoachingChat(session: session) } label: {
+                                Image(systemName: "bubble.left.and.bubble.right").padding(G.small)
+                                    .background(.regularMaterial, in: Circle())
+                            }.accessibilityLabel("꾸기에게 묻기")
+                        }
                         if hasReport && !expanded {
                             NavigationLink { LatestWeeklyReport(session: session) } label: {
                                 Image(systemName: "chart.bar.doc.horizontal").padding(G.small)

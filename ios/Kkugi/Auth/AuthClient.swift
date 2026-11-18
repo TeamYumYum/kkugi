@@ -50,6 +50,28 @@ struct AuthClient {
     }
 
     func request(_ path: String, method: String, body: Data?, bearer: String?, query: [URLQueryItem] = [], contentType: String = "application/json") async throws -> (Data, Int) {
+        let request = try makeRequest(path, method: method, body: body, bearer: bearer, query: query,
+                                      contentType: contentType, accept: "application/json")
+        let (data, response) = try await session.data(for: request, delegate: AuthRedirectPolicy())
+        guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        return (data, http.statusCode)
+    }
+
+    func stream(_ path: String, body: Data, bearer: String) async throws -> (URLSession.AsyncBytes, Int) {
+        var request = try makeRequest(path, method: "POST", body: body, bearer: bearer, query: [],
+                                      contentType: "application/json", accept: "text/event-stream")
+        request.timeoutInterval = 120
+        let (bytes, response) = try await session.bytes(for: request, delegate: AuthRedirectPolicy())
+        guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
+        if (200..<300).contains(http.statusCode), http.mimeType != "text/event-stream" {
+            bytes.task.cancel()
+            throw URLError(.badServerResponse)
+        }
+        return (bytes, http.statusCode)
+    }
+
+    private func makeRequest(_ path: String, method: String, body: Data?, bearer: String?,
+                             query: [URLQueryItem], contentType: String, accept: String) throws -> URLRequest {
         guard baseURL.scheme == "https", baseURL.host != nil else { throw URLError(.badURL) }
         var url = baseURL.appendingPathComponent(path)
         if !query.isEmpty { url.append(queryItems: query) }
@@ -57,12 +79,10 @@ struct AuthClient {
         request.httpMethod = method
         request.httpBody = body
         request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue(accept, forHTTPHeaderField: "Accept")
         if body != nil { request.setValue(contentType, forHTTPHeaderField: "Content-Type") }
         if let bearer { request.setValue("Bearer " + bearer, forHTTPHeaderField: "Authorization") }
-        let (data, response) = try await session.data(for: request, delegate: AuthRedirectPolicy())
-        guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
-        return (data, http.statusCode)
+        return request
     }
 }
 

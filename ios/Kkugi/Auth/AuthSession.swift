@@ -25,6 +25,28 @@ actor AuthSession {
         return response.0
     }
 
+    func readEvents(_ path: String, body: Data,
+                    receive: @Sendable (String, String) async throws -> Bool) async throws {
+        guard let original = try vault.read() else { throw URLError(.userAuthenticationRequired) }
+        var (bytes, status) = try await api.stream(path, body: body, bearer: original.accessToken)
+        if status == 401 {
+            bytes.task.cancel()
+            let renewed = try await refreshed(after: original)
+            (bytes, status) = try await api.stream(path, body: body, bearer: renewed.accessToken)
+        }
+        defer { bytes.task.cancel() }
+        guard (200..<300).contains(status) else { throw AuthClient.RequestFailure(status: status, code: nil) }
+        var parser = ServerEventParser()
+        for try await byte in bytes {
+            if let frame = try parser.consume(byte) {
+                try Task.checkCancellation()
+                guard try vault.read()?.sessionID == original.sessionID else { throw CancellationError() }
+                if try await receive(frame.name, frame.data) { return }
+            }
+        }
+        throw URLError(.networkConnectionLost)
+    }
+
     func markOnboarded(for id: UUID) throws {
         guard let item = try vault.read(), item.sessionID == id else { throw CancellationError() }
         try vault.save(StoredSession(sessionID: id, memberID: item.memberID, onboarded: true,

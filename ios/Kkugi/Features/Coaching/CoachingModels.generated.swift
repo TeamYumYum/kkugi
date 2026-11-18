@@ -109,3 +109,31 @@ struct ApiResponseWeeklyReportResponse: Codable {
     let `data`: WeeklyReportResponse?
     let `error`: ErrorDetail?
 }
+
+struct PersonalChatRequest: Codable {
+    let `question`: String
+    let `previousQuestion`: String?
+}
+
+struct NutritionChatCitation: Codable {
+    let `evidenceId`: String
+    let `documentId`: String
+    let `version`: String
+    let `title`: String
+    let `sourceUrl`: String
+    let `quote`: String
+}
+
+struct PersonalChatEvent: Codable {
+    let `messageId`: String
+    let `seq`: Int?
+    let `text`: String?
+    let `citations`: [NutritionChatCitation]?
+    let `status`: String?
+    let `claimCount`: Int?
+    let `clarification`: String?
+    let `pipelineVersion`: String?
+    let `code`: String?
+    let `message`: String?
+    let `lastSeq`: Int?
+}
