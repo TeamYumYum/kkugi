@@ -112,3 +112,52 @@ struct ApiResponseWorkoutRecordDetailResponse: Codable {
 struct WeeklyWorkoutGoalPutRequest: Codable {
     let `targetCount`: Int
 }
+
+struct ExerciseResponse: Codable {
+    let `id`: Int
+    let `nameKo`: String
+    let `nameEn`: String
+    let `bodyPart`: String
+    let `equipment`: String
+    let `recordType`: String
+    let `weightType`: String
+    let `startImageUrl`: String?
+    let `endImageUrl`: String?
+}
+
+struct ExercisePageResponse: Codable {
+    let `items`: [ExerciseResponse]
+    let `page`: Int
+    let `size`: Int
+    let `totalElements`: Int
+}
+
+struct ApiResponseExercisePageResponse: Codable {
+    let `success`: Bool?
+    let `data`: ExercisePageResponse?
+    let `error`: ErrorDetail?
+}
+
+struct RoutineTargetRequest: Codable {
+    let `targetWeightKg`: Double?
+    let `targetReps`: Int?
+    let `targetDurationSeconds`: Int?
+}
+
+struct RoutineExerciseRequest: Codable {
+    let `routineExerciseId`: Int?
+    let `exerciseId`: Int
+    let `restSeconds`: Int?
+    let `targets`: [RoutineTargetRequest]
+}
+
+struct RoutineSaveRequest: Codable {
+    let `name`: String
+    let `exercises`: [RoutineExerciseRequest]
+}
+
+struct ApiResponseRoutineResponse: Codable {
+    let `success`: Bool?
+    let `data`: RoutineResponse?
+    let `error`: ErrorDetail?
+}

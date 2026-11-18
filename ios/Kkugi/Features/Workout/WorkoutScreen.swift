@@ -2,6 +2,8 @@ import SwiftUI
 
 struct WorkoutScreen: View {
     let session: AuthSession
+    @State private var editorOpen = false
+    @State private var editing: RoutineResponse?
     @State private var routines: [RoutineResponse] = []
     @State private var goal: WeeklyWorkoutGoalResponse?
     @State private var count = 3
@@ -23,10 +25,12 @@ struct WorkoutScreen: View {
                 }.disabled(saving)
             }
             Section("내 루틴") {
+                Button("루틴 만들기") { editing = nil; editorOpen = true }
                 if routines.isEmpty && !loading && message.isEmpty { Text("등록한 루틴이 없어요") }
                 ForEach(routines, id: \.id) { routine in
                     NavigationLink(routine.name) {
                         List {
+                            Button("루틴 수정") { editing = routine; editorOpen = true }
                             ForEach(routine.exercises, id: \.routineExerciseId) { exercise in
                                 Section("운동 \(exercise.sortOrder) · 휴식 \(exercise.restSeconds)초") {
                                     ForEach(exercise.targets, id: \.setNo) { target in
@@ -45,6 +49,9 @@ struct WorkoutScreen: View {
                 }
             }
         }.navigationTitle("운동").task { await load() }
+        .sheet(isPresented: $editorOpen, onDismiss: { Task { await load() } }) {
+            RoutineEditor(session: session, routine: editing) { editorOpen = false }
+        }
     }
 
     @MainActor private func load() async {

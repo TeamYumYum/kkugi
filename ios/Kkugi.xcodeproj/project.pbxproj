@@ -307,6 +307,16 @@
 			"isa" = "PBXBuildFile";
 			"fileRef" = "6BC96ABA288AB53DDDE47E5D";
 		};
+		"542CD8CDA03D3B91455D9CC8" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "Kkugi/Features/Workout/RoutineEditor.swift";
+			"sourceTree" = "SOURCE_ROOT";
+		};
+		"EB3E486485B0F81FF3900C08" = {
+			"isa" = "PBXBuildFile";
+			"fileRef" = "542CD8CDA03D3B91455D9CC8";
+		};
 		"62EB2F61DE401C1A4FCF71EE" = {
 			"isa" = "PBXFileReference";
 			"lastKnownFileType" = "sourcecode.swift";
@@ -383,6 +393,7 @@
 				"8BFA66D7E8EBFF7693CCCB4A",
 				"0A16ED979A48C57DB93F9A05",
 				"6BC96ABA288AB53DDDE47E5D",
+				"542CD8CDA03D3B91455D9CC8",
 				"62EB2F61DE401C1A4FCF71EE",
 				"42CF3EC07C7A0A5C847C0343",
 				"E4E1FB9E57A8588BB1F3142B",
@@ -434,6 +445,7 @@
 				"074A6133601D376EFAD6B3AA",
 				"819C96CB77785FE29C043307",
 				"30B2B492BF70C96956E954FB",
+				"EB3E486485B0F81FF3900C08",
 				"1363D7B43223EE642F524D55",
 				"45971865F27A107CDD05218A",
 			);
