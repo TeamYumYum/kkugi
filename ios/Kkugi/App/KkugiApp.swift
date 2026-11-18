@@ -25,7 +25,15 @@ struct LoginRoot: View {
         let url = configured.flatMap(URL.init(string:)).flatMap { $0.scheme == "https" ? $0 : nil }
         let flow = MemberFlow(baseURL: url)
         _flow = StateObject(wrappedValue: flow)
-        _model = StateObject(wrappedValue: LoginModel(initialState: initialState, review: url == nil ? nil : flow.review))
+        let model: LoginModel
+        if url != nil {
+            model = LoginModel(initialState: initialState) { login, password in
+                try await flow.review(login, password)
+            }
+        } else {
+            model = LoginModel(initialState: initialState)
+        }
+        _model = StateObject(wrappedValue: model)
     }
 
     var body: some View {
