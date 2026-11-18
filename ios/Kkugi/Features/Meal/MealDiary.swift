@@ -128,7 +128,9 @@ struct MealDiary: View {
         let colors = [Color(hex: 0xFA91A8), Color(hex: 0x77B8E9), Color(hex: 0xF5BF68)]
         let names = ["단백질", "탄수화물", "지방"]
         let grams = [total.proteinG, total.carbohydrateG, total.fatG]
-        let ratios = [plan?.proteinRatio ?? 0, plan?.carbRatio ?? 0, plan?.fatRatio ?? 0]
+        let ratios: [Double] = [plan?.proteinRatio ?? 0.0, plan?.carbRatio ?? 0.0, plan?.fatRatio ?? 0.0]
+        let energy: Double = target ?? plan?.targetKcal ?? 0
+        let caloriesPerGram: [Double] = [4, 4, 9]
         let background = RoundedRectangle(cornerRadius: G.dp(16))
         return VStack(spacing: G.small) {
             VStack(alignment: .leading, spacing: G.dp(6)) {
@@ -147,13 +149,8 @@ struct MealDiary: View {
             HStack(spacing: G.dp(16)) {
                 ZStack {
                     ForEach(0..<3) { i in
-                        let diameter = G.dp(CGFloat(68 - i * 18))
-                        let goal = (target ?? plan?.targetKcal ?? 0) * ratios[i] / 100 / (i == 2 ? 9 : 4)
-                        ZStack {
-                            Circle().strokeBorder(colors[i].opacity(0.22), lineWidth: G.dp(6))
-                            Circle().inset(by: G.dp(3)).trim(from: 0, to: goal > 0 ? min(1, grams[i] / goal) : 0)
-                                .stroke(colors[i], lineWidth: G.dp(6)).rotationEffect(.degrees(-90))
-                        }.frame(width: diameter, height: diameter)
+                        let goal = energy * ratios[i] / 100.0 / caloriesPerGram[i]
+                        macroRing(i, grams: grams[i], goal: goal, color: colors[i])
                     }
                 }.accessibilityHidden(true)
                 VStack(spacing: G.small) {
@@ -168,6 +165,16 @@ struct MealDiary: View {
                 }
             }.padding(G.dp(14)).background(.white, in: background)
         }
+    }
+
+    private func macroRing(_ index: Int, grams: Double, goal: Double, color: Color) -> some View {
+        let diameter = G.dp(CGFloat(68 - index * 18))
+        let progress = CGFloat(goal > 0 ? min(1, max(0, grams / goal)) : 0)
+        return ZStack {
+            Circle().strokeBorder(color.opacity(0.22), lineWidth: G.dp(6))
+            Circle().inset(by: G.dp(3)).trim(from: 0, to: progress)
+                .stroke(color, lineWidth: G.dp(6)).rotationEffect(.degrees(-90))
+        }.frame(width: diameter, height: diameter)
     }
 
     @MainActor private func load(_ key: String) async {
