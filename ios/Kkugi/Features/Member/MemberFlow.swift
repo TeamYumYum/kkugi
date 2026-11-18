@@ -123,6 +123,10 @@ struct MemberProfileScreen: View {
                 LabeledContent("키", value: "\(profile.heightCm) cm")
             }
             if !message.isEmpty { Text(message) }
+            if let session = flow.session {
+                NavigationLink("목표 칼로리") { TargetCalorieScreen(session: session) }
+                NavigationLink("체중 기록") { WeightDiary(session: session) }
+            }
             Button("다시 불러오기") { Task { await load() } }
             if let push = PushRegistration.current { NotificationSettingsRow(registration: push) }
             Button("로그아웃") {

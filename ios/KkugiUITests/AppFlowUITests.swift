@@ -79,7 +79,7 @@ final class AppFlowUITests: XCTestCase {
         let app = launch("home")
         XCTAssertTrue(app.buttons["코칭"].waitForExistence(timeout: 10))
         app.buttons["코칭"].tap()
-        XCTAssertTrue(app.staticTexts["하루 섭취 목표"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["아직 표시할 코칭 내용이 없어요"].waitForExistence(timeout: 5))
         capture("coaching-full.png")
         app.navigationBars.buttons.element(boundBy: 0).tap()
         app.buttons["성장"].tap()

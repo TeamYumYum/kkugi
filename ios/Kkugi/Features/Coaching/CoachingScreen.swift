@@ -1,6 +1,30 @@
 import SwiftUI
 
 struct CoachingScreen: View {
+    @State private var refreshing = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: G.gap) {
+            if refreshing {
+                ProgressView()
+                GText(text: "불러오는 중이에요")
+            } else {
+                GText(text: "아직 표시할 코칭 내용이 없어요", color: GColor.muted)
+            }
+            Button {
+                refreshing = true
+                Task { await Task.yield(); refreshing = false }
+            } label: {
+                GText(text: "새로고침", size: 15, weight: 700, color: .white)
+            }.buttonStyle(GButtonStyle(background: GColor.text, outline: false)).disabled(refreshing)
+            Spacer()
+        }.frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, G.gutter)
+            .padding(.top, G.gap).background(Color(hex: 0xF5F7FA))
+            .navigationTitle("코칭").navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct TargetCalorieScreen: View {
     let session: AuthSession
     @State private var plan: CoachingPlanResponse?
     @State private var editingTarget = ""
@@ -10,7 +34,6 @@ struct CoachingScreen: View {
 
     var body: some View {
         List {
-            NavigationLink("체중 기록") { WeightDiary(session: session) }
             if failed { Button("코칭 목표 다시 불러오기") { Task { await load() } } }
             if let plan {
                 Section("하루 섭취 목표") {
@@ -30,7 +53,7 @@ struct CoachingScreen: View {
                     if !choiceMessage.isEmpty { Text(choiceMessage) }
                 }
             } else if !failed { ProgressView() }
-        }.disabled(saving).navigationTitle("코칭").task { await load() }.refreshable { await load() }
+        }.disabled(saving).navigationTitle("목표 칼로리").task { await load() }.refreshable { await load() }
     }
 
     @MainActor private func changeTarget(_ low: Int, _ high: Int) async {
@@ -78,7 +101,7 @@ struct CoachingScreen: View {
     }
 }
 
-private struct WeightDiary: View {
+struct WeightDiary: View {
     let session: AuthSession
     @State private var date = Date()
     @State private var input = ""

@@ -85,7 +85,7 @@ struct HomeScreen: View {
                         Spacer()
                         NavigationLink("운동") { WorkoutScreen(session: session) }
                         Spacer()
-                        NavigationLink("코칭") { CoachingScreen(session: session) }
+                        NavigationLink("코칭") { CoachingScreen() }
                         Spacer()
                         NavigationLink("성장") { GrowthScreen(session: session) }
                     }.padding(G.gap).background(.regularMaterial, in: Capsule())

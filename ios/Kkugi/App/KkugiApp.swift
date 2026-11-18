@@ -70,7 +70,7 @@ struct LoginRoot: View {
             case .onboarding: OnboardingScreen(submit: flow.submit, openHome: flow.showHome, dailyTarget: flow.dailyTarget)
             case .home:
                 if let session = flow.session { HomeScreen(session: session, profile: flow.showProfile) }
-            case .profile: MemberProfileScreen(flow: flow)
+            case .profile: NavigationStack { MemberProfileScreen(flow: flow) }
             }
         }.task { await flow.restore() }
         .task { await flow.observeExpiry() }

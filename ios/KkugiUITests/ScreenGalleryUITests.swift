@@ -97,11 +97,14 @@ final class ScreenGalleryUITests: XCTestCase {
 
     func testCoachingAndGrowthDetails() throws {
         let app = try home()
-        try tap(app, "코칭")
+        try tap(app, "내 프로필")
+        try tap(app, "목표 칼로리")
+        try capture("target-calorie", when: app.staticTexts["하루 섭취 목표"])
+        back(app)
         try tap(app, "체중 기록")
         try capture("weight", when: app.navigationBars["체중 기록"])
         back(app)
-        back(app)
+        try tap(app, "홈으로")
         try tap(app, "성장")
         for (label, shot) in [("날짜별 식단 기록", "diet-streak"), ("주간 목표 달성 기록", "workout-streak"),
                               ("배지 모음", "badges"), ("주간 리포트", "weekly-report")] {
