@@ -108,3 +108,13 @@ struct OnboardingScreen: View {
         step += 1
     }
 }
+
+#if DEBUG
+extension OnboardingScreen {
+    static func reference(showGoal: Bool) -> Self {
+        var screen = Self(submit: { _ in }, openHome: {}, dailyTarget: { 1800 })
+        screen._step = State(initialValue: showGoal ? 2 : 1)
+        return screen
+    }
+}
+#endif
