@@ -5,6 +5,7 @@ struct MealDiary: View {
     @State private var date = Date()
     @State private var day: DailyMealsResponse?
     @State private var failure = false
+    @State private var adding = false
 
     private var dateKey: String {
         let formatter = DateFormatter()
@@ -36,6 +37,13 @@ struct MealDiary: View {
             } else { ProgressView() }
         }
         .navigationTitle("식사 기록")
+        .toolbar { Button("식사 추가") { adding = true } }
+        .sheet(isPresented: $adding) {
+            ManualMealForm(session: session, date: date) {
+                adding = false
+                Task { await load(dateKey) }
+            }
+        }
         .task(id: dateKey) { await load(dateKey) }
         .refreshable { await load(dateKey) }
     }
@@ -51,5 +59,66 @@ struct MealDiary: View {
         } catch {
             if !Task.isCancelled && dateKey == key { failure = true }
         }
+    }
+}
+
+private struct ManualMealForm: View {
+    let session: AuthSession
+    let saved: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var date: Date
+    @State private var kind = "LUNCH"
+    @State private var names = ""
+    @State private var id = UUID()
+    @State private var revision = 1
+    @State private var previousBody: Data?
+    @State private var busy = false
+    @State private var error = ""
+
+    init(session: AuthSession, date: Date, saved: @escaping () -> Void) {
+        self.session = session
+        self.saved = saved
+        _date = State(initialValue: date)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                DatePicker("식사 시각", selection: $date, in: ...Date())
+                Picker("식사 구분", selection: $kind) {
+                    Text("아침").tag("BREAKFAST"); Text("점심").tag("LUNCH")
+                    Text("저녁").tag("DINNER"); Text("간식").tag("SNACK")
+                }
+                Section("음식 이름 (한 줄에 하나)") { TextEditor(text: $names) }
+                if !error.isEmpty { Text(error).foregroundStyle(.red) }
+                Button("저장") { Task { await save() } }
+                    .disabled(names.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }.disabled(busy)
+            .navigationTitle("직접 입력")
+            .toolbar { Button("취소") { dismiss() }.disabled(busy) }
+        }.interactiveDismissDisabled(busy)
+    }
+
+    @MainActor private func save() async {
+        guard !busy else { return }
+        busy = true
+        defer { busy = false }
+        let items = names.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }.map { MealItemRequest(candidateRegionNo: nil, candidateRank: nil, foodId: nil, grams: nil, foodName: $0) }
+        guard !items.isEmpty else { return }
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
+            func body(_ rev: Int) throws -> Data {
+                try encoder.encode(MealSaveRequest(clientUuid: id.uuidString, clientRevision: rev,
+                    eatenAt: ISO8601DateFormatter().string(from: date), mealType: kind, photoRecognitionId: nil,
+                    items: items, fromLastMealCard: false))
+            }
+            let signature = try body(0)
+            if let previousBody, signature != previousBody { revision += 1 }
+            previousBody = signature
+            _ = try await session.protectedRequest("api/v1/meals", method: "POST", body: body(revision))
+            saved()
+        } catch { self.error = "식사를 저장하지 못했어요. 다시 시도해 주세요" }
     }
 }
