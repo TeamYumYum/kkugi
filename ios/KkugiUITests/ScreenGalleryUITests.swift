@@ -5,6 +5,7 @@ final class ScreenGalleryUITests: XCTestCase {
     private func home(populated: Bool = false) throws -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KKUGI_UI_FIXTURE"] = "home"
+        app.launchEnvironment["KKUGI_MEAL_TIME"] = "2026-10-27T12:30:00+09:00"
         if populated { app.launchEnvironment["KKUGI_GALLERY_DATA"] = "recorded" }
         app.launch()
         try ready(app.buttons["내 프로필"])
