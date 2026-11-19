@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import json
 import os
 import platform
@@ -119,14 +120,22 @@ def main() -> None:
     (artifacts / "environment.json").write_text(json.dumps(environment, indent=2) + "\n")
     command([sys.executable, "ios/scripts/project.py", "--check"])
     command(["plutil", "-lint", "ios/Kkugi.xcodeproj/project.pbxproj", "ios/Kkugi/Info.plist"])
-    if device["state"] != "Booted":
-        command(["xcrun", "simctl", "boot", device["udid"]])
-    command(["xcrun", "simctl", "bootstatus", device["udid"], "-b"])
-    command(["xcrun", "simctl", "status_bar", device["udid"], "override", "--time", "9:41", "--batteryState", "charged", "--batteryLevel", "100"])
+    framework = {"arm64": "linkDebugFrameworkIosSimulatorArm64", "x86_64": "linkDebugFrameworkIosX64"}[platform.machine()]
+    project = ["xcodebuild", "-project", "ios/Kkugi.xcodeproj", "-scheme", "Kkugi",
+               "-destination", f"platform=iOS Simulator,id={device['udid']}", "-derivedDataPath", "ios/DerivedData"]
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        native = pool.submit(command, ["./android/gradlew", "-p", "shared-ui", framework, "--console=plain"],
+                             artifacts / "shared-framework.log")
+        packages = pool.submit(command, project + ["-resolvePackageDependencies"], artifacts / "swift-packages.log")
+        if device["state"] != "Booted":
+            command(["xcrun", "simctl", "boot", device["udid"]])
+        command(["xcrun", "simctl", "bootstatus", device["udid"], "-b"])
+        command(["xcrun", "simctl", "status_bar", device["udid"], "override", "--time", "9:41", "--batteryState", "charged", "--batteryLevel", "100"])
+        native.result()
+        packages.result()
     test_error = None
     try:
-        command(["xcodebuild", "-project", "ios/Kkugi.xcodeproj", "-scheme", "Kkugi", "-destination", f"platform=iOS Simulator,id={device['udid']}",
-                 "-derivedDataPath", "ios/DerivedData", "-resultBundlePath", str(result), "-parallel-testing-enabled", "NO",
+        command([*project, "-resultBundlePath", str(result), "-parallel-testing-enabled", "NO",
                  "-maximum-concurrent-test-simulator-destinations", "1", *selection, "test", "CODE_SIGN_IDENTITY=-"], artifacts / "xcodebuild.log")
     except subprocess.CalledProcessError as error:
         test_error = error
