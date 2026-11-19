@@ -597,10 +597,33 @@
 			);
 			"runOnlyForDeploymentPostprocessing" = "0";
 		};
+		"156F68FFDBD741C413B2DE54" = {
+			"isa" = "PBXShellScriptBuildPhase";
+			"name" = "Build shared UI";
+			"shellPath" = "/bin/sh";
+			"files" = (
+
+			);
+			"inputPaths" = (
+
+			);
+			"outputPaths" = (
+
+			);
+			"alwaysOutOfDate" = "1";
+			"runOnlyForDeploymentPostprocessing" = "0";
+			"buildActionMask" = "2147483647";
+			"shellScript" = "set -eu\ncd \"$SRCROOT/..\"\n./android/gradlew -p shared-ui embedAndSignAppleFrameworkForXcode\n";
+		};
 		"5DF38E2589E010EA6212EEC9" = {
 			"isa" = "XCBuildConfiguration";
 			"name" = "Debug";
 			"buildSettings" = {
+				"FRAMEWORK_SEARCH_PATHS" = (
+					"$(inherited)",
+					"$(SRCROOT)/../shared-ui/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
+					"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)",
+				);
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.kkugi.ios";
 				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
@@ -614,6 +637,12 @@
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
 				);
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "NO";
+				"OTHER_LDFLAGS" = (
+					"$(inherited)",
+					"-framework",
+					"KkugiRenderer",
+				);
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Kkugi/Kkugi.entitlements";
 				"INFOPLIST_FILE" = "Kkugi/Info.plist";
 				"INFOPLIST_KEY_CFBundleDisplayName" = "꾸기";
@@ -626,6 +655,11 @@
 			"isa" = "XCBuildConfiguration";
 			"name" = "Release";
 			"buildSettings" = {
+				"FRAMEWORK_SEARCH_PATHS" = (
+					"$(inherited)",
+					"$(SRCROOT)/../shared-ui/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
+					"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)",
+				);
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.kkugi.ios";
 				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
@@ -638,6 +672,12 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 					"@loader_path/Frameworks",
+				);
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "NO";
+				"OTHER_LDFLAGS" = (
+					"$(inherited)",
+					"-framework",
+					"KkugiRenderer",
 				);
 				"CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]" = "Kkugi/Kkugi.entitlements";
 				"INFOPLIST_FILE" = "Kkugi/Info.plist";
@@ -665,6 +705,7 @@
 				"BD071A69D019CFD546DDB181",
 			);
 			"buildPhases" = (
+				"156F68FFDBD741C413B2DE54",
 				"F0F77B5814666E08C15BD4A8",
 				"BEADD5B07D91123190E4C8A4",
 				"687107F105BD47ADE46D00D4",
@@ -865,6 +906,11 @@
 			"isa" = "XCBuildConfiguration";
 			"name" = "Debug";
 			"buildSettings" = {
+				"FRAMEWORK_SEARCH_PATHS" = (
+					"$(inherited)",
+					"$(SRCROOT)/../shared-ui/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
+					"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)",
+				);
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.kkugi.ios.KkugiTests";
 				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
@@ -886,6 +932,11 @@
 			"isa" = "XCBuildConfiguration";
 			"name" = "Release";
 			"buildSettings" = {
+				"FRAMEWORK_SEARCH_PATHS" = (
+					"$(inherited)",
+					"$(SRCROOT)/../shared-ui/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
+					"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)",
+				);
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.kkugi.ios.KkugiTests";
 				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
@@ -1023,6 +1074,11 @@
 			"isa" = "XCBuildConfiguration";
 			"name" = "Debug";
 			"buildSettings" = {
+				"FRAMEWORK_SEARCH_PATHS" = (
+					"$(inherited)",
+					"$(SRCROOT)/../shared-ui/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
+					"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)",
+				);
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.kkugi.ios.KkugiUITests";
 				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";
@@ -1043,6 +1099,11 @@
 			"isa" = "XCBuildConfiguration";
 			"name" = "Release";
 			"buildSettings" = {
+				"FRAMEWORK_SEARCH_PATHS" = (
+					"$(inherited)",
+					"$(SRCROOT)/../shared-ui/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
+					"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)",
+				);
 				"PRODUCT_NAME" = "$(TARGET_NAME)";
 				"PRODUCT_BUNDLE_IDENTIFIER" = "com.kkugi.ios.KkugiUITests";
 				"SUPPORTED_PLATFORMS" = "iphoneos iphonesimulator";

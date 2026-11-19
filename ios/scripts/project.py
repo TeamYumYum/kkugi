@@ -107,6 +107,7 @@ def generate() -> dict[Path, bytes]:
                                   ("resources", "PBXResourcesBuildPhase", resources)]:
             phases.append(add(name + "-" + phase, isa=isa, buildActionMask=2147483647, files=files, runOnlyForDeploymentPostprocessing=0))
         settings = {
+            "FRAMEWORK_SEARCH_PATHS": ["$(inherited)", "$(SRCROOT)/../shared-ui/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)", "$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)"],
             "PRODUCT_NAME": "$(TARGET_NAME)", "PRODUCT_BUNDLE_IDENTIFIER": "com.kkugi.ios" + ("" if name == "Kkugi" else "." + name),
             "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator", "TARGETED_DEVICE_FAMILY": "1",
             "CODE_SIGN_STYLE": "Automatic", "GENERATE_INFOPLIST_FILE": "YES",
@@ -115,6 +116,12 @@ def generate() -> dict[Path, bytes]:
         }
         dependencies = []
         if name == "Kkugi":
+            phases.insert(0, add("shared-ui-build", isa="PBXShellScriptBuildPhase",
+                name="Build shared UI", shellPath="/bin/sh", files=[], inputPaths=[], outputPaths=[],
+                alwaysOutOfDate=1, runOnlyForDeploymentPostprocessing=0, buildActionMask=2147483647,
+                shellScript='set -eu\ncd "$SRCROOT/.."\n./android/gradlew -p shared-ui embedAndSignAppleFrameworkForXcode\n'))
+            settings["ENABLE_USER_SCRIPT_SANDBOXING"] = "NO"
+            settings["OTHER_LDFLAGS"] = ["$(inherited)", "-framework", "KkugiRenderer"]
             settings["CODE_SIGN_ENTITLEMENTS[sdk=iphoneos*]"] = "Kkugi/Kkugi.entitlements"
             settings.update({"INFOPLIST_FILE": "Kkugi/Info.plist", "INFOPLIST_KEY_CFBundleDisplayName": "꾸기",
                              "INFOPLIST_KEY_UILaunchScreen_Generation": "YES", "INFOPLIST_KEY_UIApplicationSceneManifest_Generation": "YES"})
@@ -168,6 +175,7 @@ def generate() -> dict[Path, bytes]:
         "CFBundleShortVersionString": "1.0",
         "CFBundleVersion": "1",
         "CFBundleDevelopmentRegion": "ko", "CFBundleDisplayName": "꾸기",
+        "CADisableMinimumFrameDurationOnPhone": True,
         "NSCameraUsageDescription": "식사 사진을 찍어 음식 기록에 사용합니다.",
         "GIDClientID": "$(KKUGI_GOOGLE_IOS_CLIENT_ID)", "GIDServerClientID": "$(KKUGI_GOOGLE_SERVER_CLIENT_ID)",
         "KkugiKakaoAppKey": "$(KKUGI_KAKAO_NATIVE_APP_KEY)",

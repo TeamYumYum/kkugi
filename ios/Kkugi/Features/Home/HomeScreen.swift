@@ -1,4 +1,5 @@
 import SwiftUI
+import KkugiRenderer
 
 struct HomeScreen: View {
     let session: AuthSession
@@ -195,72 +196,39 @@ struct NotificationInbox: View {
     @State private var message = ""
 
     var body: some View {
-        VStack(spacing: 0) {
-            ZStack(alignment: .leading) {
-                GText(text: "알림", size: 15, weight: 700, alignment: .center)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityAddTraits(.isHeader)
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left").font(.system(size: G.dp(18), weight: .medium))
-                        .frame(width: G.dp(22), height: G.dp(22))
-                        .padding(.trailing, G.dp(16)).frame(minHeight: 44)
-                        .contentShape(Rectangle())
-                }.buttonStyle(.plain).accessibilityLabel("뒤로")
+        SharedInboxView(
+            state: InboxState(rows: items.map(row), loading: loading, error: message, page: Int32(pageIndex), hasNext: hasNext),
+            onBack: { dismiss() },
+            onLoad: { page in Task { await load(page) } },
+            onSelect: { key in
+                guard let item = items.first(where: { String($0.id) == key }) else { return }
+                Task {
+                    do {
+                        _ = try await session.protectedRequest("api/v1/members/me/notifications/\(item.id)/read", method: "POST")
+                        await load(pageIndex)
+                    } catch { message = "읽음으로 표시하지 못했어요" }
+                }
             }
-            .padding(.horizontal, G.gutter)
-            .padding(.top, G.dp(6))
-            inboxList
-        }
-        .background(Color(hex: 0xF5F7FA))
+        )
         .toolbar(.hidden, for: .navigationBar)
         .task { await load(pageIndex) }
     }
-
-    private var inboxList: some View {
-        List {
-            if loading { ProgressView() }
-            if !message.isEmpty { Text(message); Button("다시 시도") { Task { await load(pageIndex) } } }
-            if !loading && message.isEmpty && items.isEmpty {
-                VStack(spacing: G.gap) {
-                    ArtImage(asset: .idle).scaledToFit()
-                        .frame(width: G.dp(40), height: G.dp(40))
-                        .accessibilityHidden(true)
-                    GText(text: "아직 받은 알림이 없어요", size: 18, weight: 700, alignment: .center)
-                    GText(text: "끼니 추천이나 주간 리포트가 오면 여기에 모여요.", color: GColor.muted, alignment: .center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, G.gutter * 2).padding(.vertical, G.gutter)
-                .listRowInsets(EdgeInsets()).listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-            }
-            ForEach(items, id: \.id) { item in
-                Button {
-                    Task {
-                        do {
-                            _ = try await session.protectedRequest("api/v1/members/me/notifications/\(item.id)/read", method: "POST")
-                            await load(pageIndex)
-                        } catch { message = "읽음으로 표시하지 못했어요" }
-                    }
-                } label: {
-                    VStack(alignment: .leading) {
-                        GText(text: item.title, weight: item.read ? 400 : 700)
-                        GText(text: item.body, color: GColor.muted)
-                    }
-                }
-            }
-            if pageIndex > 0 || hasNext {
-                HStack {
-                    Button("이전") { Task { await load(pageIndex - 1) } }.disabled(pageIndex == 0)
-                    Spacer()
-                    Text("\(pageIndex + 1)페이지")
-                    Spacer()
-                    Button("다음") { Task { await load(pageIndex + 1) } }.disabled(!hasNext)
-                }.buttonStyle(.borderless).disabled(loading)
-            }
-        }.listStyle(.plain).scrollContentBackground(.hidden)
-            .contentMargins(.horizontal, 0, for: .scrollContent)
-            .background(Color(hex: 0xF5F7FA))
-            .refreshable { await load(pageIndex) }
+    private func row(_ item: MemberNotificationResponse) -> InboxRow {
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.timeZone = TimeZone(identifier: "Asia/Seoul")!
+        let now = Date()
+        let today = calendar.startOfDay(for: now)
+        let week = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? today
+        let sent = (try? Date.ISO8601FormatStyle(includingFractionalSeconds: true).parse(item.sentAt))
+            ?? (try? Date.ISO8601FormatStyle().parse(item.sentAt))
+        let section = sent.map { $0 >= today ? "오늘" : $0 >= week ? "이번 주" : "이전" } ?? "이전"
+        let format = DateFormatter()
+        format.locale = Locale(identifier: "ko_KR")
+        format.timeZone = calendar.timeZone
+        format.dateFormat = section == "오늘" ? "a h:mm" : section == "이번 주" ? "EEEE" :
+            (sent.map { calendar.isDate($0, equalTo: now, toGranularity: .year) } == true ? "M월 d일" : "yyyy년 M월 d일")
+        return InboxRow(key: String(item.id), title: item.title, body: item.body, read: item.read,
+                        type: item.type, section: section, time: sent.map { format.string(from: $0) } ?? item.sentAt)
     }
 
     @MainActor private func load(_ requested: Int) async {
@@ -278,5 +246,31 @@ struct NotificationInbox: View {
             items = data.items
             message = ""
         } catch { message = "알림을 불러오지 못했어요" }
+    }
+}
+
+private struct SharedInboxView: UIViewControllerRepresentable {
+    let state: InboxState
+    let onBack: () -> Void
+    let onLoad: (Int) -> Void
+    let onSelect: (String) -> Void
+
+    final class Coordinator: NSObject, InboxActions {
+        let model = InboxModel()
+        var view: SharedInboxView
+        init(_ view: SharedInboxView) { self.view = view }
+        func back() { view.onBack() }
+        func load(page: Int32) { view.onLoad(Int(page)) }
+        func select(key: String) { view.onSelect(key) }
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeUIViewController(context: Context) -> UIViewController {
+        context.coordinator.model.update(value: state)
+        return InboxHostKt.inboxController(model: context.coordinator.model, actions: context.coordinator)
+    }
+    func updateUIViewController(_ controller: UIViewController, context: Context) {
+        context.coordinator.view = self
+        context.coordinator.model.update(value: state)
     }
 }
