@@ -21,6 +21,13 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.unit.dp
 import java.io.File
 import java.security.MessageDigest
@@ -45,10 +52,13 @@ class SharedInboxTest {
         }
         lateinit var host: View
         var rect = Rect.Zero
+        val fontScale = mutableFloatStateOf(1f)
         compose.setContent {
             host = LocalView.current
-            Box(Modifier.size((1178f/3).dp, 759.dp).onGloballyPositioned { rect = it.boundsInRoot() }) {
-                SharedInbox(model, actions)
+            CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale.floatValue)) {
+                Box(Modifier.size((1178f/3).dp, 759.dp).onGloballyPositioned { rect = it.boundsInRoot() }) {
+                    SharedInbox(model, actions)
+                }
             }
         }
         compose.onNodeWithText("아직 받은 알림이 없어요").assertExists()
@@ -86,6 +96,11 @@ class SharedInboxTest {
         compose.runOnIdle { model.update(InboxState(rows, false, "", 0, false)) }
         compose.onNodeWithText("제목 2").assertExists()
         capture("inbox", "451248ac9d7f568a41851351a3ce2ebd9006e416c915ed86533c6cf178d95cae")
+        compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)).assertCountEquals(3)
+        val title = compose.onNodeWithText("알림")
+        val initialHeight = title.fetchSemanticsNode().boundsInRoot.height
+        compose.runOnIdle { fontScale.floatValue = 1.6f }
+        check(title.fetchSemanticsNode().boundsInRoot.height > initialHeight)
         compose.runOnIdle { model.update(InboxState(rows, false, "", 0, true)) }
         compose.onNodeWithText("제목 2").performClick()
         compose.onNodeWithText("다음").performClick()
