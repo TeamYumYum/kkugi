@@ -2,11 +2,12 @@ import XCTest
 
 @MainActor
 final class ScreenGalleryUITests: XCTestCase {
-    private func home(populated: Bool = false) throws -> XCUIApplication {
+    private func home(populated: Bool = false, pagedNotifications: Bool = false) throws -> XCUIApplication {
         let app = XCUIApplication()
         app.launchEnvironment["KKUGI_UI_FIXTURE"] = "home"
         app.launchEnvironment["KKUGI_MEAL_TIME"] = "2026-10-27T12:30:00+09:00"
         if populated { app.launchEnvironment["KKUGI_GALLERY_DATA"] = "recorded" }
+        if pagedNotifications { app.launchEnvironment["KKUGI_NOTIFICATION_PAGES"] = "1" }
         app.launch()
         try ready(app.buttons["내 프로필"])
         return app
@@ -99,6 +100,8 @@ final class ScreenGalleryUITests: XCTestCase {
         let unread = app.buttons.matching(NSPredicate(format: "label CONTAINS %@ AND label CONTAINS %@", "제목 2", "안 읽음")).firstMatch
         try capture("inbox", when: unread)
         unread.tap()
+        try ready(app.buttons["내 프로필"])
+        try tap(app, "알림")
         let read = app.buttons.matching(NSPredicate(format: "label CONTAINS %@ AND NOT (label CONTAINS %@)", "제목 2", "안 읽음")).firstMatch
         try ready(read)
         try tap(app, "뒤로")
@@ -108,6 +111,17 @@ final class ScreenGalleryUITests: XCTestCase {
         back(app)
         try tap(app, "식사 수정")
         try capture("meal-edit", when: app.navigationBars["식사 수정"])
+    }
+
+    func testPagedNotificationsOpenTheSelectedWeek() throws {
+        let app = try home(populated: true, pagedNotifications: true)
+        try tap(app, "알림")
+        let report = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "제목 1")).firstMatch
+        try ready(report)
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "제목 2")).firstMatch.exists)
+        report.tap()
+        try ready(app.navigationBars["주간 리포트"])
+        try ready(app.staticTexts["11월 9일 주간 기록"])
     }
 
     func testWorkoutScreens() throws {

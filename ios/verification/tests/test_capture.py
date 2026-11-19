@@ -1,12 +1,24 @@
 import json
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from run_macos import GALLERY_TEST, collect_evidence, evidence_name, suite_configuration
+from run_macos import GALLERY_TEST, collect_evidence, evidence_name, prepare_in_parallel, suite_configuration
 
 class CaptureTests(unittest.TestCase):
+    def test_preparation_preserves_first_error_and_stops_siblings(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            slow = [sys.executable, "-c", "import sys,time;time.sleep(12);print('finished')"]
+            failed = [sys.executable, "-c", "import sys;print('failed preparation');sys.exit(7)"]
+            with self.assertRaises(subprocess.CalledProcessError) as caught:
+                prepare_in_parallel([(slow, root / "slow.log"), (failed, root / "failure.log")])
+            self.assertEqual(caught.exception.returncode, 7)
+            self.assertEqual((root / "failure.log").read_text().strip(), "failed preparation")
+            self.assertEqual((root / "slow.log").read_text(), "")
+
     def test_partition_preserves_tests_and_separate_evidence(self):
         core_flags, core = suite_configuration("core")
         gallery_flags, gallery = suite_configuration("gallery")

@@ -61,7 +61,14 @@ private final class FixtureProtocol: URLProtocol {
         case "/api/v1/members/me/notifications":
             if populated {
                 let read = Self.notificationLock.withLock { Self.hasReadNotification }
-                return #"{"items":[{"id":2,"type":"LAST_MEAL","title":"제목 2","body":"본문 2","data":{},"sentAt":"2026-11-11T17:05:00+09:00","read":\#(read)},{"id":1,"type":"WEEKLY_REPORT","title":"제목 1","body":"본문 1","data":{},"sentAt":"2026-11-09T09:00:00+09:00","read":true}],"page":0,"size":20,"totalElements":2}"#
+                let meal = #"{"id":2,"type":"LAST_MEAL","title":"제목 2","body":"본문 2","data":{},"sentAt":"2026-11-11T17:05:00+09:00","read":\#(read)}"#
+                let report = #"{"id":1,"type":"WEEKLY_REPORT","title":"제목 1","body":"본문 1","data":{"weekStartDate":"2026-11-09"},"sentAt":"2026-11-09T09:00:00+09:00","read":true}"#
+                if ProcessInfo.processInfo.environment["KKUGI_NOTIFICATION_PAGES"] == "1" {
+                    let page = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "page" }?.value
+                    guard page == "0" || page == "1" else { return nil }
+                    return #"{"items":[\#(page == "0" ? meal : report)],"page":\#(page ?? "0"),"size":1,"totalElements":2}"#
+                }
+                return #"{"items":[\#(meal),\#(report)],"page":0,"size":20,"totalElements":2}"#
             }
             return #"{"items":[],"page":0,"size":20,"totalElements":0}"#
         case "/api/v1/routines": return #"{"items":[{"id":1,"name":"아침 루틴","exercises":[]}]}"#
@@ -85,6 +92,8 @@ private final class FixtureProtocol: URLProtocol {
             return #"{"id":7,"clientUuid":"00000000-0000-4000-8000-000000000007","routineName":"기록한 루틴","startedAt":"2026-11-18T09:00:00+09:00","endedAt":"2026-11-18T09:10:00+09:00","startExercises":[],"performedExercises":[{"sortOrder":1,"exerciseId":1,"exerciseName":"스쿼트","recordType":"WEIGHT_REPS","weightType":"EXTERNAL","restSeconds":60,"skipped":false,"sets":[{"setNo":1,"target":{"weightKg":20,"reps":10},"actual":{"weightKg":20,"reps":10},"status":"COMPLETED"}]}],"totalVolumeKg":200}"#
         case "/api/v1/exercises":
             return #"{"items":[{"id":1,"nameKo":"스쿼트","nameEn":"Squat","bodyPart":"LOWER_BODY","equipment":"BARBELL","recordType":"WEIGHT_REPS","weightType":"EXTERNAL"}],"page":0,"size":20,"totalElements":1}"#
+        case "/api/v1/weekly-reports/me/2026-11-09":
+            return #"{"weekStartDate":"2026-11-09","periodStartDate":"2026-11-09","periodEndDate":"2026-11-15","diet":{"periodDays":7,"loggedDays":3,"achievedDays":2,"level":"GOOD"},"nutrients":{},"workout":{"level":"GOOD"},"weight":{"trend":"STABLE"},"comment":{"text":"11월 9일 주간 기록","source":"RULE"}}"#
         case "/api/v1/coaching-plan/me":
             return #"{"targetKcal":1800,"carbRatio":50,"proteinRatio":25,"fatRatio":25,"startedOn":"2026-01-01","recalcPending":false}"#
         case "/api/v1/meals":

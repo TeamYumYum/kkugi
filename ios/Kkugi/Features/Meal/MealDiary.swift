@@ -233,6 +233,8 @@ private struct MealDetailView: View {
 
 struct ManualMealForm: View {
     let session: AuthSession
+    private var referenceNow: Date?
+    private var now: Date { referenceNow ?? MealDay.now }
     let saved: () -> Void
     let fromRecommendation: Bool
     let original: MealDetailResponse?
@@ -272,7 +274,7 @@ struct ManualMealForm: View {
     var body: some View {
         NavigationStack {
             Form {
-                DatePicker("식사 시각", selection: $date, in: MealDay.calendar.startOfDay(for: MealDay.now)...MealDay.now,
+                DatePicker("식사 시각", selection: $date, in: MealDay.calendar.startOfDay(for: now)...now,
                            displayedComponents: .hourAndMinute).environment(\.timeZone, MealDay.calendar.timeZone)
                 Picker("식사 구분", selection: $kind) {
                     Text("아침").tag("BREAKFAST"); Text("점심").tag("LUNCH")
@@ -395,7 +397,7 @@ struct ManualMealForm: View {
                 foodId: candidate.foodId, grams: candidate.foodId == nil ? nil : candidate.grams,
                 foodName: candidate.foodId == nil ? candidate.foodName : nil))
         }
-        guard MealDay.isToday(date), date <= MealDay.now else { error = "오늘 먹은 식사만 기록할 수 있어요"; return }
+        guard MealDay.calendar.isDate(date, inSameDayAs: now), date <= now else { error = "오늘 먹은 식사만 기록할 수 있어요"; return }
         guard let kept = try? previousItems.map({ try $0.request() }) else {
             error = "음식 이름과 섭취량을 확인해 주세요"
             return
@@ -427,8 +429,9 @@ struct ManualMealForm: View {
 
 #if DEBUG
 extension ManualMealForm {
-    static func reference(session: AuthSession, recognition: MealPhotoRecognitionResponse) -> Self {
-        var view = Self(session: session, date: MealDay.now, saved: {})
+    static func reference(session: AuthSession, recognition: MealPhotoRecognitionResponse, date: Date) -> Self {
+        var view = Self(session: session, date: date, saved: {})
+        view.referenceNow = date
         view._recognition = State(initialValue: recognition)
         view._ranks = State(initialValue: Dictionary(uniqueKeysWithValues: recognition.regions.map {
             ($0.regionNo, $0.candidates.first?.rank ?? 0)

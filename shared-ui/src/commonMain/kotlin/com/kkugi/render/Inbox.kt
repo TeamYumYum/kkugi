@@ -12,6 +12,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -46,7 +47,8 @@ import org.jetbrains.compose.resources.painterResource
 
 data class InboxRow(val key: String, val title: String, val body: String, val read: Boolean,
                     val type: String, val section: String, val time: String)
-data class InboxState(val rows: List<InboxRow>, val loading: Boolean, val error: String, val page: Int, val hasNext: Boolean)
+data class InboxState(val rows: List<InboxRow>, val loading: Boolean, val error: String,
+                      val page: Int, val hasNext: Boolean, val failedPage: Int = 0)
 class InboxModel {
     var state by mutableStateOf(InboxState(emptyList(), true, "", 0, false))
         private set
@@ -94,12 +96,12 @@ fun SharedInbox(model: InboxModel, actions: InboxActions) {
             }
             Box(Modifier.align(Alignment.Center).semantics { heading() }) { Caption("알림", 15, bold = true) }
         }
-        PullToRefreshBox(isRefreshing = state.loading, onRefresh = { actions.load(state.page) }) {
+        PullToRefreshBox(isRefreshing = state.loading && state.rows.isEmpty(), onRefresh = { actions.load(0) }) {
             LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(gap)) {
-                if (state.loading) item { CircularProgressIndicator() }
-                if (state.error.isNotEmpty()) item {
+                if (state.loading && state.rows.isEmpty()) item { CircularProgressIndicator() }
+                if (state.error.isNotEmpty() && state.failedPage == 0) item {
                     Caption(state.error)
-                    Box(Modifier.clickable(role = Role.Button) { actions.load(state.page) }) { Caption("다시 시도") }
+                    Box(Modifier.clickable(role = Role.Button) { actions.load(0) }) { Caption("다시 시도") }
                 }
                 if (!state.loading && state.error.isEmpty() && state.rows.isEmpty()) item {
                     Column(Modifier.fillMaxWidth().padding(gutter), horizontalAlignment = Alignment.CenterHorizontally,
@@ -127,11 +129,14 @@ fun SharedInbox(model: InboxModel, actions: InboxActions) {
                         }
                     }
                 }
-                if (state.page > 0 || state.hasNext) item {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Box(Modifier.clickable(enabled = !state.loading && state.page > 0, role = Role.Button) { actions.load(state.page-1) }) { Caption("이전") }
-                        Caption((state.page + 1).toString() + "페이지")
-                        Box(Modifier.clickable(enabled = !state.loading && state.hasNext, role = Role.Button) { actions.load(state.page+1) }) { Caption("다음") }
+                if (state.hasNext && state.rows.isNotEmpty()) item(key = "pagination") {
+                    if (state.error.isEmpty()) {
+                        if (!state.loading) LaunchedEffect(state.page) { actions.load(state.page + 1) }
+                        Caption("알림을 더 불러오는 중이에요", color = muted)
+                    } else if (state.failedPage > 0) {
+                        Box(Modifier.clickable(role = Role.Button) { actions.load(state.failedPage) }) {
+                            Caption("알림 더 불러오기")
+                        }
                     }
                 }
             }

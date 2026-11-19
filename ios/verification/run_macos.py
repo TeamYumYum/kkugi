@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack
 import json
 import os
 import platform
@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -52,6 +53,36 @@ def command(args: list[str], log: Path | None = None) -> str:
             raise subprocess.CalledProcessError(completed.returncode, args)
         return ""
     return subprocess.check_output(args, cwd=ROOT, text=True)
+
+
+def prepare_in_parallel(commands: list[tuple[list[str], Path]]) -> None:
+    with ExitStack() as files:
+        running = {}
+        try:
+            for args, log in commands:
+                stream = files.enter_context(log.open("w", encoding="utf-8"))
+                process = subprocess.Popen(args, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT)
+                running[process] = log
+            while running:
+                for process, log in list(running.items()):
+                    result = process.poll()
+                    if result is None:
+                        continue
+                    del running[process]
+                    if result:
+                        print(log.read_text(encoding="utf-8", errors="replace")[-12000:], flush=True)
+                        raise subprocess.CalledProcessError(result, process.args)
+                if running:
+                    time.sleep(0.3)
+        finally:
+            for process in running:
+                process.terminate()
+            for process in running:
+                try:
+                    process.wait(timeout=3)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait()
 
 
 def named_attachments(node):
@@ -123,16 +154,14 @@ def main() -> None:
     framework = {"arm64": "linkDebugFrameworkIosSimulatorArm64", "x86_64": "linkDebugFrameworkIosX64"}[platform.machine()]
     project = ["xcodebuild", "-project", "ios/Kkugi.xcodeproj", "-scheme", "Kkugi",
                "-destination", f"platform=iOS Simulator,id={device['udid']}", "-derivedDataPath", "ios/DerivedData"]
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        native = pool.submit(command, ["./android/gradlew", "-p", "shared-ui", framework, "--console=plain"],
-                             artifacts / "shared-framework.log")
-        packages = pool.submit(command, project + ["-resolvePackageDependencies"], artifacts / "swift-packages.log")
-        if device["state"] != "Booted":
-            command(["xcrun", "simctl", "boot", device["udid"]])
-        command(["xcrun", "simctl", "bootstatus", device["udid"], "-b"])
-        command(["xcrun", "simctl", "status_bar", device["udid"], "override", "--time", "9:41", "--batteryState", "charged", "--batteryLevel", "100"])
-        native.result()
-        packages.result()
+    if device["state"] != "Booted":
+        command(["xcrun", "simctl", "boot", device["udid"]])
+    prepare_in_parallel([
+        (["./android/gradlew", "-p", "shared-ui", framework, "--console=plain"], artifacts / "shared-framework.log"),
+        (project + ["-resolvePackageDependencies"], artifacts / "swift-packages.log"),
+        (["xcrun", "simctl", "bootstatus", device["udid"], "-b"], artifacts / "simulator-boot.log"),
+    ])
+    command(["xcrun", "simctl", "status_bar", device["udid"], "override", "--time", "9:41", "--batteryState", "charged", "--batteryLevel", "100"])
     test_error = None
     try:
         command([*project, "-resultBundlePath", str(result), "-parallel-testing-enabled", "NO",

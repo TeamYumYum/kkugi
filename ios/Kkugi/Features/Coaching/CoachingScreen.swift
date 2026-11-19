@@ -187,6 +187,7 @@ struct WeightDiary: View {
 
 struct LatestWeeklyReport: View {
     let session: AuthSession
+    var weekStartDate: String? = nil
     @State private var report: WeeklyReportResponse?
     @State private var empty = false
     @State private var failed = false
@@ -209,7 +210,7 @@ struct LatestWeeklyReport: View {
 
     @MainActor private func load() async {
         do {
-            let data = try await session.protectedRequest("api/v1/weekly-reports/me/latest", method: "GET")
+            let data = try await session.protectedRequest("api/v1/weekly-reports/me/" + (weekStartDate ?? "latest"), method: "GET")
             let response = try JSONDecoder().decode(ApiResponseWeeklyReportResponse.self, from: data)
             guard response.success == true, let value = response.data else { throw URLError(.badServerResponse) }
             report = value

@@ -101,10 +101,12 @@ class SharedInboxTest {
         val initialHeight = title.fetchSemanticsNode().boundsInRoot.height
         compose.runOnIdle { fontScale.floatValue = 1.6f }
         check(title.fetchSemanticsNode().boundsInRoot.height > initialHeight)
-        compose.runOnIdle { model.update(InboxState(rows, false, "", 0, true)) }
         compose.onNodeWithText("제목 2").performClick()
-        compose.onNodeWithText("다음").performClick()
+        compose.runOnIdle { model.update(InboxState(rows, false, "", 0, true)) }
+        compose.onNodeWithText("알림을 더 불러오는 중이에요").assertExists()
+        compose.runOnIdle { model.update(InboxState(rows, false, "실패", 0, true, 1)) }
+        compose.onNodeWithText("알림 더 불러오기").performClick()
         compose.onNodeWithContentDescription("뒤로").performClick()
-        assertEquals(listOf("2", "page:1", "back"), events)
+        assertEquals(listOf("2", "page:1", "page:1", "back"), events)
     }
 }

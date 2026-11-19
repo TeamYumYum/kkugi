@@ -15,7 +15,8 @@ final class FeatureReferenceTests: XCTestCase {
             nutritionPer100g: FoodNutritionResponse(kcal: 180, carbohydrateG: 12, proteinG: 24, fatG: 4))
         let region = RecognitionRegionResponse(regionNo: 1, box: nil, candidates: [candidate])
         let result = MealPhotoRecognitionResponse(recognitionId: 7, status: "SUCCEEDED", regions: [region], photoUrl: nil)
-        try await captureReference(ManualMealForm.reference(session: session, recognition: result), name: "meal-photo-confirm")
+        let photoTime = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-10-27T12:30:00+09:00"))
+        try await captureReference(ManualMealForm.reference(session: session, recognition: result, date: photoTime), name: "meal-photo-confirm")
         let rice = MealConfirmation.Food(name: "쌀밥", grams: 210, kcal: 273, carb: 59.01, protein: 5.25, fat: 0.63)
         let lunch = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-01-08T12:30:00+09:00"))
         try await captureReference(MealConfirmation(foods: [rice], source: "사진에서 찾은 음식", kind: "LUNCH",

@@ -199,24 +199,67 @@ struct NotificationInbox: View {
     @State private var hasNext = false
     @State private var loading = false
     @State private var message = ""
+    @State private var failedPage = 0
+    @State private var selectedWeek: String?
+    @State private var showingGrowth = false
+    @State private var markingRead = Set<Int>()
+    @State private var pendingHome: UUID?
 
     var body: some View {
         SharedInboxView(
-            state: InboxState(rows: items.map(row), loading: loading, error: message, page: Int32(pageIndex), hasNext: hasNext),
+            state: InboxState(rows: items.map(row), loading: loading, error: message, page: Int32(pageIndex),
+                              hasNext: hasNext, failedPage: Int32(failedPage)),
             onBack: { dismiss() },
             onLoad: { page in Task { await load(page) } },
-            onSelect: { key in
-                guard let item = items.first(where: { String($0.id) == key }) else { return }
-                Task {
-                    do {
-                        _ = try await session.protectedRequest("api/v1/members/me/notifications/\(item.id)/read", method: "POST")
-                        await load(pageIndex)
-                    } catch { message = "읽음으로 표시하지 못했어요" }
-                }
-            }
+            onSelect: open
         )
         .toolbar(.hidden, for: .navigationBar)
-        .task { await load(pageIndex) }
+        .navigationDestination(item: $selectedWeek) { week in LatestWeeklyReport(session: session, weekStartDate: week) }
+        .navigationDestination(isPresented: $showingGrowth) { GrowthScreen(session: session) }
+        .task { if items.isEmpty { await load(0) } }
+        .onDisappear { pendingHome = nil }
+    }
+
+    private func open(_ key: String) {
+        guard pendingHome == nil, let item = items.first(where: { String($0.id) == key }) else { return }
+        var write: Task<Void, Never>?
+        if !item.read && markingRead.insert(item.id).inserted {
+            write = Task {
+                defer { markingRead.remove(item.id) }
+                do {
+                    _ = try await session.protectedRequest("api/v1/members/me/notifications/\(item.id)/read", method: "POST")
+                    if let index = items.firstIndex(where: { $0.id == item.id }) {
+                        let current = items[index]
+                        items[index] = MemberNotificationResponse(id: current.id, type: current.type, title: current.title,
+                                                                  body: current.body, data: current.data, sentAt: current.sentAt, read: true)
+                    }
+                } catch { return }
+            }
+        }
+        switch item.type {
+        case "LAST_MEAL":
+            guard let write else { dismiss(); return }
+            let token = UUID()
+            pendingHome = token
+            Task { await write.value; returnHome(token) }
+            Task { try? await Task.sleep(for: .milliseconds(1500)); returnHome(token) }
+        case "BADGE": showingGrowth = true
+        case "WEEKLY_REPORT":
+            if let week = item.data["weekStartDate"], week.range(of: #"^\d{4}-\d{2}-\d{2}$"#, options: .regularExpression) != nil {
+                let format = DateFormatter()
+                format.locale = Locale(identifier: "en_US_POSIX")
+                format.timeZone = TimeZone(identifier: "Asia/Seoul")
+                format.dateFormat = "yyyy-MM-dd"
+                if let parsed = format.date(from: week), format.string(from: parsed) == week { selectedWeek = week }
+            }
+        default: break
+        }
+    }
+
+    private func returnHome(_ token: UUID) {
+        guard pendingHome == token else { return }
+        pendingHome = nil
+        dismiss()
     }
     private func row(_ item: MemberNotificationResponse) -> InboxRow {
         var calendar = Calendar(identifier: .iso8601)
@@ -232,25 +275,33 @@ struct NotificationInbox: View {
         format.timeZone = calendar.timeZone
         format.dateFormat = section == "오늘" ? "a h:mm" : section == "이번 주" ? "EEEE" :
             (sent.map { calendar.isDate($0, equalTo: now, toGranularity: .year) } == true ? "M월 d일" : "yyyy년 M월 d일")
-        return InboxRow(key: String(item.id), title: item.title, body: item.body, read: item.read,
+        return InboxRow(key: String(item.id), title: item.title, body: item.body, read: item.read || markingRead.contains(item.id),
                         type: item.type, section: section, time: sent.map { format.string(from: $0) } ?? item.sentAt)
     }
 
     @MainActor private func load(_ requested: Int) async {
-        guard !loading, requested >= 0 else { return }
+        guard !loading, requested == 0 || (hasNext && requested == pageIndex + 1) else { return }
         loading = true
+        message = ""
         defer { loading = false }
         do {
             let page = try await session.homeData(
                 "members/me/notifications", ApiResponseMemberNotificationPageResponse.self,
                 query: [URLQueryItem(name: "page", value: String(requested)), URLQueryItem(name: "size", value: "20")]
             )
-            guard page.success == true, let data = page.data else { throw URLError(.badServerResponse) }
+            guard page.success == true, let data = page.data, data.page == requested, data.size > 0 else { throw URLError(.badServerResponse) }
             pageIndex = data.page
             hasNext = (data.page + 1) * data.size < data.totalElements
-            items = data.items
-            message = ""
-        } catch { message = "알림을 불러오지 못했어요" }
+            if requested == 0 {
+                items = data.items
+            } else {
+                var seen = Set(items.map(\.id))
+                items.append(contentsOf: data.items.filter { seen.insert($0.id).inserted })
+            }
+        } catch {
+            failedPage = requested
+            message = "알림을 불러오지 못했어요"
+        }
     }
 }
 
