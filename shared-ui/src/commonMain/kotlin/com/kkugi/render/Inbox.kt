@@ -1,6 +1,11 @@
 package com.kkugi.render
 
 import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,6 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.LineHeightStyle
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -51,12 +63,22 @@ private val muted = Color(0xff868e96)
 private val gutter = 21.6.dp
 private val gap = 14.4.dp
 
+private val backArrow = ImageVector.Builder("Back", 24.dp, 24.dp, 24f, 24f).apply {
+    path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f,
+        strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
+        moveTo(15f, 5f)
+        lineTo(8f, 12f)
+        lineTo(15f, 19f)
+    }
+}.build()
+
 @Composable
 private fun Caption(value: String, size: Int = 13, bold: Boolean = false, color: Color = ink, center: Boolean = false) {
     val em = size * 1.2f
-    Text(value, fontFamily = FontFamily(Font(Res.font.noto_sans_kr_variable)),
-        fontWeight = if (bold) FontWeight.Bold else FontWeight.Normal, color = color,
-        fontSize = em.sp, letterSpacing = (-0.01f * em).sp, lineHeight = (1.45f * em).sp,
+    val weight = if (bold) FontWeight.Bold else FontWeight.Normal
+    Text(value, style = TextStyle(fontFamily = FontFamily(Font(Res.font.noto_sans_kr_variable, weight)),
+        fontWeight = weight, color = color, fontSize = em.sp, letterSpacing = (-0.01).em, lineHeight = 1.45.em,
+        lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.None)),
         textAlign = if (center) TextAlign.Center else TextAlign.Start)
 }
 
@@ -65,10 +87,10 @@ private fun Caption(value: String, size: Int = 13, bold: Boolean = false, color:
 fun SharedInbox(model: InboxModel, actions: InboxActions) {
     val state = model.state
     Column(Modifier.fillMaxSize().background(Color(0xfff5f7fa)).padding(horizontal = gutter)) {
-        Box(Modifier.fillMaxWidth().padding(top = 7.2.dp).heightIn(min = 45.6.dp)) {
+        Box(Modifier.fillMaxWidth().padding(top = 7.2.dp).heightIn(min = 38.4.dp)) {
             Box(Modifier.align(Alignment.CenterStart).semantics { contentDescription = "뒤로" }
                 .clickable(role = Role.Button, onClick = actions::back).size(26.4.dp), contentAlignment = Alignment.Center) {
-                Caption("‹", 20)
+                Image(rememberVectorPainter(backArrow), null, Modifier.fillMaxSize(), colorFilter = ColorFilter.tint(ink))
             }
             Box(Modifier.align(Alignment.Center).semantics { heading() }) { Caption("알림", 15, bold = true) }
         }
