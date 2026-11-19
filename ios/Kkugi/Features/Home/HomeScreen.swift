@@ -186,9 +186,14 @@ private extension AuthSession {
     }
 }
 
+extension EnvironmentValues {
+    @Entry var notificationReferenceDate: Date? = nil
+}
+
 struct NotificationInbox: View {
     let session: AuthSession
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.notificationReferenceDate) private var referenceDate
     @State private var items: [MemberNotificationResponse] = []
     @State private var pageIndex = 0
     @State private var hasNext = false
@@ -216,7 +221,7 @@ struct NotificationInbox: View {
     private func row(_ item: MemberNotificationResponse) -> InboxRow {
         var calendar = Calendar(identifier: .iso8601)
         calendar.timeZone = TimeZone(identifier: "Asia/Seoul")!
-        let now = Date()
+        let now = referenceDate ?? Date()
         let today = calendar.startOfDay(for: now)
         let week = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? today
         let sent = (try? Date.ISO8601FormatStyle(includingFractionalSeconds: true).parse(item.sentAt))

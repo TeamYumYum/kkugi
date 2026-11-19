@@ -14,6 +14,9 @@ enum AppUIFixture {
 }
 
 private final class FixtureProtocol: URLProtocol {
+    private static let notificationLock = NSLock()
+    private static var hasReadNotification = false
+
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func stopLoading() {}
@@ -48,10 +51,17 @@ private final class FixtureProtocol: URLProtocol {
             return #"{"started":true,"startedOn":"2026-01-01","today":"2026-01-08","diet":{"currentDays":2,"longestDays":3,"thisWeek":[]},"workout":{"currentWeeks":1,"longestWeeks":2},"badges":[{"code":"FIRST","name":"첫 기록","description":"첫 기록을 남겼어요","category":"DIET","conditionKind":"COUNT","threshold":1,"earnedAt":"2026-01-01"}],"path":{"days":[],"weeklyGoals":[]}}"#
         case "/api/v1/weekly-workout-goal/me":
             return #"{"configured":true,"thisWeek":{"weekStartDate":"2026-01-05","targetCount":3,"firstWeek":false},"progress":{"countedCount":1,"achieved":false}}"#
-        case "/api/v1/members/me/notifications/unread-count": return #"{"unreadCount":0}"#
+        case "/api/v1/members/me/notifications/2/read":
+            guard populated, request.httpMethod == "POST" else { return nil }
+            Self.notificationLock.withLock { Self.hasReadNotification = true }
+            return "null"
+        case "/api/v1/members/me/notifications/unread-count":
+            let count = populated && !Self.notificationLock.withLock { Self.hasReadNotification } ? 1 : 0
+            return #"{"unreadCount":\#(count)}"#
         case "/api/v1/members/me/notifications":
             if populated {
-                return #"{"items":[{"id":2,"type":"LAST_MEAL","title":"제목 2","body":"본문 2","data":{},"sentAt":"2026-11-11T17:05:00+09:00","read":false},{"id":1,"type":"WEEKLY_REPORT","title":"제목 1","body":"본문 1","data":{},"sentAt":"2026-11-09T09:00:00+09:00","read":true}],"page":0,"size":20,"totalElements":2}"#
+                let read = Self.notificationLock.withLock { Self.hasReadNotification }
+                return #"{"items":[{"id":2,"type":"LAST_MEAL","title":"제목 2","body":"본문 2","data":{},"sentAt":"2026-11-11T17:05:00+09:00","read":\#(read)},{"id":1,"type":"WEEKLY_REPORT","title":"제목 1","body":"본문 1","data":{},"sentAt":"2026-11-09T09:00:00+09:00","read":true}],"page":0,"size":20,"totalElements":2}"#
             }
             return #"{"items":[],"page":0,"size":20,"totalElements":0}"#
         case "/api/v1/routines": return #"{"items":[{"id":1,"name":"아침 루틴","exercises":[]}]}"#

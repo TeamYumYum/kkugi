@@ -26,6 +26,12 @@ struct KkugiApp: App {
                 LoginRoot()
                 #endif
             }
+                #if DEBUG
+                .environment(\.notificationReferenceDate,
+                    ProcessInfo.processInfo.environment["KKUGI_UI_FIXTURE"] == "home" &&
+                    ProcessInfo.processInfo.environment["KKUGI_GALLERY_DATA"] == "recorded"
+                    ? ISO8601DateFormatter().date(from: "2026-11-11T17:05:00+09:00") : nil)
+                #endif
                 .environmentObject(push)
                 .preferredColorScheme(.light)
         }

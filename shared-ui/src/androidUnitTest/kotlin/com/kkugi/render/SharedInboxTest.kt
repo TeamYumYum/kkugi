@@ -23,6 +23,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import java.io.File
+import java.security.MessageDigest
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [36], qualifiers = "ko-rKR-w400dp-h880dp-xxhdpi")
@@ -51,21 +52,44 @@ class SharedInboxTest {
             }
         }
         compose.onNodeWithText("아직 받은 알림이 없어요").assertExists()
-        compose.runOnIdle {
+        fun capture(name: String, referenceDigest: String) = compose.runOnIdle {
             assertEquals(1178, rect.width.toInt())
             assertEquals(2277, rect.height.toInt())
             val image = Bitmap.createBitmap(1178, 2277, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(image)
             canvas.translate(-rect.left, -rect.top)
             host.draw(canvas)
-            val output = File("build/reports/shared-ui/inbox-empty.png")
+            val output = File("build/reports/shared-ui/$name.png")
             requireNotNull(output.parentFile).mkdirs()
             output.outputStream().use { check(image.compress(Bitmap.CompressFormat.PNG, 100, it)) }
+            val digest = MessageDigest.getInstance("SHA-256")
+            val row = IntArray(image.width)
+            val bytes = ByteArray(image.width * 4)
+            for (y in 0 until image.height) {
+                image.getPixels(row, 0, row.size, 0, y, image.width, 1)
+                row.forEachIndexed { x, argb ->
+                    bytes[4*x] = (argb ushr 16).toByte()
+                    bytes[4*x+1] = (argb ushr 8).toByte()
+                    bytes[4*x+2] = argb.toByte()
+                    bytes[4*x+3] = (argb ushr 24).toByte()
+                }
+                digest.update(bytes)
+            }
+            assertEquals("Original Android RGBA at 218f3248: $name", referenceDigest,
+                digest.digest().joinToString("") { "%02x".format(it) })
         }
-        compose.runOnIdle { model.update(InboxState(listOf(InboxRow("42","알림 제목","알림 본문",false,"BADGE","오늘","오후 1:30")),false,"",0,true)) }
-        compose.onNodeWithText("알림 제목").performClick()
+        capture("inbox-empty", "451016baa00e444bb7ee62386023ceb5a71cc6528c7bddd4b8fcae1e08390aa3")
+        val rows = listOf(
+            InboxRow("2", "제목 2", "본문 2", false, "LAST_MEAL", "오늘", "오후 5:05"),
+            InboxRow("1", "제목 1", "본문 1", true, "WEEKLY_REPORT", "이번 주", "월요일")
+        )
+        compose.runOnIdle { model.update(InboxState(rows, false, "", 0, false)) }
+        compose.onNodeWithText("제목 2").assertExists()
+        capture("inbox", "451248ac9d7f568a41851351a3ce2ebd9006e416c915ed86533c6cf178d95cae")
+        compose.runOnIdle { model.update(InboxState(rows, false, "", 0, true)) }
+        compose.onNodeWithText("제목 2").performClick()
         compose.onNodeWithText("다음").performClick()
         compose.onNodeWithContentDescription("뒤로").performClick()
-        assertEquals(listOf("42","page:1","back"),events)
+        assertEquals(listOf("2", "page:1", "back"), events)
     }
 }

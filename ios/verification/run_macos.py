@@ -17,7 +17,7 @@ DEVICE_NAME = "iPhone 16"
 CASES = ["login-initial", "login-recent-kakao", "login-kakao-busy", "login-google-busy", "login-error"]
 GALLERY_TEST = "KkugiUITests/ScreenGalleryUITests"
 GALLERY_SCREENS = """
-home inbox-empty chat profile profile-edit body-edit withdrawal meal-add food-search meal-photo inbox meal-detail
+home inbox-empty chat profile profile-edit body-edit withdrawal meal-add food-search meal-photo system-photo-picker inbox meal-detail
 meal-edit schedule workout-history exercise-records workout-recorder routine-detail routine-editor exercise-search
 target-calorie weight diet-streak workout-streak badges weekly-report workout-detail routine-list routine-recommend
 ai-survey-full ai-survey ai-result exercise-pick

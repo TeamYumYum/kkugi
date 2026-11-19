@@ -15,7 +15,7 @@ class CaptureTests(unittest.TestCase):
         self.assertEqual(suite_configuration("all"), ([], core | gallery))
         self.assertFalse(core & gallery)
         required_ui = """
-            home inbox-empty chat profile profile-edit body-edit withdrawal meal-add food-search meal-photo
+            home inbox-empty chat profile profile-edit body-edit withdrawal meal-add food-search meal-photo system-photo-picker
             inbox meal-detail meal-edit schedule workout-history exercise-records workout-recorder routine-detail
             routine-editor exercise-search target-calorie weight diet-streak workout-streak badges weekly-report
             workout-detail routine-list routine-recommend ai-survey-full ai-survey ai-result exercise-pick

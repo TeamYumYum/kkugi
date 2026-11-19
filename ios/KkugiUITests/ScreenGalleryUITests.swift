@@ -25,10 +25,28 @@ final class ScreenGalleryUITests: XCTestCase {
 
     private func capture(_ name: String, when element: XCUIElement) throws {
         try ready(element)
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        let animated = ["home", "growth", "meal-day", "meal-recognizing", "workout-recorder"]
+        let frame = animated.contains(name) ? XCUIScreen.main.screenshot() : try settledFrame(name)
+        let attachment = XCTAttachment(screenshot: frame)
         attachment.name = name + "-full.png"
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    private func settledFrame(_ name: String) throws -> XCUIScreenshot {
+        let deadline = ProcessInfo.processInfo.systemUptime + 6
+        var previous: Data?
+        repeat {
+            let frame = XCUIScreen.main.screenshot()
+            guard let cgImage = frame.image.cgImage, let pixels = cgImage.dataProvider?.data else {
+                throw NSError(domain: "Gallery", code: 2, userInfo: [NSLocalizedDescriptionKey: "Cannot read pixels for " + name])
+            }
+            let data = pixels as Data
+            if previous == data { return frame }
+            previous = data
+            RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.2))
+        } while ProcessInfo.processInfo.systemUptime < deadline
+        throw NSError(domain: "Gallery", code: 3, userInfo: [NSLocalizedDescriptionKey: "Screen did not settle: " + name])
     }
 
     private func back(_ app: XCUIApplication) {
@@ -67,12 +85,21 @@ final class ScreenGalleryUITests: XCTestCase {
         try tap(app, "닫기")
         try tap(app, "사진으로 음식 인식")
         try capture("meal-photo", when: app.navigationBars["사진으로 식사 기록"])
+        try tap(app, "사진 보관함에서 선택")
+        let cancelPicker = app.buttons.matching(NSPredicate(format: "label IN %@", ["Cancel", "취소"])).firstMatch
+        try capture("system-photo-picker", when: cancelPicker)
+        cancelPicker.tap()
+        try ready(app.buttons["사진 보관함에서 선택"])
     }
 
     func testRecordedMealAndNotifications() throws {
         let app = try home(populated: true)
         try tap(app, "알림")
-        try capture("inbox", when: app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "제목 2")).firstMatch)
+        let unread = app.buttons.matching(NSPredicate(format: "label CONTAINS %@ AND label CONTAINS %@", "제목 2", "안 읽음")).firstMatch
+        try capture("inbox", when: unread)
+        unread.tap()
+        let read = app.buttons.matching(NSPredicate(format: "label CONTAINS %@ AND NOT (label CONTAINS %@)", "제목 2", "안 읽음")).firstMatch
+        try ready(read)
         try tap(app, "뒤로")
         try tap(app, "식사 기록")
         try tap(app, "식사 상세")
