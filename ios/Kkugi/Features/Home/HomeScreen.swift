@@ -187,6 +187,7 @@ private extension AuthSession {
 
 struct NotificationInbox: View {
     let session: AuthSession
+    @Environment(\.dismiss) private var dismiss
     @State private var items: [MemberNotificationResponse] = []
     @State private var pageIndex = 0
     @State private var hasNext = false
@@ -194,6 +195,28 @@ struct NotificationInbox: View {
     @State private var message = ""
 
     var body: some View {
+        VStack(spacing: 0) {
+            ZStack(alignment: .leading) {
+                GText(text: "알림", size: 15, weight: 700, alignment: .center)
+                    .frame(maxWidth: .infinity)
+                    .accessibilityAddTraits(.isHeader)
+                Button { dismiss() } label: {
+                    Image(systemName: "chevron.left").font(.system(size: G.dp(18), weight: .medium))
+                        .frame(width: G.dp(22), height: G.dp(22))
+                        .padding(.trailing, G.dp(16)).frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityLabel("뒤로")
+            }
+            .padding(.horizontal, G.gutter)
+            .padding(.top, G.dp(6))
+            inboxList
+        }
+        .background(Color(hex: 0xF5F7FA))
+        .toolbar(.hidden, for: .navigationBar)
+        .task { await load(pageIndex) }
+    }
+
+    private var inboxList: some View {
         List {
             if loading { ProgressView() }
             if !message.isEmpty { Text(message); Button("다시 시도") { Task { await load(pageIndex) } } }
@@ -235,9 +258,9 @@ struct NotificationInbox: View {
                 }.buttonStyle(.borderless).disabled(loading)
             }
         }.listStyle(.plain).scrollContentBackground(.hidden)
+            .contentMargins(.horizontal, 0, for: .scrollContent)
             .background(Color(hex: 0xF5F7FA))
-            .navigationTitle("알림").navigationBarTitleDisplayMode(.inline)
-            .task { await load(pageIndex) }.refreshable { await load(pageIndex) }
+            .refreshable { await load(pageIndex) }
     }
 
     @MainActor private func load(_ requested: Int) async {
